@@ -15,11 +15,12 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M1.3 (Qt Quick/Kirigami GUI foundation):**
+> **Development status — M1.4 (Qt Quick/Kirigami primary navigation):**
 > The repository includes a Qt-independent C++23 core, CMake/Ninja presets,
 > compiler hardening, ASan/UBSan, the M0 documentation contracts and a real
-> **Qt 6/Kirigami desktop window**. The window explicitly reports that monitoring
-> is **not active**. No management daemon, agentless network sensor, detection
+> **Qt 6/Kirigami desktop shell** with seven navigable sections (Dashboard,
+> Assets, Events, Detections, Alerts, Investigations, and Settings). Every
+> section explicitly reports monitoring is **not active**. No management daemon, agentless network sensor, detection
 > engine, alerting, or privileged security controls are implemented yet.
 > The Qt QML startup smoke test validates actual Kirigami imports; it is not a
 > security or production qualification.
@@ -70,7 +71,7 @@ segments rather than claim complete visibility. Encrypted payloads are not
 silently decrypted; local observed endpoints can be cataloged without an agent
 under the approved network scope.
 
-## Building the M1.3 desktop foundation
+## Building the M1.4 navigation shell
 
 On Ubuntu 26.04 AMD64, install the [build prerequisites](docs/development/BUILD_FOUNDATION.md), then run:
 
@@ -80,11 +81,14 @@ cmake --build --preset linux-release --parallel
 ctest --preset linux-release --output-on-failure
 ```
 
-Running `./build/presets/linux-release/apps/desktop/knetsentry` opens the first
-Kirigami window. It does not monitor or collect any traffic. `--version` and
+Running `./build/presets/linux-release/apps/desktop/knetsentry` opens the
+Kirigami navigation shell. Use the global drawer or `Ctrl+1` through `Ctrl+7`
+to select its seven pages. None monitor or collect traffic. `--version` and
 `--help` work without a graphical display. `--self-test-qml` is used by the
 mandatory `knetsentry_kirigami_qml_startup` CTest with an offscreen renderer.
-See the [M1.3 GUI foundation guide](docs/development/GUI_FOUNDATION.md).
+The `knetsentry_primary_navigation` test verifies all seven routes without
+creating simulated telemetry. See the [M1.4 navigation guide](docs/development/GUI_NAVIGATION.md)
+and [M1.3 GUI foundation guide](docs/development/GUI_FOUNDATION.md).
 `linux-sanitize` adds ASan/UBSan for project code. The `linux-core-only` preset
 remains useful but **cannot qualify the Qt/Kirigami desktop**.
 
@@ -92,6 +96,7 @@ remains useful but **cannot qualify the Qt/Kirigami desktop**.
 
 | Document | Purpose |
 | --- | --- |
+| [M1.4 navigation shell](docs/development/GUI_NAVIGATION.md) | Seven Qt/Kirigami top-level destinations, navigation testing, and honest placeholder state |
 | [M1.2 compiler hardening](docs/development/HARDENING_AND_ANALYSIS.md) | Target-scoped compiler warnings, sanitizers, optional analysis and ELF verification |
 | [M1.1 build foundation](docs/development/BUILD_FOUNDATION.md) | CMake presets, dependency setup, smoke tests, target ownership |
 | [Product vision](PRODUCT_VISION.md) | Purpose, audiences, benefits, success criteria, and non-goals |

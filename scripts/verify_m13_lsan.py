@@ -54,7 +54,13 @@ require(re.search(r"if\(KNETSENTRY_ENABLE_SANITIZERS\)\s+"
                   r"set_property\(TEST knetsentry_kirigami_qml_startup APPEND PROPERTY ENVIRONMENT\s+"
                   r'"LSAN_OPTIONS=suppressions=\$\{PROJECT_SOURCE_DIR\}/tests/sanitizers/'
                   r'lsan_qml_third_party\.supp:print_suppressions=1"\)', tests) is not None,
-        "LSan suppression must be attached only to the actual Kirigami smoke test")
+        "LSan suppression must be attached to the actual Kirigami smoke test")
+# The M1.4 navigation test also imports Kirigami; allow exactly that second
+# QML-only scope, while requiring the original narrow patterns and leak probe.
+require(re.search(r"set_property\(TEST knetsentry_primary_navigation APPEND PROPERTY ENVIRONMENT\s+"
+                  r'"LSAN_OPTIONS=suppressions=\$\{PROJECT_SOURCE_DIR\}/tests/sanitizers/'
+                  r'lsan_qml_third_party\.supp:print_suppressions=1"\)', tests) is not None,
+        "LSan suppression must be attached to the M1.4 QML navigation test")
 require("knetsentry_lsan_negative_control" in tests and
         "add_executable(knetsentry_lsan_probe sanitizers/lsan_probe.cpp)" in tests and
         "knetsentry_apply_project_options(knetsentry_lsan_probe)" in tests,
@@ -64,8 +70,8 @@ require(re.search(r"if\(KNETSENTRY_ENABLE_SANITIZERS\)\s+"
         "intentional leak fixture must only build with sanitizers")
 require("--probe \"$<TARGET_FILE:knetsentry_lsan_probe>\"" in tests,
         "LSan negative control must execute the built probe")
-require(tests.count("LSAN_OPTIONS=suppressions=") == 2,
-        "LSan suppression must be restricted to QML smoke and negative-control tests")
+require(tests.count("LSAN_OPTIONS=suppressions=") == 3,
+        "LSan suppression must be restricted to two QML runtime tests and the negative control")
 
 probe = read("tests/sanitizers/lsan_probe.cpp")
 require("SPDX-License-Identifier: MIT" in probe[:120], "probe lacks MIT SPDX")
@@ -114,7 +120,7 @@ if ERRORS:
         print(f"  - {issue}", file=sys.stderr)
     sys.exit(1)
 print("M1.3 scoped LSan verification: PASS")
-print("  Exactly two external-library leak rules, scoped to Kirigami CTest only")
+print("  Exactly two external-library leak rules, scoped to QML CTests only")
 print("  Global ASan leak detection remains enabled; no broad suppressions")
 if args.probe:
     print("  Deliberate 1337-byte first-party leak correctly detected and rejected")

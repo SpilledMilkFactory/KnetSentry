@@ -22,12 +22,22 @@ if(KNETSENTRY_BUILD_DESKTOP)
         LABELS "smoke;desktop;qml"
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
         TIMEOUT 30)
+    # M1.4: visit all seven pages through the actual QML router, reject an
+    # invalid destination, and ensure top-level switches do not grow the stack.
+    add_test(NAME knetsentry_primary_navigation
+        COMMAND $<TARGET_FILE:knetsentry> --self-test-navigation)
+    set_tests_properties(knetsentry_primary_navigation PROPERTIES
+        LABELS "desktop;qml;navigation;regression"
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+        TIMEOUT 30)
     # The two observed third-party leak stacks are not KnetSentry leaks.
     # Scope LSan suppressions to this specific full-QML smoke test only;
     # keep detect_leaks=1 for the entire sanitizer preset. The negative
     # control below proves first-party leaks remain detectable.
     if(KNETSENTRY_ENABLE_SANITIZERS)
         set_property(TEST knetsentry_kirigami_qml_startup APPEND PROPERTY ENVIRONMENT
+            "LSAN_OPTIONS=suppressions=${PROJECT_SOURCE_DIR}/tests/sanitizers/lsan_qml_third_party.supp:print_suppressions=1")
+        set_property(TEST knetsentry_primary_navigation APPEND PROPERTY ENVIRONMENT
             "LSAN_OPTIONS=suppressions=${PROJECT_SOURCE_DIR}/tests/sanitizers/lsan_qml_third_party.supp:print_suppressions=1")
     endif()
 endif()
