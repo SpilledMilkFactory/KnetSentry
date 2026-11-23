@@ -178,3 +178,10 @@ remain separate from official KDE adoption.
 
 Any change to these objectives must be explicitly reviewed and reflected in
 its acceptance evidence, not implemented as a silent reduction in scope.
+
+## M1.4 primary navigation (implementation scope)
+
+The Qt desktop now provides a seven-section Kirigami shell with an explicit
+non-operational state and headless route-testing gate. No collected security
+telemetry, fake detections, network capture, or manager privileges are added.
+See [M1.4 navigation requirements](GUI_NAVIGATION.md).

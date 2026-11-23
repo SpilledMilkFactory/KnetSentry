@@ -9,6 +9,8 @@
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QString>
+#include <QStringList>
+#include <QVariant>
 
 #include <iostream>
 #include <string_view>
@@ -25,7 +27,7 @@ void set_application_metadata() {
 
 void configure_parser(QCommandLineParser &parser) {
     parser.setApplicationDescription(QStringLiteral(
-        "KnetSentry M1.3 Qt Quick/Kirigami desktop foundation; no SIEM monitoring is active."));
+        "KnetSentry M1.4 Qt Quick/Kirigami navigation shell; no SIEM monitoring is active."));
     parser.addHelpOption();
     parser.addVersionOption();
 }
@@ -64,7 +66,11 @@ int main(int argc, char *argv[]) {
     const QCommandLineOption qml_smoke_test(
         QStringLiteral("self-test-qml"),
         QStringLiteral("Load the embedded Kirigami window and exit; intended for tests."));
+    const QCommandLineOption navigation_smoke_test(
+        QStringLiteral("self-test-navigation"),
+        QStringLiteral("Exercise all seven non-operational navigation pages and exit."));
     parser.addOption(qml_smoke_test);
+    parser.addOption(navigation_smoke_test);
     parser.process(app);
 
     // The UI has no privileged interfaces and exposes no operational SIEM
@@ -82,6 +88,46 @@ int main(int argc, char *argv[]) {
     }
     if (parser.isSet(qml_smoke_test)) {
         std::cout << "KnetSentry M1.3 Kirigami QML smoke: PASS (not an operational SIEM)\n";
+        return 0;
+    }
+    if (parser.isSet(navigation_smoke_test)) {
+        const QStringList sections = {
+            QStringLiteral("dashboard"), QStringLiteral("assets"),
+            QStringLiteral("events"), QStringLiteral("detections"),
+            QStringLiteral("alerts"), QStringLiteral("investigations"),
+            QStringLiteral("settings")};
+        // Exercise repeated replacement, not just one pass, to expose
+        // stale-page ownership and transient scene-attachment failures.
+        for (int pass = 0; pass < 4; ++pass) {
+            for (const QString &section : sections) {
+                if (!engine.rootObjects().constFirst()->setProperty("navigationRequest", section)) {
+                    std::cerr << "KnetSentry: navigation request property is unavailable.\n";
+                    return 1;
+                }
+                QCoreApplication::processEvents();
+                const QObject *root = engine.rootObjects().constFirst();
+                if (root->property("activeSection").toString() != section ||
+                    root->property("currentPageSection").toString() != section ||
+                    root->property("navigationDepth").toInt() != 1) {
+                    std::cerr << "KnetSentry: failed navigation or unbounded page stack.\n";
+                    return 1;
+                }
+            }
+        }
+        // Invalid destinations must never change the displayed page.
+        if (!engine.rootObjects().constFirst()->setProperty(
+                "navigationRequest", QStringLiteral("unapproved"))) {
+            return 1;
+        }
+        QCoreApplication::processEvents();
+        const QObject *root = engine.rootObjects().constFirst();
+        if (root->property("activeSection").toString() != QStringLiteral("settings") ||
+            root->property("currentPageSection").toString() != QStringLiteral("settings") ||
+            root->property("navigationDepth").toInt() != 1) {
+            std::cerr << "KnetSentry: invalid destination was not rejected.\n";
+            return 1;
+        }
+        std::cout << "KnetSentry M1.4 primary navigation: PASS (7 sections; no telemetry)\n";
         return 0;
     }
     return app.exec();

@@ -10,7 +10,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 ## Scope and design
 
 - `apps/desktop/main.cpp` uses `QCoreApplication` for `--version`/`--help` without a display, and `QGuiApplication`/`QQmlApplicationEngine` to load the actual window.
-- `apps/desktop/Main.qml` declares `Kirigami.ApplicationWindow`, with a single honest non-operational overview page. M1.4 will add the primary navigation.
+- `apps/desktop/Main.qml` declares `Kirigami.ApplicationWindow`; M1.4 adds the GlobalDrawer and seven honest, non-operational `SectionPage.qml` destinations ([navigation guide](GUI_NAVIGATION.md)).
 - `qt_add_qml_module` embeds the QML files under `io.github.spilledmilkfactory.KnetSentry` with Qt 6's standard resource prefix. There are no loose QML files loaded from an untrusted working directory.
 - The QML is UI-only: no manager privileges, storage, packet capture, outbound network calls, sensor configuration, agent authentication, or fake security telemetry.
 - `packaging/desktop/io.github.spilledmilkfactory.KnetSentry.desktop` is development-stage metadata, **not** an installed package or final icon. Packaging and AppStream validation remain M15.
@@ -109,13 +109,14 @@ originate in **Fontconfig**, the **Qt font database**, and the system-installed
 **Kirigami controls QML plugin**. This is not a verified KnetSentry allocation;
 we must **not** infer that the upstream libraries are leak-free either.
 
-Only the sanitizer build's `knetsentry_kirigami_qml_startup` CTest receives
+Only the sanitizer build's two QML-only tests (`knetsentry_kirigami_qml_startup` and `knetsentry_primary_navigation`) receive
 `LSAN_OPTIONS=suppressions=.../tests/sanitizers/lsan_qml_third_party.supp`.
 The file contains **only** `leak:libfontconfig.so.1` and
 `leak:libKirigamiControlsplugin.so`, matching the two observed external
 allocation stacks. `ASAN_OPTIONS=detect_leaks=1` is retained, as are ASan
 and UBSan memory/undefined-behavior checks. These rules do **not** apply to
-other CTest cases, to manually launched executables, or to release builds.
+other CTest cases (apart from the separate intentional-leak negative control,
+which uses the same file), to manually launched executables, or to release builds.
 
 Every sanitizer build includes `knetsentry_lsan_negative_control`: it runs
 an isolated test-only executable that **intentionally** leaks 1337 bytes, with
@@ -142,8 +143,17 @@ A new leak report not matching these **two** entries is a failure requiring
 investigation. Reevaluate and ideally remove the suppressions following Qt,
 Kirigami, Fontconfig, or compiler upgrades; update documented evidence when
 upstream behavior changes. Do not generalize them to an entire Qt library,
-all QML tests, or project-wide sanitizer settings. A passing run proves
+additional tests, or project-wide sanitizer settings. A passing run proves
 only that this fixture exercises an operational QML startup while known
 external leak stacks are excluded; it does not prove the libraries leak-free.
 
 References: [LeakSanitizer suppressions](https://clang.llvm.org/docs/LeakSanitizer.html).
+
+## M1.4 navigation diagnostic follow-up
+
+The initial M1.4 manual GNOME run showed a PageRow warning for created
+`SectionPage` instances. See [GUI_NAVIGATION.md](GUI_NAVIGATION.md) for
+explicit-object ownership, the real runtime warning regression, rootless
+per-user development desktop registration and the separate upstream
+Kirigami DrawerHandle warning. Runtime GUI qualification still requires the
+Ubuntu 26.04 Qt/KF6 configuration; core-only checks do not qualify it.
