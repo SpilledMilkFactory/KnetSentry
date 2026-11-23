@@ -155,7 +155,13 @@ criteria and M14 will validate them.
   identify adversaries, trust boundaries, abuse cases, proposed controls, and
   accountable future tests. No mitigations are deployed and residual risks
   are **not yet assessed or accepted**.
-- **M0.4:** Component boundaries, APIs, and storage/transport design.
+- **M0.4 (defined):** The [modular system architecture](docs/architecture/SYSTEM_ARCHITECTURE.md),
+  [component catalog](docs/architecture/COMPONENT_CATALOG.md),
+  [interface contracts](docs/architecture/INTERFACE_CONTRACTS.md),
+  [deployment profiles](docs/architecture/DEPLOYMENT_TOPOLOGIES.md), and
+  [traceability index](docs/architecture/ARCHITECTURE_TRACEABILITY.md)
+  define proposed process responsibilities, trust separation and data flows.
+  No socket, capture helper, or security control is implemented by these documents.
 - **M0.5:** Resource budgets and benchmark thresholds.
 - **M0.6:** Final component-level licensing, third-party obligations, and
   SPDX/REUSE implementation. The existing repository license is currently MIT.

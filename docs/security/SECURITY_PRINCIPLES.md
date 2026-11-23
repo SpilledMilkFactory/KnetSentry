@@ -122,6 +122,19 @@ privileged local attacker.
   and adversarial fixtures according to affected trust boundaries.
 - Do not represent an unrun test or unreviewed control as security evidence.
 
+## 2A. M0.4 process and authority separation
+
+The [modular architecture](../architecture/SYSTEM_ARCHITECTURE.md) and
+[interface design](../architecture/INTERFACE_CONTRACTS.md) establish planned
+independent roles for privileged capture versus unprivileged packet parsing,
+local GUI/CLI versus authorized management IPC, authenticated agent
+transport versus source truth, restricted provider HTTPS egress versus
+observed external peers, and offline AI versus deterministic detection.
+The proposed component privileges and future verification owners are
+recorded in the [component catalog](../architecture/COMPONENT_CATALOG.md)
+and [architecture traceability](../architecture/ARCHITECTURE_TRACEABILITY.md).
+These are design boundaries only; isolation effectiveness remains unverified.
+
 ## 3. Response safety
 
 Detection is not authorization to intervene. Active response is disabled by
@@ -150,7 +163,7 @@ prove that the system is vulnerability-free.
 ## 5. Follow-up issue ownership
 
 - **M0.2–M0.4:** LAN policy and threat model documented in M0.2/M0.3;
-  M0.4 must reconcile conceptual flows with process/API design.
+  M0.4 documents the proposed separation of processes and logical APIs.
 - **M0.6–M0.7:** Licensing/supply-chain controls and quality requirements.
 - **M3–M4:** Network isolation, authenticated enrollment, secure transport.
 - **M5–M11:** Privacy-aware collection, evidence, detections, incidents.

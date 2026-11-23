@@ -6,8 +6,8 @@ SPDX-License-Identifier: MIT
 # KnetSentry — Product Scope and Deployment Boundaries
 
 **Status:** M0.1 product baseline refined by M0.2 network requirements.
-M0.3 defines the initial threat model; M0.4 will specify detailed service interfaces;
-no network security implementation is implied here.
+M0.3 defines the initial threat model; M0.4 documents proposed process and
+logical interface boundaries; no network security implementation is implied here.
 
 ## 1. Initial compatibility contract
 
@@ -153,8 +153,18 @@ truthful. Detection explanations and reports must preserve those limitations.
 M0.2 defines the monitoring, local transport, and optional intelligence-egress
 contracts. M0.3 supplies the [initial threat model](../security/THREAT_MODEL.md),
 [risk register](../security/THREAT_REGISTER.md), and future verification
-requirements. M0.4 formalizes service interfaces,
-process boundaries, and protocols.
+requirements. M0.4 defines proposed process and logical interface boundaries;
+concrete on-wire protocols and deployed controls belong to later issues.
+The [M0.4 system architecture](SYSTEM_ARCHITECTURE.md),
+[component catalog](COMPONENT_CATALOG.md),
+[interface contracts](INTERFACE_CONTRACTS.md) and
+[deployment topologies](DEPLOYMENT_TOPOLOGIES.md) now define planned
+responsibilities for privileged capture, isolated parsing, ingestion,
+policy enforcement, optional agents, authorized feed egress, offline AI,
+and the unprivileged Qt frontend. Agentless visibility is always contingent
+on actual gateway exports or mirrored/tapped traffic; it never requires an
+agent on the observed printer, camera, or doorbell. No processes, interfaces,
+or controls are yet implemented by M0.4.
 M0.5 defines performance and capacity thresholds. M0.6 resolves the final
 licensing, dependency, and KDE compliance policy.
 
