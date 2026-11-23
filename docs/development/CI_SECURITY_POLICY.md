@@ -67,6 +67,15 @@ Branch protection must not require a check name until that workflow exists and
 has demonstrated repeatable completion. Once enabled, missing results or
 infrastructure failures are not automatically treated as security passes.
 
+## Repository governance dependency
+
+M0.8 adds the [PR template](../../.github/pull_request_template.md),
+[CODEOWNERS](../../.github/CODEOWNERS), and
+[manual settings checklist](REPOSITORY_ADMIN_CHECKLIST.md). These files do not
+activate GitHub branch rules, private vulnerability reporting, or workflow checks.
+Enable branch protection and appropriate security controls through GitHub
+settings only after the affected workflows are functioning.
+
 ## References
 
 - [GitHub secure use](https://docs.github.com/en/actions/reference/security/secure-use)

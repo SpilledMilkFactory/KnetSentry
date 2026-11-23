@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2026 Chris Sutton
+# SPDX-License-Identifier: MIT
+name: Documentation issue
+description: Report a documentation inconsistency or propose a clarification.
+title: "[Docs]: "
+labels: ["type:documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not disclose security vulnerabilities, private telemetry, or credentials in public issues. Follow SECURITY.md."
+  - type: input
+    id: location
+    attributes:
+      label: Document location
+      placeholder: "docs/architecture/SYSTEM_ARCHITECTURE.md"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Inconsistency or requested change
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Proposed acceptance criteria

@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Chris Sutton
+# SPDX-License-Identifier: MIT
+# KnetSentry currently has a single maintainer. Self-review is not independent approval.
+* @SpilledMilkFactory
+/docs/ @SpilledMilkFactory
+/scripts/ @SpilledMilkFactory
+/.github/ @SpilledMilkFactory

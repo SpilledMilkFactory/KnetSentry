@@ -161,6 +161,10 @@ remain separate from official KDE adoption.
   [planned 30-gate verification matrix](VERIFICATION_MATRIX.md),
   [CI policy](CI_SECURITY_POLICY.md), and [evidence requirements](VERIFICATION_EVIDENCE.md);
   the real CMake/Qt/CI/security tests remain future implementation work.
+- **M0.8 (defined):** [Contribution and governance rules](../../GOVERNANCE.md),
+  [vulnerability reporting](../../SECURITY.md), repository templates and
+  [owner setup steps](REPOSITORY_ADMIN_CHECKLIST.md). GitHub security intake
+  enablement, notifications and rulesets are manual/future tasks, not passed checks.
 - **M13:** Security sign-off supported by evidence.
 - **M14:** Performance and resilience qualification.
 - **M15:** Distribution verification and release publication.

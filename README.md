@@ -15,7 +15,7 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M0.7 (design documents and offline verifiers only):** This repository
+> **Development status — M0.8 (design documents, governance templates, and offline verifiers only):** This repository
 > contains the product and network-security contracts, threat model, modular
 > architecture, performance/reliability targets, dependency policy, and
 > planned secure development/verification gates.
@@ -112,8 +112,9 @@ does **not** imply that KnetSentry is an official KDE project.
 ## Development and contributions
 
 The repository is in its documentation-first foundation stage. Build commands,
-source-code test suites, CI workflows and security disclosure infrastructure
-will be implemented in their scheduled milestones. M0.7 documents the
+source-code test suites and CI workflows will be implemented in their scheduled
+milestones. M0.8 adds governance and public issue/PR templates; **private vulnerability
+reporting must still be enabled and verified in GitHub settings**. M0.7 documents the
 [development contract](DEVELOPMENT_CONTRACT.md) but has not executed
 compiler, Qt, sanitizer, network or runtime tests; never infer that a missing
 test has passed.
@@ -121,6 +122,14 @@ test has passed.
 For now, review the requirements documents above and file GitHub issues for unclear,
 conflicting, or untestable requirements. Security-sensitive implementation
 should not begin until its relevant trust and network boundaries are defined.
+
+## Project governance and security reports
+
+[Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md) · [Security policy](SECURITY.md) · [Governance](GOVERNANCE.md) · [Repository setup checklist](docs/development/REPOSITORY_ADMIN_CHECKLIST.md).
+
+**Do not publish vulnerabilities or private LAN evidence in public issues.** Security
+reports use GitHub private advisories when explicitly enabled; see the security
+policy for the current setup limitation. KnetSentry is not yet an official KDE project.
 
 ## License
 
