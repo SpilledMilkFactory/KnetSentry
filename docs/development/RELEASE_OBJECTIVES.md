@@ -193,3 +193,13 @@ platform-driven light/dark coloring, accessible semantic badges and responsive
 scrolling. [Visual design standards](VISUAL_DESIGN_SYSTEM.md) and the offline
 verifier are defined; full Ubuntu 26.04 acceptance remains required. No SIEM
 monitoring, operational severity, or distributor approval is implied.
+
+## M1.6 initial structured diagnostics (non-authoritative)
+
+A Qt-independent, bounded JSONL diagnostic publisher with allowlisted codes,
+private-context redaction, concurrency/sink-failure checks, and an optional
+C++ desktop lifecycle integration is implemented. See
+[the M1.6 diagnostics contract](STRUCTURED_DIAGNOSTICS.md).
+This is **not** a persistent security-event store, an authorized audit trail,
+or proof of complete privacy for raw third-party Qt diagnostics. M2.5 and M6
+remain responsible for durable, authorized audit/evidence storage controls.

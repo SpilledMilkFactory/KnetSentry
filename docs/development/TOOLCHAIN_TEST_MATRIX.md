@@ -5,9 +5,9 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M1.2 CMake hardening, warnings-as-errors, ASan/UBSan and optional
-clang-tidy/Clazy presets exist. The Qt window, Qt Test/Quick Test suites and CI
-still do **not** exist. Initial supported target is Ubuntu 26.04 AMD64. See the
+**State:** M1.2 hardening, ASan/UBSan, optional clang-tidy/Clazy presets,
+M1.3–M1.5 Qt/Kirigami window/navigation/design, and M1.6 diagnostic tests
+exist. Full Qt Test/Quick Test suites and GitHub Actions CI remain future work. Initial supported target is Ubuntu 26.04 AMD64. See the
 [M1.1 build guide](BUILD_FOUNDATION.md).
 
 ## Planned build and analysis matrix

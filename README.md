@@ -74,7 +74,7 @@ segments rather than claim complete visibility. Encrypted payloads are not
 silently decrypted; local observed endpoints can be cataloged without an agent
 under the approved network scope.
 
-## Building the M1.5 visual design shell
+## Building the M1.6 diagnostics-enabled visual shell
 
 On Ubuntu 26.04 AMD64, install the [build prerequisites](docs/development/BUILD_FOUNDATION.md), then run:
 
@@ -103,10 +103,23 @@ appearance follows the user's system palette; in-app theme switching is not
 yet implemented. The offscreen `knetsentry_visual_system` test qualifies real
 QML tokens in non-sanitized desktop builds.
 
+## M1.6 structured application diagnostics
+
+The Qt-independent core now provides an allowlisted, bounded JSON-line
+publisher with severity, component, event, outcome, UTC epoch time, an
+instance-local sequence, optional non-sensitive counts, and fixed redaction
+of explicitly designated private context. The desktop emits fixed lifecycle
+codes to stderr only; no telemetry or protected audit store is introduced.
+See the [M1.6 structured diagnostics contract](docs/development/STRUCTURED_DIAGNOSTICS.md).
+Validate with `python3 scripts/verify_m16_diagnostics.py` and the
+`knetsentry_structured_diagnostics` CTest in each relevant preset.
+Raw Qt/Kirigami framework output is **not** sanitized by this publisher.
+
 ## Product documentation
 
 | Document | Purpose |
 | --- | --- |
+| [M1.6 structured diagnostics](docs/development/STRUCTURED_DIAGNOSTICS.md) | Typed event catalog, redaction boundary, JSONL limits and test instructions |
 | [M1.5 visual design system](docs/development/VISUAL_DESIGN_SYSTEM.md) | KDE/Qt palettes, severity/status separation, spacing, responsive UI and accessibility foundations |
 | [M1.4 navigation shell](docs/development/GUI_NAVIGATION.md) | Seven Qt/Kirigami top-level destinations, navigation testing, and honest placeholder state |
 | [M1.2 compiler hardening](docs/development/HARDENING_AND_ANALYSIS.md) | Target-scoped compiler warnings, sanitizers, optional analysis and ELF verification |

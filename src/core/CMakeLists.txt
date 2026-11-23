@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Chris Sutton
 # SPDX-License-Identifier: BSD-2-Clause
 
-add_library(knetsentry_core STATIC build_info.cpp)
+add_library(knetsentry_core STATIC build_info.cpp diagnostics.cpp)
 add_library(KnetSentry::Core ALIAS knetsentry_core)
 
 target_compile_features(knetsentry_core PUBLIC cxx_std_23)
