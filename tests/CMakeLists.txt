@@ -10,6 +10,21 @@ add_test(NAME knetsentry_core_build_identity
     COMMAND knetsentry_core_smoke)
 set_tests_properties(knetsentry_core_build_identity PROPERTIES LABELS "unit;smoke")
 
+# M1.6: Qt-independent structured diagnostics, bounded JSONL formatting,
+# redaction, sink failure and concurrent sequence verification. The Python
+# wrapper must parse actual compiled output; zero emitted records is failure.
+find_package(Threads REQUIRED)
+add_executable(knetsentry_diagnostics_probe diagnostics_smoke.cpp)
+target_link_libraries(knetsentry_diagnostics_probe PRIVATE
+    KnetSentry::Core Threads::Threads)
+knetsentry_apply_project_options(knetsentry_diagnostics_probe)
+add_test(NAME knetsentry_structured_diagnostics
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/scripts/verify_m16_diagnostics.py"
+        --probe "$<TARGET_FILE:knetsentry_diagnostics_probe>")
+set_tests_properties(knetsentry_structured_diagnostics PROPERTIES
+    LABELS "security;unit;privacy;regression" TIMEOUT 30)
+
 if(KNETSENTRY_BUILD_DESKTOP)
     add_test(NAME knetsentry_desktop_version
         COMMAND $<TARGET_FILE:knetsentry> --version)
@@ -55,6 +70,17 @@ if(KNETSENTRY_BUILD_DESKTOP)
             LABELS "desktop;qml;visual;regression"
             ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
             TIMEOUT 30)
+    endif()
+    # M1.6: prove the real Qt application publishes the expected fixed-code
+    # GUI lifecycle diagnostic records. The sanitizer QML startup test already
+    # covers this path; do not introduce another unqualified LSan exception.
+    if(NOT KNETSENTRY_ENABLE_SANITIZERS)
+        add_test(NAME knetsentry_desktop_diagnostic_lifecycle
+            COMMAND "${Python3_EXECUTABLE}"
+                "${PROJECT_SOURCE_DIR}/scripts/verify_m16_diagnostics.py"
+                --desktop-binary "$<TARGET_FILE:knetsentry>")
+        set_tests_properties(knetsentry_desktop_diagnostic_lifecycle PROPERTIES
+            LABELS "desktop;qml;privacy;security;regression" TIMEOUT 40)
     endif()
     # The two observed third-party leak stacks are not KnetSentry leaks.
     # Scope LSan suppressions to this specific full-QML smoke test only;

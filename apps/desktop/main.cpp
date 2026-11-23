@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Chris Sutton
 // SPDX-License-Identifier: MIT
 #include "knetsentry/core/build_info.hpp"
+#include "knetsentry/core/diagnostics.hpp"
 
 #include <QCommandLineOption>
 #include <QCommandLineParser>
@@ -61,6 +62,21 @@ int main(int argc, char *argv[]) {
     QGuiApplication::setDesktopFileName(
         QStringLiteral("io.github.spilledmilkfactory.KnetSentry"));
 
+    // Fixed-code structured diagnostics. Never pass QML errors, CLI strings,
+    // credentials or framework messages to this privacy-safe publisher.
+    knetsentry::core::DiagnosticLogger diagnostics(std::clog);
+    auto publish = [&diagnostics](knetsentry::core::DiagnosticLevel level,
+                                  knetsentry::core::DiagnosticEvent event,
+                                  knetsentry::core::DiagnosticOutcome outcome) {
+        if (!diagnostics.write({level, knetsentry::core::DiagnosticComponent::Desktop,
+                                event, outcome})) {
+            std::cerr << "KnetSentry: diagnostic sink unavailable.\n";
+        }
+    };
+    publish(knetsentry::core::DiagnosticLevel::Info,
+            knetsentry::core::DiagnosticEvent::GuiStarting,
+            knetsentry::core::DiagnosticOutcome::Started);
+
     QCommandLineParser parser;
     configure_parser(parser);
     const QCommandLineOption qml_smoke_test(
@@ -82,14 +98,23 @@ int main(int argc, char *argv[]) {
     QQmlApplicationEngine engine;
     engine.loadFromModule("io.github.spilledmilkfactory.KnetSentry", "Main");
     if (engine.rootObjects().size() != 1) {
+        publish(knetsentry::core::DiagnosticLevel::Error,
+                knetsentry::core::DiagnosticEvent::GuiLoadRejected,
+                knetsentry::core::DiagnosticOutcome::Failure);
         std::cerr << "KnetSentry: failed to instantiate the QML root window.\n";
         return 1;
     }
     const auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
     if (window == nullptr || window->objectName() != QStringLiteral("knetSentryMainWindow")) {
+        publish(knetsentry::core::DiagnosticLevel::Error,
+                knetsentry::core::DiagnosticEvent::GuiLoadRejected,
+                knetsentry::core::DiagnosticOutcome::Rejected);
         std::cerr << "KnetSentry: unexpected QML root; Kirigami startup not qualified.\n";
         return 1;
     }
+    publish(knetsentry::core::DiagnosticLevel::Info,
+            knetsentry::core::DiagnosticEvent::GuiReady,
+            knetsentry::core::DiagnosticOutcome::Success);
     if (parser.isSet(qml_smoke_test)) {
         std::cout << "KnetSentry M1.3 Kirigami QML smoke: PASS (not an operational SIEM)\n";
         return 0;
