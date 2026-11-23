@@ -135,6 +135,23 @@ recorded in the [component catalog](../architecture/COMPONENT_CATALOG.md)
 and [architecture traceability](../architecture/ARCHITECTURE_TRACEABILITY.md).
 These are design boundaries only; isolation effectiveness remains unverified.
 
+### Administrator-selected security-evidence storage
+
+The [raw-first storage contract](../architecture/STORAGE_PLACEMENT_CONTRACT.md)
+allows a separate mounted drive, but requires manager-authorized folder and
+mount verification, service-scoped access, explicit failure status, evidence
+retention/holds and no surprise fallback onto the system disk. Full-packet
+payload retention remains separately controlled and off by default.
+
+## 2B. Performance cannot override security or observability
+
+The [M0.5 performance contract](../development/PERFORMANCE_REQUIREMENTS.md)
+requires bounded queues, attributed source loss, honest sensor coverage,
+retention protection and tested durability behavior. Throughput optimizations
+cannot bypass access controls, weaken authorized network scope, silently
+prune protected evidence, or label partial coverage as complete. Runtime
+qualification remains future work; no M0.5 threshold is currently verified.
+
 ## 3. Response safety
 
 Detection is not authorization to intervene. Active response is disabled by

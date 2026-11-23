@@ -147,7 +147,19 @@ planned independent check in [security traceability](ARCHITECTURE_TRACEABILITY.m
 `AttributionConfidence`, `CoverageState`, `EvidenceReference`, `SchemaVersion`,
 `ProcessingDisposition`. Unknown or absent values are represented explicitly,
 not filled in with fabricated defaults. Binary parser and network limits are
-set by M3–M6 and workload budgets by M0.5.
+set by M3–M6 and initial engineering workload budgets by
+[M0.5 requirements](../development/PERFORMANCE_REQUIREMENTS.md). These
+targets are unmeasured until M14 qualification.
+
+### Storage placement and raw-first durability
+
+The [administrator-selectable storage contract](STORAGE_PLACEMENT_CONTRACT.md)
+requires permitted original event records to be durably written to a configured
+local volume **before** normalization and indexed storage. The raw store and
+SQLite index store can reside on separate mounted local drives. The GUI only
+proposes a folder; the manager alone authorizes its storage configuration.
+On a missing/replaced drive, no writing into the vacated mount path on the OS
+filesystem is allowed. A raw-durable event is not automatically indexed.
 
 ## 5. Dependencies, storage and interface governance
 
