@@ -90,6 +90,17 @@ need("No devices, alerts, detections, or incidents are simulated." in qml["Secti
 need("readonly property bool animateStatusChanges: false" in qml["DesignTokens.qml"],
      "animated severity/status changes must remain disabled")
 
+# Qt QML value types are module-scoped: `color` comes from QtQuick, not
+# QtQml. The original M1.5 source passed the static contrast checks but
+# failed to instantiate DesignTokens.qml in *every* desktop configuration.
+# Catch that exact regression even when this verifier runs without Qt.
+need(bool(re.search(r"^import[ \t]+QtQuick(?:[ \t]|$)",
+                    qml["DesignTokens.qml"], re.MULTILINE)),
+     "DesignTokens.qml: typed 'color' properties require an import QtQuick")
+need(len(re.findall(r"^\s*readonly property color\s+\w+\s*:",
+                    qml["DesignTokens.qml"], re.MULTILINE)) == 6,
+     "DesignTokens.qml: six semantic color properties must stay strongly typed")
+
 tokens = qml["DesignTokens.qml"]
 hexes = dict(re.findall(r'readonly property color\s+(\w+):\s*"(#[0-9A-Fa-f]{6})"', tokens))
 expected = ("criticalBackground", "highBackground", "mediumBackground",

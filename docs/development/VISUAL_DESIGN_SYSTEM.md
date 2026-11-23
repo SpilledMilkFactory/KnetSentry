@@ -110,6 +110,24 @@ status animation** (`animateStatusChanges: false`), so there is currently no
 in-app reduced-motion toggle to test or persist. Future animation must include
 explicit opt-out/system-preference handling and a testable static fallback.
 
+## M1.5 QML color-type import correction
+
+Qt Quick supplies the QML `color` value type used by the six strongly typed
+severity-token properties in `DesignTokens.qml`. A file importing only
+`QtQml` may pass C++ compilation and static color-contrast inspection while
+failing at **QML instantiation** with `color is not a type`. The token module
+therefore imports `QtQuick` explicitly (in addition to `QtQml`).
+
+The offline `verify_m15_visual.py` now requires that import and all six typed
+properties. Removing `import QtQuick` is a supported negative test: the offline
+verifier must fail even without access to a QML runtime. The real desktop
+`knetsentry_kirigami_qml_startup`, `knetsentry_primary_navigation`, and
+`knetsentry_visual_system` tests remain mandatory for supported full builds.
+
+A successful static verification is **not** evidence of a running GUI. The
+corrected Qt/Kirigami desktop must be reconfigured, compiled, tested and
+manually inspected on Ubuntu 26.04 AMD64 before M1.5 is accepted.
+
 ## Ubuntu 26.04 acceptance
 
 Run the full Qt desktop configurations, not only the `linux-core-only` build:

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Chris Sutton
 // SPDX-License-Identifier: MIT
 import QtQml
+import QtQuick
 
 // M1.5: presentation-only token catalogue. No telemetry, credentials or IPC.
 // Platform-managed text/surface colors come from Kirigami.Theme, not here.
