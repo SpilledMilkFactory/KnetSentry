@@ -15,8 +15,9 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M0.2 (requirements only):** This repository currently
-> contains the product definition and a proposed network-security contract.
+> **Development status — M0.3 (design documents only):** This repository
+> contains the product definition, network-security contract, and initial
+> threat model with prospective mitigations and verification ownership.
 > It does **not** yet include a
 > functional SIEM, network collector, desktop application, detection engine, or
 > production security controls. The capabilities below are *planned*, not
@@ -78,6 +79,9 @@ under the approved network scope.
 | [Network scope requirements](docs/security/NETWORK_SCOPE_REQUIREMENTS.md) | Distinct monitoring, transport, and external-intelligence security boundaries |
 | [Network communication matrix](docs/architecture/NETWORK_COMMUNICATION_MATRIX.md) | Intended permitted, observed, and prohibited flows |
 | [Network verification plan](docs/security/NETWORK_SCOPE_VERIFICATION_PLAN.md) | Future M3 and integration test specifications |
+| [Initial threat model](docs/security/THREAT_MODEL.md) | Protected assets, adversaries, trust boundaries, attack scenarios, limits |
+| [Threat register](docs/security/THREAT_REGISTER.md) | Qualitative risk screening, proposed controls, future owners |
+| [Threat verification matrix](docs/security/THREAT_VERIFICATION_MATRIX.md) | Planned tests and evidence needed for future security claims |
 | [Release objectives](docs/development/RELEASE_OBJECTIVES.md) | v1.0.0 release bar, milestone groups, and open decisions |
 
 The GitHub roadmap covers M0–M15 for v1.0.0, followed by a separate optional
@@ -98,7 +102,7 @@ should not begin until its relevant trust and network boundaries are defined.
 ## License
 
 The repository currently uses the **MIT License**, as recorded in [LICENSE](LICENSE).
-This existing license is retained for M0.1. M0.6 will document the final
+This existing license has been preserved through M0.3. M0.6 will document the final
 component-level licensing and SPDX/REUSE policy, including KDE requirements for
 source code, documentation, CMake files, and third-party assets. Changes to
 license terms will be explicit and reviewed, not silently assumed.
