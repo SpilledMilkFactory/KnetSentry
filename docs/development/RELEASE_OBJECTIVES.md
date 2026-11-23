@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2026 Chris Sutton
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
 # KnetSentry — Release Objectives and Acceptance Strategy
@@ -123,10 +123,15 @@ supports KDE-style integration and GNOME compatibility, but **does not confer
 official KDE status**. Incubation, KDE Invent infrastructure, localization,
 and KDE Review are separate M16 objectives.
 
-The starter repository currently uses **MIT**. M0.6 will decide and document
-component-level licensing, SPDX/REUSE practice, KDE documentation and CMake
-license requirements, and third-party redistribution. M0.1 does not silently
-change the existing license or create a final GPL commitment.
+M0.6 adopts [MIT for KnetSentry-authored application code](LICENSING_POLICY.md)
+while retaining the unchanged root MIT license. Revised Markdown documents use
+CC-BY-SA-4.0; future CMake files use BSD-2-Clause. Per-file SPDX identifiers,
+`LICENSES/` texts and REUSE metadata make those decisions explicit; earlier MIT
+documentation grants are not revoked. [Dependency approval](DEPENDENCY_APPROVAL_POLICY.md)
+and [distribution clearance](THIRD_PARTY_NOTICE_POLICY.md) remain mandatory
+for each actual version and released artifact; no external Qt module, feed or
+model is implicitly approved. [KDE integration criteria](KDE_COMPATIBILITY_POLICY.md)
+remain separate from official KDE adoption.
 
 ## 8. Decisions to be closed by later issues
 
@@ -151,7 +156,7 @@ change the existing license or create a final GPL commitment.
   to their owning issues.
 - **M0.5 (defined):** Test workloads, resource budgets, latency and capacity
   thresholds; implementation, measurements and final baselines remain M14 work.
-- **M0.6:** Source/documentation/build licensing and dependency review.
+- **M0.6 (defined):** Source/documentation/build licensing and dependency approval policy; actual package and redistribution audits remain future work.
 - **M0.7:** Mandatory build, test, and security qualification gates.
 - **M13:** Security sign-off supported by evidence.
 - **M14:** Performance and resilience qualification.

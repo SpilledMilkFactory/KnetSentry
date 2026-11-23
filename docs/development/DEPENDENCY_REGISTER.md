@@ -1,0 +1,26 @@
+<!--
+SPDX-FileCopyrightText: 2026 Chris Sutton
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
+# KnetSentry — Initial Dependency Candidate Register
+
+**Status:** Architecture-stage inventory; **zero third-party implementations or runtime bundles have been approved** by this register. These are candidates, not exact installed versions, confirmed apt packages, approved license grants or a dependency lockfile.
+
+| ID | Candidate / class | Planned use | License / constraint to verify | Future owner | Decision |
+|---|---|---|---|---|---|
+| `DEP-001` | Qt 6 Core / GUI / QML / Quick / Quick Controls | Desktop presentation | Exact module license and LGPLv3 obligations; do not generalize to all Qt modules | M1.3 | `CANDIDATE` |
+| `DEP-002` | KDE Frameworks 6 (selected modules) | Kirigami-compatible desktop | Module-specific SPDX/license and dependencies | M1.3 | `CANDIDATE` |
+| `DEP-003` | Kirigami / Kirigami Addons (if needed) | Qt Quick UI patterns | Exact KDE module, packaging and LGPL/other license | M1.3 | `CANDIDATE` |
+| `DEP-004` | Extra CMake Modules (ECM) | KDE-oriented build configuration | Tooling license, package origin; custom CMake files BSD-2-Clause | M1.1 | `CANDIDATE` |
+| `DEP-005` | TLS / cryptography library (e.g. OpenSSL) | Authentication and encrypted agent transport | Exact version, license, provider and FIPS claims if made | M4.2 | `CANDIDATE` |
+| `DEP-006` | SQLite | Indexed event and metadata store | Source provenance, public-domain status/attestation and bundled components | M6.4 | `CANDIDATE` |
+| `DEP-007` | Linux capture stack (e.g. libpcap) | Privileged capture broker / passive sensor | Licensing, privileges, parser security and deployment | M5.10 | `CANDIDATE` |
+| `DEP-008` | systemd / libsystemd | Journal collectors and service control | Module license, Ubuntu packages, privilege model | M2.7/M5.2 | `CANDIDATE` |
+| `DEP-009` | Optional network analytics (Zeek / Suricata) | Potential network telemetry adapters | Separate runtime/redistribution and copyleft implications | M9.5 | `CANDIDATE` |
+| `DEP-010` | Sigma specifications / rule collections | Detection format and optional imported rules | Specification and rule-set licenses are distinct; rule corpus may restrict use | M10.6 | `CANDIDATE` |
+| `DEP-011` | ATT&CK, CVE and CISA data feeds | Opt-in intelligence synchronization | Provider terms, bulk access, attribution, redistribution and API conditions | M10.9 | `CANDIDATE` |
+| `DEP-012` | Offline AI inference engine and model weights | Optional local investigation assistance | Runtime code vs model weights terms, source provenance and privacy | M12.3 | `CANDIDATE` |
+| `DEP-013` | Qt Graphs / other Qt GPL-only add-ons | Optional rich visualizations | **GPL-only open-source option may conflict with MIT-app distribution goal**; not an approved default | M8.2 | `REVIEW_REQUIRED` |
+
+The `CANDIDATE` label means **not approved**. This is not a record of installed artifacts; it is a planned review queue. Future entries must include a separate version/source digest, exact licenses and artifact approval evidence. Relevant security risk: `TH-031` / `TB-10` / `TV-24` in the [threat model](../security/THREAT_MODEL.md) and [verification matrix](../security/THREAT_VERIFICATION_MATRIX.md).

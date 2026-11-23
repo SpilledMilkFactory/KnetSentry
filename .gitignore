@@ -1,2 +1,8 @@
+# SPDX-FileCopyrightText: 2026 Chris Sutton
+# SPDX-License-Identifier: MIT
 /build/
 /build-*/
+
+# Local Python verifier artifacts
+__pycache__/
+*.py[cod]

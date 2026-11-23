@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2026 Chris Sutton
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
 # KnetSentry — Product Vision
@@ -169,8 +169,10 @@ criteria and M14 will validate them.
   No socket, capture helper, or security control is implemented by these documents.
 - **M0.5 (defined):** Initial engineering resource budgets, workload profiles,
   testable benchmark thresholds, and recovery criteria; actual results pending M14.
-- **M0.6:** Final component-level licensing, third-party obligations, and
-  SPDX/REUSE implementation. The existing repository license is currently MIT.
+- **M0.6 (defined):** [MIT application licensing and REUSE policy](docs/development/LICENSING_POLICY.md),
+  [dependency approval](docs/development/DEPENDENCY_APPROVAL_POLICY.md), and
+  [KDE/GNOME policy](docs/development/KDE_COMPATIBILITY_POLICY.md).
+  Third-party artifacts remain unapproved until version- and distribution-specific review.
 - **M0.7–M0.8:** Quality gates, governance, and disclosure procedures.
 
 The roadmap is a plan. Features are not represented as implemented until their

@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2026 Chris Sutton
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
 # KnetSentry
@@ -114,8 +114,15 @@ should not begin until its relevant trust and network boundaries are defined.
 
 ## License
 
-The repository currently uses the **MIT License**, as recorded in [LICENSE](LICENSE).
-This existing license has been preserved through M0.5. M0.6 will document the final
-component-level licensing and SPDX/REUSE policy, including KDE requirements for
-source code, documentation, CMake files, and third-party assets. Changes to
-license terms will be explicit and reviewed, not silently assumed.
+KnetSentry-authored application code and tooling use **MIT**; the original
+[root MIT license](LICENSE) is unchanged. Revised project documentation uses
+**CC-BY-SA-4.0** under per-file SPDX headers. Future custom CMake code will
+use **BSD-2-Clause**. Earlier MIT grants to documents remain valid.
+
+See the [licensing policy](docs/development/LICENSING_POLICY.md),
+[dependency approval process](docs/development/DEPENDENCY_APPROVAL_POLICY.md),
+[initial candidate register](docs/development/DEPENDENCY_REGISTER.md),
+[third-party notice policy](docs/development/THIRD_PARTY_NOTICE_POLICY.md), and
+[KDE compatibility policy](docs/development/KDE_COMPATIBILITY_POLICY.md).
+M0.6 records policies; it does **not** approve Qt modules, bundled libraries,
+third-party detection corpora, AI weights, or any release distribution.
