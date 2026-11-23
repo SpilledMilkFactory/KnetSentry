@@ -148,3 +148,12 @@ only that this fixture exercises an operational QML startup while known
 external leak stacks are excluded; it does not prove the libraries leak-free.
 
 References: [LeakSanitizer suppressions](https://clang.llvm.org/docs/LeakSanitizer.html).
+
+## M1.4 navigation diagnostic follow-up
+
+The initial M1.4 manual GNOME run showed a PageRow warning for created
+`SectionPage` instances. See [GUI_NAVIGATION.md](GUI_NAVIGATION.md) for
+explicit-object ownership, the real runtime warning regression, rootless
+per-user development desktop registration and the separate upstream
+Kirigami DrawerHandle warning. Runtime GUI qualification still requires the
+Ubuntu 26.04 Qt/KF6 configuration; core-only checks do not qualify it.

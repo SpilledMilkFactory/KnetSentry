@@ -57,8 +57,12 @@ require("Kirigami.ApplicationWindow" in main and "Kirigami.GlobalDrawer" in main
         "expected Kirigami window/drawer")
 require('pageStack.initialPage: SectionPage { sectionId: "dashboard" }' in main,
         "initial dashboard must be an actual SectionPage")
-require('pageStack.replace(sectionPageComponent, { "sectionId": sectionId })' in main,
-        "top-level navigation must replace the current page")
+require('sectionPageComponent.createObject(null, { "sectionId": sectionId })' in main,
+        "navigation must instantiate the section page before PageRow adoption")
+require('pageStack.replace(nextPage)' in main and 'nextPage.destroy()' in main,
+        "top-level navigation must replace with the pre-created page and clean up failures")
+require('pageStack.replace(sectionPageComponent,' not in main,
+        "do not reintroduce upstream PageRow Component-instantiation diagnostics")
 require("pageStack.push(" not in main, "top-level navigation must not accumulate pages")
 require("isValidSection(sectionId)" in main and "onNavigationRequestChanged" in main,
         "navigation authorization/verification entry point missing")
@@ -83,6 +87,8 @@ require("Not operational" in page and "No devices, alerts, detections, or incide
         "all destinations must clearly state they are placeholders")
 require("required property string sectionId" in page,
         "invalid/missing section identifiers must not silently be accepted")
+require('for (int pass = 0; pass < 4; ++pass)' in cpp,
+        "runtime navigation must cover repeated page replacement")
 require("--self-test-navigation" not in main and "self-test-navigation" in cpp,
         "navigation runtime test must be a C++ CLI option, not a QML shell command")
 for token in ("navigationRequest", "currentPageSection", "navigationDepth",

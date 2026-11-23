@@ -50,8 +50,17 @@ Kirigami.ApplicationWindow {
         }
         // These are TOP-LEVEL destinations, not drill-down history. Replacing
         // the current page keeps the navigation stack bounded at depth one.
-        const page = pageStack.replace(sectionPageComponent, { "sectionId": sectionId })
-        if (!page) {
+        // Kirigami 6.24 can warn about temporarily unparented graphics items
+        // when PageRow itself instantiates a Component. Construct the Page
+        // explicitly and let PageRow adopt the actual object. No warning
+        // filters or global QML logging overrides are necessary.
+        const nextPage = sectionPageComponent.createObject(null, { "sectionId": sectionId })
+        if (!nextPage) {
+            return false
+        }
+        const insertedPage = pageStack.replace(nextPage)
+        if (insertedPage !== nextPage) {
+            nextPage.destroy()
             return false
         }
         activeSection = sectionId

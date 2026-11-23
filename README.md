@@ -25,6 +25,9 @@ offline AI assistance.
 > The Qt QML startup smoke test validates actual Kirigami imports; it is not a
 > security or production qualification.
 
+The M1.4 follow-up includes a page-lifecycle warning regression test and an
+optional, reversible [GNOME development desktop-entry helper](docs/development/GUI_NAVIGATION.md#desktop-portal-registration-on-gnome).
+
 ## Intended platform and architecture
 
 - **Initial target:** Ubuntu 26.04 LTS on AMD64/x86-64, with support for both

@@ -97,6 +97,63 @@ KDE Plasma compatibility remains a project target but is not claimed tested
 by a GNOME-only acceptance run. Full QML accessibility/navigation automation
 and expanded visual testing are assigned to future GUI issues.
 
+## M1.4 follow-up: page ownership and desktop diagnostics
+
+The M1.4 GNOME manual run reported repeated `QML SectionPage: Created graphical
+object was not placed in the graphics scene` messages after navigation.
+This is consistent with KDE issue 501674: Kirigami `PageRow` can emit that
+warning when it instantiates a `Component` directly. KnetSentry now calls
+`sectionPageComponent.createObject(null, { "sectionId": sectionId })` and
+passes the resulting `Kirigami.Page` object to `pageStack.replace(nextPage)`.
+PageRow adopts the object. If the replacement fails, the unattached object
+is destroyed rather than leaked; the active section is unchanged. This
+preserves top-level stack depth one and rejects unknown route identifiers.
+
+A second, **non-sanitizer** CTest (`knetsentry_navigation_qml_diagnostics`)
+runs 28 actual route transitions and rejects the specific unplaced-SectionPage
+warning. The full ASan/UBSan navigation test continues to run separately
+with the existing narrow third-party LSan suppressions (no new suppressions).
+To inspect it independently:
+
+```bash
+python3 scripts/check_m14_runtime_diagnostics.py --build-dir build/presets/linux-release
+```
+
+### Desktop-portal registration on GNOME
+
+The desktop-portal error `App info not found for
+'io.github.spilledmilkfactory.KnetSentry'` indicates that the unpackaged
+development executable lacks a discoverable matching `.desktop` entry.
+`setDesktopFileName()` alone does not install or register the desktop entry.
+A separate, explicit per-user helper can register your current binary:
+
+```bash
+python3 scripts/manage_dev_desktop_entry.py --install \
+    --binary build/presets/linux-release/apps/desktop/knetsentry
+python3 scripts/manage_dev_desktop_entry.py --check
+# Re-launch ./build/presets/linux-release/apps/desktop/knetsentry
+python3 scripts/manage_dev_desktop_entry.py --uninstall  # when finished
+```
+
+The helper does not use root, run during application startup, overwrite
+an unmanaged desktop entry, or change system-wide registration. Its effects
+are confined to the current user's XDG applications directory. Desktop-
+portal behavior depends on the user session and installed portal services;
+retest in your actual GNOME session. A per-user developer registration is
+**not** a substitute for future package-level desktop integration.
+
+### Kirigami DrawerHandle binding loop
+
+`DrawerHandle.qml: ... Binding loop ... bottomMargin` originates inside the
+installed Kirigami QML module (6.24.0 in the reported run), not in
+`SectionPage.qml`. This follow-up does not modify, vendor, or suppress
+upstream Kirigami QML. If it remains, preserve the warning and reassess
+against an updated Kirigami package or report a minimal reproducer upstream.
+Disabling the drawer handle would remove an existing keyboard/mouse
+navigation affordance and is not an acceptable untested workaround.
+The diagnostics helper reports this message separately; use
+`--check-all-warnings` for an intentionally strict external-dependency check.
+
 ## Security, licensing, and limitations
 
 This issue changes only the unprivileged Qt presentation and its test harness.

@@ -96,18 +96,22 @@ int main(int argc, char *argv[]) {
             QStringLiteral("events"), QStringLiteral("detections"),
             QStringLiteral("alerts"), QStringLiteral("investigations"),
             QStringLiteral("settings")};
-        for (const QString &section : sections) {
-            if (!engine.rootObjects().constFirst()->setProperty("navigationRequest", section)) {
-                std::cerr << "KnetSentry: navigation request property is unavailable.\n";
-                return 1;
-            }
-            QCoreApplication::processEvents();
-            const QObject *root = engine.rootObjects().constFirst();
-            if (root->property("activeSection").toString() != section ||
-                root->property("currentPageSection").toString() != section ||
-                root->property("navigationDepth").toInt() != 1) {
-                std::cerr << "KnetSentry: failed navigation or unbounded page stack.\n";
-                return 1;
+        // Exercise repeated replacement, not just one pass, to expose
+        // stale-page ownership and transient scene-attachment failures.
+        for (int pass = 0; pass < 4; ++pass) {
+            for (const QString &section : sections) {
+                if (!engine.rootObjects().constFirst()->setProperty("navigationRequest", section)) {
+                    std::cerr << "KnetSentry: navigation request property is unavailable.\n";
+                    return 1;
+                }
+                QCoreApplication::processEvents();
+                const QObject *root = engine.rootObjects().constFirst();
+                if (root->property("activeSection").toString() != section ||
+                    root->property("currentPageSection").toString() != section ||
+                    root->property("navigationDepth").toInt() != 1) {
+                    std::cerr << "KnetSentry: failed navigation or unbounded page stack.\n";
+                    return 1;
+                }
             }
         }
         // Invalid destinations must never change the displayed page.
