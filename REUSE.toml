@@ -8,3 +8,9 @@ path = ["LICENSE"]
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Chris Sutton"
 SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = ["CMakePresets.json"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Chris Sutton"
+SPDX-License-Identifier = "MIT"

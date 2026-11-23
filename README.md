@@ -15,14 +15,13 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M0.8 (design documents, governance templates, and offline verifiers only):** This repository
-> contains the product and network-security contracts, threat model, modular
-> architecture, performance/reliability targets, dependency policy, and
-> planned secure development/verification gates.
-> It does **not** yet include a
-> functional SIEM, network collector, desktop application, detection engine, or
-> production security controls. The capabilities below are *planned*, not
-> implemented or security-certified.
+> **Development status — M1.1 (initial C++23/CMake foundation):** This repository
+> now includes a Qt-independent core library, a minimal Qt-linked desktop
+> bootstrap, out-of-tree CMake presets, initial CTest smoke tests, and the
+> accepted M0 security/architecture documentation. The bootstrap has **no
+> Qt Quick/Kirigami window yet** (M1.3) and is **not** a functional SIEM, network
+> sensor, management daemon, detection engine, or production security control.
+> Those capabilities remain planned and unverified.
 
 ## Intended platform and architecture
 
@@ -70,10 +69,25 @@ segments rather than claim complete visibility. Encrypted payloads are not
 silently decrypted; local observed endpoints can be cataloged without an agent
 under the approved network scope.
 
+## Building the M1.1 foundation
+
+On Ubuntu 26.04 AMD64, install the [build prerequisites](docs/development/BUILD_FOUNDATION.md), then run:
+
+```bash
+cmake --preset linux-release
+cmake --build --preset linux-release --parallel
+ctest --preset linux-release --output-on-failure
+```
+
+This currently builds a console-only Qt bootstrap; the full Kirigami window
+arrives in M1.3. A `linux-core-only` preset is available for Qt-free build
+smoke tests but does **not** qualify the default desktop configuration.
+
 ## Product documentation
 
 | Document | Purpose |
 | --- | --- |
+| [M1.1 build foundation](docs/development/BUILD_FOUNDATION.md) | CMake presets, dependency setup, smoke tests, target ownership |
 | [Product vision](PRODUCT_VISION.md) | Purpose, audiences, benefits, success criteria, and non-goals |
 | [Product scope](docs/architecture/PRODUCT_SCOPE.md) | Supported deployments, boundaries, capabilities, and exclusions |
 | [Modular system architecture](docs/architecture/SYSTEM_ARCHITECTURE.md) | Process separation, data flows, privileges, and module dependencies |
