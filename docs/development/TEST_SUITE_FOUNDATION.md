@@ -17,7 +17,10 @@ remain unimplemented and must not be represented as passing security tests.
    exercise actual compiled C++23 code. The new boundary test confirms
    private text is never serialized, the maximum uint64 count stays intact,
    invalid event IDs fail without partial output, and logger sequences are
-   per instance. All checks execute in Release, not disabled `assert()` calls.
+   per instance. An intentionally unapproved diagnostic event is constructed
+   with `std::bit_cast` from an 8-bit representation to avoid analyzer warnings
+   about an out-of-range enum *cast*, while still testing logger rejection.
+   All checks execute in Release, not disabled `assert()` calls.
 2. **Qt Test model:** `knetsentry_qt_model_contract` runs a genuine
    `QAbstractListModel` using Qt Test's `QCOMPARE`, `QVERIFY`,
    `QSignalSpy`, and `QAbstractItemModelTester`. The production-owned
@@ -25,7 +28,9 @@ remain unimplemented and must not be represented as passing security tests.
    of the seven primary application section identifiers/titles. It is an
    initial model contract, not a network assets or security-event model;
    the existing QML drawer remains the navigation authority for M1.7.
-   Out-of-range role access and unauthorized edits must fail.
+   Out-of-range role access and unauthorized edits must fail. The one-column
+   assertion uses the public `QAbstractItemModel` virtual interface because
+   `QAbstractListModel::columnCount` is private in the supported Qt 6 headers.
 3. **Qt Test application:** `knetsentry_qt_application_lifecycle` launches
    the actual desktop executable using Qt's `QProcess` with display
    variables removed. `--version` and `--help` must work headlessly;
@@ -39,7 +44,10 @@ remain unimplemented and must not be represented as passing security tests.
    executes `verify_m17_suites.py --build-dir <build>` to inspect the
    *actual* CMakeCache and `ctest -N` output. It rejects zero tests,
    missing/extra tests, incomplete desktop qualification, missing
-   warnings-as-errors, and disabled release hardening. Qt Test must be
+   warnings-as-errors, and disabled release hardening. It also inspects
+   CTest JSON command discovery and requires actual executable files, so
+   a failed build cannot pass merely because test names are registered.
+   This remains discovery/build evidence, not proof that tests ran. Qt Test must be
    installed and found for all full-desktop configurations, with no
    silent fallback to core-only testing.
 
@@ -79,6 +87,11 @@ ctest --test-dir build/presets/linux-release --output-on-failure -L qt
 
 Repeat for `linux-debug`, `linux-sanitize`, `linux-clazy`,
 `linux-analysis`, `linux-core-only`, and `linux-sanitize-core-only`.
+After a successful build, the M1.7 verifier now rejects missing test binaries
+rather than accepting `ctest -N` names alone. A newly configured but not yet
+built tree may therefore report FAIL by design. It is important to build
+before running `verify_m17_suites.py --build-dir`.
+
 Each required preset must run successfully rather than being replaced with
 an unrelated preset's result. `ctest -N` is **discovery only** and cannot
 qualify a test that has never executed. The `noTestsAction: error` preset
@@ -108,3 +121,26 @@ count, outcomes, relevant sanitized logs, and any EXCEPTION/BLOCKED reasons
 following [`VERIFICATION_EVIDENCE.md`](VERIFICATION_EVIDENCE.md). `VG-27`
 traceability remains a documentation/evidence requirement, not a claim that
 public GitHub Actions exists; CI setup is planned for M1.8.
+
+## M1.7 Qt 6 and analyzer corrective follow-up
+
+The first M1.7 Ubuntu desktop builds failed in `section_catalog_qtest.cpp`:
+`model.columnCount()` was inaccessible because Qt 6's `QAbstractListModel`
+override is private and requires a parent argument. The model itself was not
+shown defective. Call `columnCount()` through the public `QAbstractItemModel`
+base interface; do **not** modify production model visibility or weaken
+compiler warnings to accommodate the test. Release, Debug, Clazy, sanitizer,
+and analysis must all compile the test normally.
+
+The analysis preset additionally warned on an intentionally out-of-range
+`static_cast<DiagnosticEvent>(255)` in the core negative-control test.
+Construct that test-only invalid representation with `std::bit_cast` from
+`std::uint8_t{255}`; retain the logger's rejection and no-partial-output checks.
+Neither first-party security checks nor analyzer configuration is relaxed.
+
+Finally, CTest registration alone was insufficient evidence of a completed
+build: `ctest -N` listed the two Qt tests after the compiler failed, even
+though their executables did not exist. The configured verification now
+requires every registered CTest command to resolve to an executable on disk;
+**that is still not evidence that the tests have passed**, which requires an
+actual `ctest --output-on-failure` run on the same revision.

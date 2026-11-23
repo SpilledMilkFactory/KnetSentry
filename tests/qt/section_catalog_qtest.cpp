@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #include "section_catalog_model.hpp"
 
+#include <QAbstractItemModel>
 #include <QAbstractItemModelTester>
 #include <QSignalSpy>
 #include <QTest>
@@ -26,7 +27,10 @@ void SectionCatalogQTest::readOnlyRolesAndOrdering() {
         "Dashboard", "Assets", "Events", "Detections", "Alerts",
         "Investigations", "Settings"};
     QCOMPARE(model.rowCount(), 7);
-    QCOMPARE(model.columnCount(), 1);
+    // QAbstractListModel's columnCount override is private in Qt 6.
+    // Exercise the public virtual interface through QAbstractItemModel.
+    const QAbstractItemModel& itemModel = model;
+    QCOMPARE(itemModel.columnCount(), 1);
     const auto roles = model.roleNames();
     QCOMPARE(roles.value(knetsentry::desktop::SectionCatalogModel::SectionIdRole), QByteArray("sectionId"));
     QCOMPARE(roles.value(knetsentry::desktop::SectionCatalogModel::SectionTitleRole), QByteArray("sectionTitle"));

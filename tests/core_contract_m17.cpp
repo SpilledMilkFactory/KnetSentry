@@ -3,6 +3,7 @@
 #include "knetsentry/core/build_info.hpp"
 #include "knetsentry/core/diagnostics.hpp"
 
+#include <bit>
 #include <cstdint>
 #include <iostream>
 #include <limits>
@@ -46,8 +47,14 @@ int main() {
         std::cerr << "Independent logger sequence contract failed\n";
         return 1;
     }
+    // Test an invalid wire-like enum representation without an out-of-range
+    // enum cast that clang's static analyzer flags before logger validation.
+    // DiagnosticEvent has an explicit uint8_t underlying type, so all 8-bit
+    // representations are valid values of the *type*, not all approved events.
+    static_assert(sizeof(DiagnosticEvent) == sizeof(std::uint8_t));
+    const auto unapprovedEvent = std::bit_cast<DiagnosticEvent>(std::uint8_t{255});
     if (logger.write({DiagnosticLevel::Info, DiagnosticComponent::Core,
-                      static_cast<DiagnosticEvent>(255), DiagnosticOutcome::Rejected})) {
+                      unapprovedEvent, DiagnosticOutcome::Rejected})) {
         std::cerr << "Unapproved enum value accepted\n";
         return 1;
     }

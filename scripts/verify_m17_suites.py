@@ -9,6 +9,8 @@ CMake cache and CTest discovery, rejecting zero/missing/incorrectly-scoped tests
 from __future__ import annotations
 
 import argparse
+import json
+import os
 import re
 import subprocess
 import sys
@@ -85,6 +87,17 @@ def source_contract() -> None:
             "unqualified QML subprocess test must not expand LSan scope")
     require("knetsentry_configuration_contract" in tests,
             "configured CTest inventory gate must be mandatory")
+    # M1.7 regression: QAbstractListModel::columnCount is private on Qt 6;
+    # call via QAbstractItemModel's public virtual interface instead.
+    require("model.columnCount()" not in qt_model_test,
+            "invalid Qt 6 QAbstractListModel::columnCount() direct call")
+    require("itemModel.columnCount()" in qt_model_test and
+            "const QAbstractItemModel& itemModel = model;" in qt_model_test,
+            "Qt model test must exercise the public abstract item-model interface")
+    core_test = (ROOT / "tests/core_contract_m17.cpp").read_text()
+    require("std::bit_cast<DiagnosticEvent>" in core_test and
+            "static_cast<DiagnosticEvent>(255)" not in core_test,
+            "invalid diagnostic event test must not trigger analyzer enum-cast warning")
 
 
 def configured_contract(path: Path) -> tuple[int, bool, bool]:
@@ -114,6 +127,28 @@ def configured_contract(path: Path) -> tuple[int, bool, bool]:
     require(set(names) == expected,
             "CTest inventory mismatch: missing=" + repr(sorted(expected - set(names))) +
             ", unexpected=" + repr(sorted(set(names) - expected)))
+
+    # ctest -N can list registered tests even when compilation FAILED and
+    # their binaries were never created. Inspect CTest's machine-readable
+    # command discovery and require every registered executable to exist.
+    discovery = subprocess.run(
+        ["ctest", "--test-dir", str(path), "--show-only=json-v1"],
+        capture_output=True, text=True, check=False, timeout=15)
+    require(discovery.returncode == 0, "CTest JSON discovery failed")
+    try:
+        discovered = json.loads(discovery.stdout)["tests"]
+    except (ValueError, KeyError, TypeError) as error:
+        raise ValueError(f"invalid CTest JSON inventory: {error}") from error
+    require(len(discovered) == len(names), "CTest JSON and text inventories disagree")
+    require({test.get("name") for test in discovered} == expected,
+            "CTest JSON names do not match required inventory")
+    for test in discovered:
+        command = test.get("command")
+        require(isinstance(command, list) and command and isinstance(command[0], str),
+                f"CTest executable missing (build incomplete): {test.get('name')}")
+        executable = Path(command[0])
+        require(executable.is_file() and os.access(executable, os.X_OK),
+                f"CTest executable not built or not executable: {test.get('name')}")
     return len(names), desktop, sanitize
 
 
@@ -127,7 +162,8 @@ def main() -> int:
             count, desktop, sanitized = configured_contract(args.build_dir.resolve())
             print("M1.7 test-suite verification: PASS")
             print(f"  Real CTest inventory: {count} required tests; desktop={desktop}; sanitized={sanitized}")
-            print("  No missing, skipped, duplicated, or unqualified test registration")
+            print("  All required CTest commands resolve to built executables")
+            print("  Discovery/build evidence only: individual tests must still pass CTest")
         else:
             print("M1.7 test-suite verification: PASS (source-only)")
             print("  C++ unit, Qt Test model/application, QML and configuration gates defined")
