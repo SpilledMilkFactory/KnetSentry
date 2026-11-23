@@ -15,6 +15,10 @@ option(KNETSENTRY_BUILD_DESKTOP "Build the Qt/Kirigami desktop bootstrap" ON)
 
 include(CTest)
 
+# M1.2: enable checks only for our own targets; never change third-party
+# Qt/KDE compilation flags or instrument their installed binaries.
+include(cmake/KnetSentryBuildOptions.cmake)
+
 # The core never depends on Qt, KDE, a GUI session, or privileged networking.
 add_subdirectory(src/core)
 
@@ -25,6 +29,29 @@ if(KNETSENTRY_BUILD_DESKTOP)
     list(PREPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
     include(ECMFindQmlModule)
     find_package(Qt6 REQUIRED NO_MODULE COMPONENTS Core Gui Qml Quick QuickControls2)
+
+    # The Clazy compiler wrapper uses Clang rather than the system GCC.
+    # Ubuntu's Kirigami CMake package requires compiler-compatible OpenMP;
+    # GCC's libgomp does not automatically satisfy Clang's libomp discovery.
+    # Diagnose this before FindKF6 presents the misleading "Kirigami missing" error.
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
+       CMAKE_CXX_COMPILER MATCHES "(^|/)clazy(-[0-9]+)?$")
+        find_package(OpenMP QUIET COMPONENTS CXX)
+        if(NOT OpenMP_CXX_FOUND)
+            string(REGEX MATCH "^[0-9]+" _knetsentry_clang_major
+                "${CMAKE_CXX_COMPILER_VERSION}")
+            message(FATAL_ERROR
+                "Clazy uses Clang ${CMAKE_CXX_COMPILER_VERSION}, but that toolchain "
+                "cannot find OpenMP. This prevents Ubuntu's installed Kirigami "
+                "package from being resolved; Kirigami itself is not necessarily "
+                "missing. On Ubuntu 26.04 install the matching LLVM OpenMP "
+                "development runtime (for Clang ${_knetsentry_clang_major}: "
+                "sudo apt install libomp-${_knetsentry_clang_major}-dev), "
+                "then reconfigure with cmake --preset linux-clazy --fresh. "
+                "Do not override or disable Kirigami dependency validation.")
+        endif()
+    endif()
+
     find_package(KF6 REQUIRED COMPONENTS Kirigami)
     ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
     add_subdirectory(apps/desktop)
