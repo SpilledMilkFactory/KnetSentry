@@ -5,13 +5,15 @@ import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
-// M1.4: seven intentionally non-operational top-level destinations.
-// Future milestones will replace this shell content with authorized IPC data.
+// M1.5: presentation-only visual language. No device, event or alert models.
 Kirigami.Page {
     id: page
     objectName: "knetSentrySectionPage"
     required property string sectionId
     title: sectionTitle
+    DesignTokens { id: tokens }
+    readonly property string visualSystemVersion: tokens.version
+    readonly property bool compactLayout: width < tokens.compactBreakpoint
 
     readonly property string sectionTitle: {
         switch (sectionId) {
@@ -47,47 +49,123 @@ Kirigami.Page {
         }
     }
 
-    ColumnLayout {
+    // Scroll rather than truncate or overlap at smaller GNOME/KDE window sizes.
+    Flickable {
+        id: scroller
         anchors.fill: parent
-        anchors.margins: Kirigami.Units.largeSpacing
-        spacing: Kirigami.Units.largeSpacing
+        contentWidth: width
+        contentHeight: content.implicitHeight + tokens.spaceL * 2
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        Controls.ScrollBar.vertical: Controls.ScrollBar {}
 
-        Controls.Label {
-            text: page.sectionTitle
-            font.pixelSize: 28
-            font.bold: true
-            Layout.fillWidth: true
-        }
+        ColumnLayout {
+            id: content
+            x: tokens.spaceL
+            y: tokens.spaceL
+            width: Math.max(0, scroller.width - tokens.spaceL * 2)
+            spacing: tokens.spaceM
 
-        Controls.Label {
-            text: qsTr("Local Network Security Intelligence")
-            Layout.fillWidth: true
-        }
+            Controls.Label {
+                text: page.sectionTitle
+                font.pixelSize: tokens.titleSize
+                font.weight: Font.Bold
+                color: Kirigami.Theme.textColor
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                Accessible.role: Accessible.Heading
+            }
+            Controls.Label {
+                text: qsTr("Local Network Security Intelligence")
+                font.pixelSize: tokens.bodySize
+                color: Kirigami.Theme.textColor
+                Layout.fillWidth: true
+            }
+            StatusBadge {
+                label: qsTr("Monitoring unavailable")
+            }
+            Kirigami.InlineMessage {
+                type: Kirigami.MessageType.Information
+                visible: true
+                text: qsTr("Not operational — no security telemetry is being collected or displayed.")
+                Layout.fillWidth: true
+            }
+            Controls.Label {
+                text: page.sectionDescription
+                font.pixelSize: tokens.bodySize
+                color: Kirigami.Theme.textColor
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
+            Controls.Label {
+                text: qsTr("This is an application-shell preview. No devices, alerts, detections, or incidents are simulated.")
+                font.pixelSize: tokens.captionSize
+                color: Kirigami.Theme.textColor
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
 
-        Kirigami.InlineMessage {
-            type: Kirigami.MessageType.Information
-            visible: true
-            text: qsTr("Not operational — no security telemetry is being collected or displayed.")
-            Layout.fillWidth: true
-        }
+            Flow {
+                id: cards
+                spacing: tokens.spaceM
+                Layout.fillWidth: true
+                Layout.preferredHeight: childrenRect.height
+                SurfaceCard {
+                    width: cards.width > tokens.compactBreakpoint
+                           ? (cards.width - cards.spacing) / 2 : cards.width
+                    heading: qsTr("Implementation status")
+                    description: qsTr("Presentation foundation only. No collectors, manager, database, or detection engine is running.")
+                    iconName: "dialog-information"
+                }
+                SurfaceCard {
+                    width: cards.width > tokens.compactBreakpoint
+                           ? (cards.width - cards.spacing) / 2 : cards.width
+                    heading: qsTr("Monitoring coverage")
+                    description: qsTr("Unavailable. Missing telemetry is not evidence of a safe network or an absence of threats.")
+                    iconName: "network-disconnect"
+                }
+            }
 
-        Controls.Label {
-            text: page.sectionDescription
-            wrapMode: Text.WordWrap
-            Layout.fillWidth: true
-        }
+            ColumnLayout {
+                visible: page.sectionId === "settings"
+                Layout.fillWidth: true
+                spacing: tokens.spaceS
+                Controls.Label {
+                    text: qsTr("Visual system reference — examples only")
+                    font.pixelSize: tokens.sectionSize
+                    font.weight: Font.DemiBold
+                    Layout.fillWidth: true
+                }
+                Controls.Label {
+                    text: qsTr("The application follows the active Qt/KDE system palette, including light and dark appearance. These are severity color samples, not real alerts.")
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                }
+                Flow {
+                    id: paletteSamples
+                    spacing: tokens.spaceS
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: childrenRect.height
+                    SeverityBadge { level: "critical" }
+                    SeverityBadge { level: "high" }
+                    SeverityBadge { level: "medium" }
+                    SeverityBadge { level: "low" }
+                    SeverityBadge { level: "unknown" }
+                }
+                Controls.Label {
+                    text: qsTr("Severity is distinct from monitoring availability and source confidence. No alerts are loaded.")
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                }
+            }
 
-        Controls.Label {
-            text: qsTr("This is an application-shell preview. No devices, alerts, detections, or incidents are simulated.")
-            wrapMode: Text.WordWrap
-            Layout.fillWidth: true
-        }
-
-        Item { Layout.fillHeight: true }
-
-        Controls.Label {
-            text: qsTr("M1.4 · Primary navigation foundation")
-            Layout.fillWidth: true
+            Controls.Label {
+                text: qsTr("M1.5 · Visual design system foundation")
+                font.pixelSize: tokens.captionSize
+                color: Kirigami.Theme.textColor
+                Layout.fillWidth: true
+                topPadding: tokens.spaceL
+            }
         }
     }
 }

@@ -27,7 +27,7 @@ void set_application_metadata() {
 
 void configure_parser(QCommandLineParser &parser) {
     parser.setApplicationDescription(QStringLiteral(
-        "KnetSentry M1.4 Qt Quick/Kirigami navigation shell; no SIEM monitoring is active."));
+        "KnetSentry M1.5 Qt Quick/Kirigami visual system; no SIEM monitoring is active."));
     parser.addHelpOption();
     parser.addVersionOption();
 }
@@ -71,6 +71,10 @@ int main(int argc, char *argv[]) {
         QStringLiteral("Exercise all seven non-operational navigation pages and exit."));
     parser.addOption(qml_smoke_test);
     parser.addOption(navigation_smoke_test);
+    const QCommandLineOption visual_smoke_test(
+        QStringLiteral("self-test-visual"),
+        QStringLiteral("Verify the embedded visual design tokens and QML pages."));
+    parser.addOption(visual_smoke_test);
     parser.process(app);
 
     // The UI has no privileged interfaces and exposes no operational SIEM
@@ -88,6 +92,27 @@ int main(int argc, char *argv[]) {
     }
     if (parser.isSet(qml_smoke_test)) {
         std::cout << "KnetSentry M1.3 Kirigami QML smoke: PASS (not an operational SIEM)\n";
+        return 0;
+    }
+    if (parser.isSet(visual_smoke_test)) {
+        QObject *root = engine.rootObjects().constFirst();
+        if (root->property("visualSystemVersion").toString() != QStringLiteral("M1.5") ||
+            !root->property("visualTokensValid").toBool() ||
+            root->property("currentPageVisualSystem").toString() != QStringLiteral("M1.5")) {
+            std::cerr << "KnetSentry: visual token contract failed.\n";
+            return 1;
+        }
+        if (!root->setProperty("navigationRequest", QStringLiteral("settings"))) {
+            std::cerr << "KnetSentry: settings page could not be selected.\n";
+            return 1;
+        }
+        QCoreApplication::processEvents();
+        if (root->property("activeSection").toString() != QStringLiteral("settings") ||
+            root->property("currentPageVisualSystem").toString() != QStringLiteral("M1.5")) {
+            std::cerr << "KnetSentry: visual system not active on settings page.\n";
+            return 1;
+        }
+        std::cout << "KnetSentry M1.5 visual system: PASS (platform palette; no telemetry)\n";
         return 0;
     }
     if (parser.isSet(navigation_smoke_test)) {

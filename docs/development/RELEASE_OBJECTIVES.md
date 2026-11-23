@@ -185,3 +185,11 @@ The Qt desktop now provides a seven-section Kirigami shell with an explicit
 non-operational state and headless route-testing gate. No collected security
 telemetry, fake detections, network capture, or manager privileges are added.
 See [M1.4 navigation requirements](GUI_NAVIGATION.md).
+
+## M1.5 design foundation (development only)
+
+The seven-section Qt/Kirigami GUI gains reusable visual tokens, cards,
+platform-driven light/dark coloring, accessible semantic badges and responsive
+scrolling. [Visual design standards](VISUAL_DESIGN_SYSTEM.md) and the offline
+verifier are defined; full Ubuntu 26.04 acceptance remains required. No SIEM
+monitoring, operational severity, or distributor approval is implied.

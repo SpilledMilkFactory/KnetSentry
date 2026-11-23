@@ -74,7 +74,7 @@ segments rather than claim complete visibility. Encrypted payloads are not
 silently decrypted; local observed endpoints can be cataloged without an agent
 under the approved network scope.
 
-## Building the M1.4 navigation shell
+## Building the M1.5 visual design shell
 
 On Ubuntu 26.04 AMD64, install the [build prerequisites](docs/development/BUILD_FOUNDATION.md), then run:
 
@@ -85,7 +85,7 @@ ctest --preset linux-release --output-on-failure
 ```
 
 Running `./build/presets/linux-release/apps/desktop/knetsentry` opens the
-Kirigami navigation shell. Use the global drawer or `Ctrl+1` through `Ctrl+7`
+Kirigami visual design and navigation shell. Use the global drawer or `Ctrl+1` through `Ctrl+7`
 to select its seven pages. None monitor or collect traffic. `--version` and
 `--help` work without a graphical display. `--self-test-qml` is used by the
 mandatory `knetsentry_kirigami_qml_startup` CTest with an offscreen renderer.
@@ -95,10 +95,19 @@ and [M1.3 GUI foundation guide](docs/development/GUI_FOUNDATION.md).
 `linux-sanitize` adds ASan/UBSan for project code. The `linux-core-only` preset
 remains useful but **cannot qualify the Qt/Kirigami desktop**.
 
+The M1.5 design system introduces platform-themed cards, severity examples
+(never simulated alerts), consistent typography and spacing, and responsive
+scrolling pages. See the [visual design system](docs/development/VISUAL_DESIGN_SYSTEM.md)
+for the appearance/contrast and reduced-motion contracts. Qt/KDE light/dark
+appearance follows the user's system palette; in-app theme switching is not
+yet implemented. The offscreen `knetsentry_visual_system` test qualifies real
+QML tokens in non-sanitized desktop builds.
+
 ## Product documentation
 
 | Document | Purpose |
 | --- | --- |
+| [M1.5 visual design system](docs/development/VISUAL_DESIGN_SYSTEM.md) | KDE/Qt palettes, severity/status separation, spacing, responsive UI and accessibility foundations |
 | [M1.4 navigation shell](docs/development/GUI_NAVIGATION.md) | Seven Qt/Kirigami top-level destinations, navigation testing, and honest placeholder state |
 | [M1.2 compiler hardening](docs/development/HARDENING_AND_ANALYSIS.md) | Target-scoped compiler warnings, sanitizers, optional analysis and ELF verification |
 | [M1.1 build foundation](docs/development/BUILD_FOUNDATION.md) | CMake presets, dependency setup, smoke tests, target ownership |

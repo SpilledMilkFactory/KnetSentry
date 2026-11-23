@@ -44,6 +44,18 @@ if(KNETSENTRY_BUILD_DESKTOP)
             LABELS "desktop;qml;navigation;regression"
             TIMEOUT 50)
     endif()
+    # M1.5 visual integration executes the real Kirigami/QML module. Keep
+    # this separate from LSan-scoped QML tests until its external leak budget
+    # is independently qualified; the existing sanitized navigation test
+    # still exercises every themed page and its lifetime.
+    if(NOT KNETSENTRY_ENABLE_SANITIZERS)
+        add_test(NAME knetsentry_visual_system
+            COMMAND $<TARGET_FILE:knetsentry> --self-test-visual)
+        set_tests_properties(knetsentry_visual_system PROPERTIES
+            LABELS "desktop;qml;visual;regression"
+            ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+            TIMEOUT 30)
+    endif()
     # The two observed third-party leak stacks are not KnetSentry leaks.
     # Scope LSan suppressions to this specific full-QML smoke test only;
     # keep detect_leaks=1 for the entire sanitizer preset. The negative
