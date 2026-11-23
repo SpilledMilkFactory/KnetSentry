@@ -35,14 +35,34 @@ privileged local attacker.
 
 ### Explicit local-network scope
 
-- KnetSentry initiates **no Internet connections** for analytics, update
-  checks, telemetry upload, cloud AI, or external service dependencies.
-- Administrators approve the local interfaces, destinations, peers, and
-  network scopes. Private IP prefixes are not proof of membership.
-- IPv4, IPv6, route changes, virtual interfaces, and unexpected transitions
-  are in scope for policy analysis. Ambiguity must fail closed.
-- Host-level network enforcement backs application-level connection checks.
-- Local network residence never substitutes for agent authentication.
+- The **monitoring boundary** is administrator-approved LAN segments and
+  authorized sensors/gateway sources, including unknown IoT devices observed
+  within that scope without installing endpoint agents. Per-device approval is
+  not needed for passive observation inside the approved monitoring domain;
+  agents and privileged management access still require explicit enrollment.
+  Local devices' Internet peer metadata may be recorded when observable.
+  No active scanning, probing, or enrollment of unrelated Internet hosts.
+- Monitor **source coverage and gaps**. Passive sensors on ordinary switched
+  or wireless ports are not assumed to see other devices' unicast traffic;
+  access-point isolation, encryption, asymmetric routes, and dropped mirror
+  packets must be surfaced as visibility limitations.
+- Treat device identity, manufacturer, model, firmware, and corresponding CVE
+  matches as evidence-dependent. DHCP/MAC/IP and vendor heuristics alone do not
+  justify claiming a confirmed device identity or vulnerability.
+- Agent-to-manager transport stays on approved, authenticated LAN paths;
+  local presence or private addressing never substitutes for identity.
+- A designated manager component may perform **opt-in HTTPS** synchronization
+  with approved CVE, MITRE ATT&CK, CISA KEV, or other security-information
+  sources, with provider allowlists, TLS validation, size limits, and auditing.
+- Privacy protections prohibit automatic outbound transfer of host logs,
+  evidence, inventories, packet contents, credentials, or incidents.
+- IPv4/IPv6, interface/route changes, dual-stack handling, and scoped IPv6
+  addresses must be evaluated; uncertainty fails closed for affected flows.
+- Host-level network enforcement backs application-level permission checks.
+- The [M0.2 network contract](NETWORK_SCOPE_REQUIREMENTS.md) and its
+  [verification plan](NETWORK_SCOPE_VERIFICATION_PLAN.md) define auditable
+  boundaries between authorized monitoring, agent transport, and optional
+  external intelligence access.
 
 ### Cryptographic identities and transport
 
@@ -110,7 +130,10 @@ privileges or authorize actions by themselves.
 
 | Requirement | Planned validation |
 | --- | --- |
-| LAN-only operation | Route/scope tests, host enforcement, namespace-based adversarial checks |
+| LAN-scoped agentless monitoring | Approved sensor and network-scope tests, IoT traffic evidence without agents, external-peer flow observation, prohibited active external probing |
+| Sensor visibility and attribution | Gateway/SPAN coverage and gap tests, encrypted-metadata limits, ambiguous device identity and spoofed DHCP/MAC handling |
+| Restricted external intelligence egress | Provider allowlists, TLS/redirect/DNS tests, privacy and offline-mode checks |
+| Agent transport boundaries | Route/scope tests, host enforcement, namespace-based adversarial checks |
 | Trusted agent communication | Enrollment, mutual-authentication, credential lifecycle, rejection tests |
 | Least-privilege services | systemd, filesystem, capabilities, and local IPC authorization tests |
 | Safe processing | Parser tests, fuzzing, sanitizer checks, size and resource-limit tests |

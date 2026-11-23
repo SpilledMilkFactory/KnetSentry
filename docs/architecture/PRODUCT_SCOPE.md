@@ -5,8 +5,9 @@ SPDX-License-Identifier: MIT
 
 # KnetSentry — Product Scope and Deployment Boundaries
 
-**Status:** M0.1 product boundary statement. Detailed policies will be specified
-in M0.2–M0.4; no security implementation is implied here.
+**Status:** M0.1 product baseline refined by M0.2 network requirements.
+M0.3–M0.4 will specify the threat model and detailed service interfaces;
+no network security implementation is implied here.
 
 ## 1. Initial compatibility contract
 
@@ -16,13 +17,15 @@ in M0.2–M0.4; no security implementation is implied here.
 | Desktop environments | GNOME and KDE Plasma on the supported OS |
 | Desktop stack | Qt 6, Qt Quick/QML, KDE Frameworks 6, Kirigami |
 | Services | Modern C++23, narrowly justified C, CMake + Ninja |
-| Connectivity | Administrator-approved local interfaces, destinations, and peers |
-| Internet dependency | None for normal KnetSentry operation |
+| Monitoring scope | Administrator-approved LAN segments and sensor sources; agentless device observation is first-class |
+| Transport scope | Authenticated agent/manager communication on approved LAN paths |
+| Internet intelligence | Optional, administrator-approved HTTPS feed synchronization; not required for core monitoring |
 | GUI dependency of services | None; security processes run without a desktop |
 
-Device integrations that accept syslog or optional passive observations may
-receive data from non-Ubuntu network equipment. This **does not imply** that
-KnetSentry's endpoint agent runs on such devices.
+Passive sensors, local gateway exports, and authorized device-log integrations
+may observe non-Ubuntu equipment (printers, doorbells, cameras, smart TVs)
+**without installing an agent on those devices**. The supported Ubuntu target
+applies to KnetSentry's own executable components, not to the observed devices.
 
 ## 2. Deployment roles
 
@@ -44,46 +47,62 @@ resources or bypass manager authorization. Services work without the GUI.
 **CLI (`knetsentryctl`, planned):** Offers narrow administrative interfaces
 subject to the same authentication, authorization, and auditing rules.
 
-**Optional integrations (planned):** Explicitly configured network-device log
-sources, passive sensors, and isolated offline AI, each with its own privacy,
-privilege, provenance, and resource controls.
+**Agentless sensor / gateway ingest (planned baseline):** Observe authorized
+local traffic via supported passive capture, mirrored ports, and/or gateway,
+firewall, access-point, DHCP/DNS, and network-flow exports. Source trust,
+coverage, and telemetry content are documented; no software is required on
+observed IoT devices.
 
-## 3. LAN-only contract
+**Optional integrations (planned):** Host-level endpoint agents, additional
+network-device log sources, isolated offline AI, and manager-controlled public
+security-intelligence feeds, each with its own privacy, authorization,
+provenance, and resource controls.
 
-1. KnetSentry processes **must not initiate Internet connections**, including
-   cloud AI, update checks, analytics, crash uploads, or external lookups.
-2. Connections must be approved by a network-scope policy and independently
-   constrained through supported operating-system controls.
-3. Administrators must explicitly approve interfaces, destinations, and
-   networks. RFC 1918, link-local, loopback, or globally scoped addresses do
-   not automatically become authorized merely by their address category.
-4. Both IPv4 and IPv6 must be handled, including address-family transitions,
-   IPv4-mapped addresses, and interface-scoped IPv6 link-local addresses.
-5. Unexpected address, route, or interface changes require revalidation;
-   uncertainty or failed policy checks must fail closed.
-6. Routed VLANs, new subnets, VPNs, bridges, and virtual interfaces require
-   an explicit M0.2 policy decision rather than default inclusion.
-7. Local presence does not establish trust. Supported agent identities require
-   explicit enrollment, validated authentication, and authorization.
-8. Passive monitoring and network-device integration require specific
-   authorization and must not enable unrestricted scanning or interception.
-9. Application policy, firewall enforcement, and isolated-network adversarial
-   tests will be developed in M3—not claimed as present in M0.1.
+## 3. Monitoring and network-communications contract
 
-This contract governs **KnetSentry-originated communications**, not the
-operating system's package manager or unrelated applications.
+1. Monitor devices observed within **administrator-approved LAN segments**
+   using authorized passive sensors or network exports, without requiring
+   per-device approval or agents. Authorized telemetry may include traffic
+   exchanged between local assets and **external Internet peers**. Unknown
+   devices can be identified and alerted on, not automatically trusted.
+2. Remote addresses appearing in network events do not become monitored hosts
+   or authorized targets for active scanning, probing, DNS queries, or fetches.
+3. Secure agent-to-manager communications use administrator-approved local
+   interfaces, segments, peer identities, and host-enforced policies.
+4. Default transport scope is on-link; additional routed local VLANs/subnets
+   require specific administrative authorization and validated paths. Unapproved
+   VPNs, tunnels, routes, and interfaces are denied.
+5. A designated manager component **may** fetch public CVE, MITRE ATT&CK, KEV,
+   and other approved intelligence over HTTPS when individually configured.
+6. External feed traffic is restricted by provider, purpose, endpoint, TLS,
+   redirect, DNS and privacy rules. No automatic upload of private telemetry.
+7. The GUI, agent collectors, and optional AI inference do not inherit general
+   Internet access. Core SIEM operation remains functional offline.
+8. IPv4/IPv6 scope, interface and route changes, authorization, and firewall
+   enforcement must fail closed for the affected operation.
+9. Application policy and Linux host-enforcement tests are scheduled in M3;
+   publishing these requirements does not constitute enforcement.
+
+See the authoritative [network contract](../security/NETWORK_SCOPE_REQUIREMENTS.md),
+[flow matrix](NETWORK_COMMUNICATION_MATRIX.md), and
+[future verification plan](../security/NETWORK_SCOPE_VERIFICATION_PLAN.md).
 
 ## 4. Planned in-scope functionality
 
 ### Security telemetry
 
-- Authenticated agent enrollment and selected systemd journal, authentication,
-  SSH, Linux Audit Framework, and file-integrity event collection on approved
-  Ubuntu hosts.
-- Configured network-device syslog and optional passive traffic *metadata*
-  sources, with clear data-source and trust limitations.
-- Asset inventory derived from authorized identities and observations—not an
-  assertion of complete knowledge of all LAN devices.
+- **First-class agentless monitoring** of local devices within approved
+  network/sensor scope using visible flow, DNS, DHCP, firewall, or passive
+  capture metadata. No software installation on doorbells, printers, or IoT
+  equipment is required.
+- Supported gateway/router exports, network-device syslog, and selected
+  passive capture modes, with explicit source, coverage, and trust limitations.
+- **Optional** authenticated agent enrollment and systemd journal,
+  authentication, SSH, Linux Audit Framework, and file-integrity event
+  collection on approved Ubuntu hosts.
+- Asset inventory derived from available network evidence and/or authorized
+  agent identities; unknown devices may be identified passively but accuracy
+  and full coverage are not presumed.
 
 ### Processing and investigations
 
@@ -104,14 +123,21 @@ operating system's package manager or unrelated applications.
 
 ## 5. Initial non-goals and exclusions
 
-- Automatic discovery, probing, or scanning of unknown LAN hosts, arbitrary
-  packet interception, or monitoring without the network owner's authority.
-- Cloud hosting, cloud inference, Internet telemetry upload, external account
-  services, or default public threat-intelligence lookups.
+- Unapproved active scanning, probing, interception, or collection outside the
+  network owner's authorized monitoring scope. Passive discovery and inventory
+  of local devices within an approved sensor scope are **not excluded**.
+  Future opt-in active local discovery must be separately approved, bounded,
+  and confined to authorized segments.
+- Cloud hosting, cloud inference, unapproved Internet telemetry upload,
+  external account services, arbitrary external queries, or silent background
+  feed connections. Approved HTTPS security-intelligence synchronization is
+  optional and separately governed by administrator policy.
 - Windows or non-Ubuntu endpoint agents, ARM targets, enterprise distributed
   clusters, or additional supported OS packages in v1.0.0.
-- Guaranteed visibility into non-enrolled devices, attack attribution,
-  accurate causality from correlation, or lossless operation under all failures.
+- Guaranteed complete visibility where the network does not supply traffic
+  to the sensor; successful plaintext inspection of encrypted sessions; precise
+  firmware/CVE attribution without corroborating inventory; causation from
+  correlation; or lossless operation under all failures.
 - Unrestricted automated remediation or AI-directed administrative actions.
 - Official KDE affiliation before its independent community review process.
 
@@ -124,8 +150,9 @@ truthful. Detection explanations and reports must preserve those limitations.
 
 ## 7. Unresolved decisions
 
-M0.2 specifies the precise network-scope policy. M0.3 supplies the threat
-model. M0.4 formalizes service interfaces, process boundaries, and protocols.
+M0.2 defines the monitoring, local transport, and optional intelligence-egress
+contracts. M0.3 supplies the threat model. M0.4 formalizes service interfaces,
+process boundaries, and protocols.
 M0.5 defines performance and capacity thresholds. M0.6 resolves the final
 licensing, dependency, and KDE compliance policy.
 
