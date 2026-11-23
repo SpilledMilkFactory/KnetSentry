@@ -20,6 +20,11 @@ The desktop must operate under GNOME and KDE Plasma on the supported OS.
 M0.1 ships **documentation only**. It does not claim that software, tests,
 security controls, or release artifacts already exist.
 
+M1.1 introduces only the [Qt-aware CMake foundation](BUILD_FOUNDATION.md),
+core smoke tests and dependency discovery. Qt Quick/Kirigami UI, services,
+and actual SIEM capabilities remain future work. A passing core-only build does
+not qualify the desktop or production security requirements.
+
 ## 2. Roadmap stages
 
 | Stage | Milestones | Target outcome |

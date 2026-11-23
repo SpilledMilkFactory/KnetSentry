@@ -5,8 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M0.7 contract; the CMake project, Qt tests and toolchain presets
-are **not yet implemented**. Initial supported target is Ubuntu 26.04 AMD64.
+**State:** M1.1 CMake foundation and release/debug/core-only presets exist. The Qt
+window, Qt Test/Quick Test suites, sanitizer preset, hardening and CI still do
+**not** exist. Initial supported target is Ubuntu 26.04 AMD64. See the
+[M1.1 build guide](BUILD_FOUNDATION.md).
 
 ## Planned build and analysis matrix
 
@@ -60,7 +62,9 @@ cmake --build --preset linux-sanitize --parallel
 ASAN_OPTIONS=halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ctest --preset linux-sanitize --output-on-failure
 ```
 
-The preset names and environment are proposals, not usable commands in M0.7.
+The `linux-release` configure/build/test commands are now usable after
+installing Qt/KDE build dependencies on Ubuntu 26.04. The `linux-sanitize`
+preset is still a proposal owned by M1.2; do not run or claim it until added.
 See [verification cases](VERIFICATION_MATRIX.md) for activation and evidence.
 
 ## Authoritative reference links
