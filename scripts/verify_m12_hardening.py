@@ -63,6 +63,16 @@ for rel, target in (("src/core/CMakeLists.txt", "knetsentry_core"),
             f"{target} lacks project-scoped options")
 require("include(cmake/KnetSentryBuildOptions.cmake)" in root,
         "root must load project-scoped hardening module")
+# Check that Clazy's compiler-specific OpenMP prerequisite has a clear,
+# fail-closed diagnosis. This is a source check, not a Clazy runtime test.
+for expected in (
+    'CMAKE_CXX_COMPILER MATCHES "(^|/)clazy(-[0-9]+)?$"',
+    "find_package(OpenMP QUIET COMPONENTS CXX)",
+    "if(NOT OpenMP_CXX_FOUND)",
+    "sudo apt install libomp-${_knetsentry_clang_major}-dev",
+    "cmake --preset linux-clazy --fresh",
+):
+    require(expected in root, f"missing Clazy/OpenMP prerequisite guard: {expected}")
 for forbidden in ("add_compile_options(", "add_link_options(",
                   "set(CMAKE_CXX_FLAGS", "set(CMAKE_EXE_LINKER_FLAGS"):
     require(forbidden not in root, f"root CMake unexpectedly uses global flags: {forbidden}")

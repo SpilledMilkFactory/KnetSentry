@@ -57,6 +57,24 @@ ctest --preset linux-clazy --output-on-failure
 
 The Clazy preset uses the upstream-supported `CMAKE_CXX_COMPILER=clazy` wrapper; `CLAZY_CHECKS=level0` may be set in the environment for explicitly selected checks. Diagnose any first-party warnings rather than silently suppressing them. `linux-analysis` requires `clang-tidy`; it is not a substitute for Clazy. Neither preset substitutes for M1.8 CI automation, M1.7 Qt Test, or future QML linting. A Clazy or clang-tidy failure is `FAIL`/`BLOCKED` until resolved.
 
+### Clazy on Ubuntu 26.04: Clang OpenMP prerequisite
+
+The `linux-clazy` preset makes `/usr/bin/clazy` (Clang, not GCC) the C++ compiler. Ubuntu's **installed** `KF6Kirigami` CMake package may require OpenMP as a dependency. OpenMP can be available to GCC via `libgomp` while remaining unavailable to Clang until the matching LLVM `libomp` development runtime is installed. In that case, the message `Could NOT find KF6 (missing: Kirigami)` is a *downstream symptom*, not proof that `libkirigami-dev` is absent.
+
+For the documented Clazy/Clang **21** toolchain on Ubuntu 26.04 AMD64:
+
+```bash
+sudo apt update
+sudo apt install libomp-21-dev
+
+# Clear cached compiler/dependency probes from the failed configuration.
+cmake --preset linux-clazy --fresh && \
+cmake --build --preset linux-clazy --parallel && \
+ctest --preset linux-clazy --output-on-failure
+```
+
+For another Clang major version, install its matching `libomp-<major>-dev` package as provided by the distribution. If the package is unavailable, investigate the actual compiler/runtime mismatch rather than forcing `KF6Kirigami_FOUND` or disabling the dependency. CMake now detects this condition early when using the Clazy compiler wrapper, with an actionable diagnostic. This does not introduce an OpenMP dependency into the KnetSentry core or the standard GCC presets. The Qt QML `qmlplugindump`/`org.kde.kirigami` warning is a **separate** M1.3 runtime-discovery issue and should be investigated after the GUI exists.
+
 ## Hardening evidence and limitations
 
 - Project-owned targets use `-Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wconversion -Wsign-conversion -Wnull-dereference -Werror` on supported GNU/Clang toolchains.
