@@ -115,10 +115,21 @@ Validate with `python3 scripts/verify_m16_diagnostics.py` and the
 `knetsentry_structured_diagnostics` CTest in each relevant preset.
 Raw Qt/Kirigami framework output is **not** sanitized by this publisher.
 
+## M1.7 foundational CTest and Qt Test suites
+
+The test foundation now includes real Qt Test (`QAbstractItemModelTester`,
+`QSignalSpy`, and `QProcess`) suites for a fixed, non-operational navigation
+catalog and the existing desktop application, plus a Qt-independent C++
+privacy regression and an executable CTest configuration/inventory gate.
+The core-only presets remain Qt-independent; they **cannot** qualify the GUI.
+All M1.7 tests use synthetic/fixed data, never live LAN telemetry.
+See [M1.7 testing and acceptance](docs/development/TEST_SUITE_FOUNDATION.md).
+
 ## Product documentation
 
 | Document | Purpose |
 | --- | --- |
+| [M1.7 CTest and Qt Test foundation](docs/development/TEST_SUITE_FOUNDATION.md) | Compiled C++/Qt Test suites, CMake inventory gate, negative checks and acceptance commands |
 | [M1.6 structured diagnostics](docs/development/STRUCTURED_DIAGNOSTICS.md) | Typed event catalog, redaction boundary, JSONL limits and test instructions |
 | [M1.5 visual design system](docs/development/VISUAL_DESIGN_SYSTEM.md) | KDE/Qt palettes, severity/status separation, spacing, responsive UI and accessibility foundations |
 | [M1.4 navigation shell](docs/development/GUI_NAVIGATION.md) | Seven Qt/Kirigami top-level destinations, navigation testing, and honest placeholder state |

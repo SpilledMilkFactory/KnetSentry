@@ -25,7 +25,60 @@ add_test(NAME knetsentry_structured_diagnostics
 set_tests_properties(knetsentry_structured_diagnostics PROPERTIES
     LABELS "security;unit;privacy;regression" TIMEOUT 30)
 
+# M1.7: validate actual configured test inventory; never allow zero-test PASS
+# or a core-only CTest run to qualify the Qt desktop.
+add_test(NAME knetsentry_configuration_contract
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/scripts/verify_m17_suites.py"
+        --build-dir "${PROJECT_BINARY_DIR}")
+set_tests_properties(knetsentry_configuration_contract PROPERTIES
+    LABELS "configuration;security;regression" TIMEOUT 30)
+
+# M1.7 independent first-party unit boundary and privacy regression.
+add_executable(knetsentry_core_contract_m17 core_contract_m17.cpp)
+target_link_libraries(knetsentry_core_contract_m17 PRIVATE KnetSentry::Core)
+knetsentry_apply_project_options(knetsentry_core_contract_m17)
+add_test(NAME knetsentry_core_boundary_contract
+    COMMAND $<TARGET_FILE:knetsentry_core_contract_m17>)
+set_tests_properties(knetsentry_core_boundary_contract PROPERTIES
+    LABELS "unit;security;privacy;regression" TIMEOUT 30)
+
 if(KNETSENTRY_BUILD_DESKTOP)
+    # Qt Test is required for full desktop test qualification, not silently
+    # skipped if unavailable. The core-only preset remains Qt-independent.
+    find_package(Qt6 REQUIRED COMPONENTS Test)
+
+    add_executable(knetsentry_qt_model_test qt/section_catalog_qtest.cpp)
+    set_target_properties(knetsentry_qt_model_test PROPERTIES AUTOMOC ON)
+    target_include_directories(knetsentry_qt_model_test PRIVATE
+        "${PROJECT_SOURCE_DIR}/apps/desktop")
+    target_link_libraries(knetsentry_qt_model_test PRIVATE
+        knetsentry_section_catalog Qt6::Core Qt6::Test)
+    knetsentry_apply_project_options(knetsentry_qt_model_test)
+    add_test(NAME knetsentry_qt_model_contract
+        COMMAND $<TARGET_FILE:knetsentry_qt_model_test>)
+    set_tests_properties(knetsentry_qt_model_contract PROPERTIES
+        LABELS "qt;model;unit;regression;security" TIMEOUT 30)
+
+    # QProcess-based Qt Test: verify the real GUI binary's headless CLI and
+    # offscreen Kirigami initialization without any mocked application state.
+    # Keep the extra QML-launching process out of sanitizer configs until its
+    # third-party LSan behavior is separately qualified; the existing two
+    # approved QML tests continue running with leak detection enabled.
+    if(NOT KNETSENTRY_ENABLE_SANITIZERS)
+        add_executable(knetsentry_qt_application_test qt/application_qtest.cpp)
+        set_target_properties(knetsentry_qt_application_test PROPERTIES AUTOMOC ON)
+        target_compile_definitions(knetsentry_qt_application_test PRIVATE
+            KNETSENTRY_DESKTOP_EXECUTABLE="$<TARGET_FILE:knetsentry>")
+        target_link_libraries(knetsentry_qt_application_test PRIVATE
+            Qt6::Core Qt6::Test)
+        knetsentry_apply_project_options(knetsentry_qt_application_test)
+        add_dependencies(knetsentry_qt_application_test knetsentry)
+        add_test(NAME knetsentry_qt_application_lifecycle
+            COMMAND $<TARGET_FILE:knetsentry_qt_application_test>)
+        set_tests_properties(knetsentry_qt_application_lifecycle PROPERTIES
+            LABELS "qt;desktop;qml;regression" TIMEOUT 80)
+    endif()
     add_test(NAME knetsentry_desktop_version
         COMMAND $<TARGET_FILE:knetsentry> --version)
     set_tests_properties(knetsentry_desktop_version PROPERTIES LABELS "smoke;desktop")
