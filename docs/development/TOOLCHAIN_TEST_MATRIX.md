@@ -78,3 +78,15 @@ See [verification cases](VERIFICATION_MATRIX.md) for activation and evidence.
 - [GCC instrumentation options](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html)
 
 See the [M1.2 hardening guide](HARDENING_AND_ANALYSIS.md) for current commands, flags, and evidence requirements.
+
+
+## M1.7 executable test foundation
+
+M1.7 adds a compiled Qt-independent diagnostic boundary test, a production
+read-only section catalog with Qt Test model-contract coverage, Qt Test
+application initialization via actual desktop QProcess, and a configured
+CTest inventory gate. Full desktop builds **require** Qt6::Test; a missing
+package is a configuration failure, not a skipped test. Expected inventories:
+Release/Debug/Clazy/analysis 13; sanitizer 10; core-only 5; sanitized
+core-only 6. See [M1.7 test-suite contract](TEST_SUITE_FOUNDATION.md).
+All counts are targets until CTest has run on the intended revision.

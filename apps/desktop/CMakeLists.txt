@@ -2,11 +2,18 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
 # M1.3: real Qt Quick/Kirigami application. Security services remain outside QML.
+# M1.7: first-party read-only Qt item-model foundation, independently Qt Test-able.
+add_library(knetsentry_section_catalog STATIC
+    section_catalog_model.cpp section_catalog_model.hpp)
+set_target_properties(knetsentry_section_catalog PROPERTIES AUTOMOC ON)
+target_link_libraries(knetsentry_section_catalog PUBLIC Qt6::Core)
+knetsentry_apply_project_options(knetsentry_section_catalog)
+
 add_executable(knetsentry main.cpp)
 target_compile_features(knetsentry PRIVATE cxx_std_23)
 knetsentry_apply_project_options(knetsentry)
 target_link_libraries(knetsentry PRIVATE
-    KnetSentry::Core Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2)
+    KnetSentry::Core knetsentry_section_catalog Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2)
 
 # Qt 6-managed QML module and embedded resources; no loose QML directory
 # searched at runtime and no handwritten resource path assumptions.

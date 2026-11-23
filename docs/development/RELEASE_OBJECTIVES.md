@@ -203,3 +203,13 @@ C++ desktop lifecycle integration is implemented. See
 This is **not** a persistent security-event store, an authorized audit trail,
 or proof of complete privacy for raw third-party Qt diagnostics. M2.5 and M6
 remain responsible for durable, authorized audit/evidence storage controls.
+
+
+## M1.7 initial executable test suites (foundation only)
+
+The [M1.7 CTest/Qt Test plan](TEST_SUITE_FOUNDATION.md) adds a Qt Test
+read-only navigation model, real headless CLI/QML subprocess checks,
+Qt-independent negative security units, and an executed CTest configuration
+inventory gate. These are first-party test foundations and do not verify
+SIEM runtime authorization, network monitoring, sensor coverage or durable
+audit storage. Passing core-only tests is not full desktop qualification.
