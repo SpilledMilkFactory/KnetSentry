@@ -95,6 +95,21 @@ path, while `C-21` host policy independently verifies effective restrictions.
 If network state changes invalidate a scope, the affected operation fails
 closed while relevant observation/coverage status is marked degraded.
 
+## Capacity assumptions across deployment profiles
+
+The [M0.5 workload profiles](../development/WORKLOAD_PROFILES.md) require an
+agentless reporting source independently of optional endpoint agents.
+[Performance requirements](../development/PERFORMANCE_REQUIREMENTS.md)
+measure raw capture PPS separately from normalized events/s. A workstation
+running a gateway export adapter may have no direct access to mirrored
+packets; a dedicated mirror sensor may observe more packets but produce fewer
+normalized records. Neither is evidence of complete network visibility.
+
+Storage capacity and seven-day retention depend on actual event sizes, indexes,
+spools and headroom; see the
+[resource model](../development/RESOURCE_CAPACITY_MODEL.md). These provisional
+capacity envelopes are **not hardware minimums or achieved throughput claims**.
+
 ## Shared operating assumptions and prohibitions
 
 1. **Manager, desktop, privileged capture and feed egress are distinct

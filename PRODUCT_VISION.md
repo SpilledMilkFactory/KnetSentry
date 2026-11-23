@@ -138,8 +138,13 @@ The initial release is successful only when evidence shows that:
 - Required security, reliability, documentation, redistribution, and release
   checks pass for the source revision being published.
 
-Quantitative thresholds for throughput, detection latency, storage, recovery,
-and UI responsiveness are **not yet approved**; M0.5 will define measurable
+Initial **engineering** thresholds for throughput, detection latency, storage,
+recovery, and UI responsiveness are now specified in
+[the M0.5 performance requirements](docs/development/PERFORMANCE_REQUIREMENTS.md); implementation and M14 evidence will validate or revise them. M0.5 also requires an administrator-selectable raw event storage directory
+on a mounted local secondary drive, with an independent indexed database
+location and no unapproved OS-disk fallback. See the
+[storage placement contract](docs/architecture/STORAGE_PLACEMENT_CONTRACT.md).
+M0.5 defines measurable
 criteria and M14 will validate them.
 
 ## 7. Governance and decisions still to be made
@@ -162,7 +167,8 @@ criteria and M14 will validate them.
   [traceability index](docs/architecture/ARCHITECTURE_TRACEABILITY.md)
   define proposed process responsibilities, trust separation and data flows.
   No socket, capture helper, or security control is implemented by these documents.
-- **M0.5:** Resource budgets and benchmark thresholds.
+- **M0.5 (defined):** Initial engineering resource budgets, workload profiles,
+  testable benchmark thresholds, and recovery criteria; actual results pending M14.
 - **M0.6:** Final component-level licensing, third-party obligations, and
   SPDX/REUSE implementation. The existing repository license is currently MIT.
 - **M0.7–M0.8:** Quality gates, governance, and disclosure procedures.

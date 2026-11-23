@@ -15,9 +15,9 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M0.3 (design documents only):** This repository
-> contains the product definition, network-security contract, and initial
-> threat model with prospective mitigations and verification ownership.
+> **Development status — M0.5 (design documents only):** This repository
+> contains the product and network-security contracts, threat model, modular
+> architecture, and initial performance/reliability qualification targets.
 > It does **not** yet include a
 > functional SIEM, network collector, desktop application, detection engine, or
 > production security controls. The capabilities below are *planned*, not
@@ -89,6 +89,13 @@ under the approved network scope.
 | [Threat register](docs/security/THREAT_REGISTER.md) | Qualitative risk screening, proposed controls, future owners |
 | [Threat verification matrix](docs/security/THREAT_VERIFICATION_MATRIX.md) | Planned tests and evidence needed for future security claims |
 | [Release objectives](docs/development/RELEASE_OBJECTIVES.md) | v1.0.0 release bar, milestone groups, and open decisions |
+| [Performance requirements](docs/development/PERFORMANCE_REQUIREMENTS.md) | 54 initial engineering requirements and measurement definitions |
+| [Workload profiles](docs/development/WORKLOAD_PROFILES.md) | Synthetic agentless and optional-agent benchmark cases W-00–W-09 |
+| [Benchmark plan](docs/development/BENCHMARK_PLAN.md) | 28 prospective benchmark cases and evidence methodology |
+| [Storage placement contract](docs/architecture/STORAGE_PLACEMENT_CONTRACT.md) | Administrator-selected raw drive, raw-first writes, separate indexes and mount safety |
+| [Storage/capacity model](docs/development/RESOURCE_CAPACITY_MODEL.md) | Honest data-size calculations, process budgets, and retention limits |
+| [Recovery plan](docs/development/RELIABILITY_RECOVERY_PLAN.md) | 18 planned outage and degradation cases |
+| [Result template](docs/development/BENCHMARK_RESULT_TEMPLATE.md) | Required future benchmark provenance and observations |
 
 The GitHub roadmap covers M0–M15 for v1.0.0, followed by a separate optional
 M16 milestone for KDE community adoption. Following KDE development guidance
@@ -108,7 +115,7 @@ should not begin until its relevant trust and network boundaries are defined.
 ## License
 
 The repository currently uses the **MIT License**, as recorded in [LICENSE](LICENSE).
-This existing license has been preserved through M0.3. M0.6 will document the final
+This existing license has been preserved through M0.5. M0.6 will document the final
 component-level licensing and SPDX/REUSE policy, including KDE requirements for
 source code, documentation, CMake files, and third-party assets. Changes to
 license terms will be explicit and reviewed, not silently assumed.

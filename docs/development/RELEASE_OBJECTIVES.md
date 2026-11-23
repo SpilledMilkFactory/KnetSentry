@@ -81,15 +81,30 @@ be separately authorized and are not required for core SIEM operation.
 
 ## 5. Reliability and capacity planning
 
-M0.5 must approve quantified targets for latency, throughput, memory,
-storage, recovery, and GUI performance. For **initial engineering evaluation**
-only, consider 10 monitored sources (sensors and/or agents), 100 aggregate
- events/second sustained, and bursts of
-1,000 events/second for a defined period. These are **not demonstrated or
-promised performance capabilities**. M14 will collect reproducible evidence.
+M0.5 defines [54 traceable engineering qualification targets](PERFORMANCE_REQUIREMENTS.md),
+[workload scenarios W-00–W-09](WORKLOAD_PROFILES.md), a
+[28-test benchmark plan](BENCHMARK_PLAN.md), an
+[evidence template](BENCHMARK_RESULT_TEMPLATE.md), a
+[resource/retention capacity model](RESOURCE_CAPACITY_MODEL.md), and a
+[recovery/degradation matrix](RELIABILITY_RECOVERY_PLAN.md).
 
-Tests should cover disconnections, bounded queues, overload and event loss
-reporting, service crashes, storage constraints, and extended operation.
+The initial v1.0.0 reference targets include 10 reporting sources (with
+at least one agentless source), 100 normalized events/s sustained for 60 min,
+1,000 events/s burst for 60 s, separate packet-capture scenarios at 2,000
+PPS sustained and 10,000 PPS burst, bounded latency/CPU/RSS, truthful loss
+reporting, and 24-hour soak testing. Administrators must be able to choose a mounted local drive for raw event
+records independently of the indexed SQLite database. The GUI must provide a
+filesystem folder browser and the manager must validate mount identity,
+permissions, raw-first durability, and failure behavior without silent fallback
+onto the OS disk. See the [storage placement contract](../architecture/STORAGE_PLACEMENT_CONTRACT.md).
+
+Seven days of event retention at these
+rates can require hundreds of GiB once indexes and headroom are included;
+retention must be explicitly sized rather than universally guaranteed.
+
+**These are declared targets, not tested performance or product capabilities.**
+M14 must collect reproducible release-relevant evidence. Security, source
+attribution, privacy and network-scope requirements remain binding under load.
 
 ## 6. Release deliverables
 
@@ -134,7 +149,8 @@ change the existing license or create a final GPL commitment.
   storage ownership, separate public-feed egress and Qt presentation rules.
   Interface encodings, exact privileges and implemented controls are deferred
   to their owning issues.
-- **M0.5:** Test workloads, resource budgets, latency and capacity thresholds.
+- **M0.5 (defined):** Test workloads, resource budgets, latency and capacity
+  thresholds; implementation, measurements and final baselines remain M14 work.
 - **M0.6:** Source/documentation/build licensing and dependency review.
 - **M0.7:** Mandatory build, test, and security qualification gates.
 - **M13:** Security sign-off supported by evidence.

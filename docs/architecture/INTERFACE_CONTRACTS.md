@@ -100,6 +100,18 @@ reason (e.g. `scope_denied`, `oversize`, `unsupported_version`,
 `source_unverified`, `queue_full`, `parse_error`). Exact enum names and
 limits will be finalized with versioned protocol schemas in M4–M6.
 
+### Raw-storage and index-storage stage semantics
+
+Interface `I-11` is subject to the
+[storage placement contract](STORAGE_PLACEMENT_CONTRACT.md): authorized raw
+original records commit to the administrator-selected raw local volume before
+normalization/indexing. The manager separately records `RAW_DURABLE`,
+`INDEX_PENDING` and `INDEXED`. The unprivileged GUI may select a candidate
+folder but cannot grant write authority; the manager validates mount identity,
+permissions and space before accepting it. Missing/replaced mounts are denied
+without implicit OS-drive fallback. SQLite/index paths are independently
+configured and must support reliable local locking and WAL semantics.
+
 ## 4. Failures and recovery by boundary
 
 | Failure | Mandatory architectural response |
