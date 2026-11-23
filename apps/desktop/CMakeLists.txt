@@ -15,3 +15,16 @@ qt_add_qml_module(knetsentry
     VERSION 1.0
     QML_FILES Main.qml
 )
+
+# Qt 6.10's generated QML cache registry can trigger GCC 15's
+# -Wnull-dereference diagnostic while inlining QHash internals. Preserve
+# -Werror for *all* first-party C++ and other generated sources: downgrade
+# only this Qt-generated translation unit's specific diagnostic to a warning.
+# Keep QML ahead-of-time compilation enabled and remove this exception once
+# the distribution's Qt/GCC combination no longer needs it.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(_knetsentry_qmlcache_loader
+        "${CMAKE_CURRENT_BINARY_DIR}/.rcc/qmlcache/knetsentry_qmlcache_loader.cpp")
+    set_source_files_properties("${_knetsentry_qmlcache_loader}"
+        PROPERTIES COMPILE_OPTIONS "-Wno-error=null-dereference")
+endif()

@@ -64,3 +64,37 @@ The second form requires the built desktop executable and checks the actual embe
 6. Test KDE Plasma when a test environment is available; it is a v1.0 compatibility obligation, not an excuse to bypass GNOME testing.
 
 **Risk note:** Qt and Kirigami are third-party libraries outside KnetSentry's own sanitizer instrumentation. Dependency redistribution status remains separately governed by M0.6 and the M15 release review.
+
+## M1.3 follow-up: GCC 15 warning in Qt-generated QML cache loader
+
+Ubuntu 26.04 GCC 15 can report `-Wnull-dereference` while compiling
+Qt 6.10's generated `knetsentry_qmlcache_loader.cpp`, with the diagnostic
+pointing into Qt's `QHash` implementation. Since M1.2 enables `-Werror` on
+KnetSentry-owned targets, this diagnostic otherwise fails the entire desktop
+build even though it does **not** originate in handwritten KnetSentry C++.
+
+The desktop CMake target now downgrades this specific diagnostic to a visible
+warning **only** for the Qt-generated QML cache loader, using CMake's
+source-file `COMPILE_OPTIONS`. All other translation units retain the strict
+first-party warning policy; the QML ahead-of-time compiler stays enabled.
+This is a narrowly scoped build workaround, **not** evidence that the warning
+is a confirmed GCC false positive or that Qt libraries have been audited.
+Reassess and remove the exception when the relevant Qt/GCC versions change.
+
+The compilation database is generated at CMake configure time, so verify the
+scope **before** the build completes:
+
+```bash
+cmake --preset linux-release --fresh
+python3 scripts/verify_m13_gui.py --compile-commands build/presets/linux-release/compile_commands.json
+cmake --build --preset linux-release --parallel
+ctest --preset linux-release --output-on-failure
+python3 scripts/verify_m13_gui.py --build-dir build/presets/linux-release
+```
+
+The verifier requires the loader to retain `-Werror` and `-Wnull-dereference`
+and, with GCC, also receive `-Wno-error=null-dereference`; no other C++ source
+may receive that exception. Clang/Clazy must not receive the GCC-specific flag. It verifies **flags**, not runtime behavior: the QML startup
+CTest and manual visible window launch remain mandatory acceptance checks.
+If the Qt-generated source path changes in a future Qt version, this check
+fails rather than silently allowing a broad relaxation.

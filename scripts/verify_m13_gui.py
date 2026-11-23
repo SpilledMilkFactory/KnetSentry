@@ -9,6 +9,8 @@ for an actual import/instantiation check with the installed Kirigami runtime.
 from __future__ import annotations
 
 import argparse
+import json
+import shlex
 import os
 import re
 import subprocess
@@ -34,6 +36,8 @@ def source(name: str) -> str:
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--build-dir", type=Path, help="Require real executable and test QML imports")
+parser.add_argument("--compile-commands", type=Path,
+                    help="Check that the GCC warning exception is present only in the Qt-generated cache loader")
 args = parser.parse_args()
 
 root = source("CMakeLists.txt")
@@ -82,6 +86,62 @@ require("Terminal=false" in desktop and "Exec=knetsentry" in desktop,
 require("GUI_FOUNDATION.md" in source("README.md"), "README missing M1.3 documentation link")
 require("Qt6::" not in source("src/core/CMakeLists.txt"), "Qt dependency leaked into core")
 
+# M1.3 follow-up: Qt-generated cache registration can trip a GCC 15 diagnostic
+# in Qt headers. Keep project warnings-as-errors intact and allow a narrowly
+# scoped, visible *warning* only for that single generated translation unit.
+for token in (
+    'if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")',
+    '${CMAKE_CURRENT_BINARY_DIR}/.rcc/qmlcache/knetsentry_qmlcache_loader.cpp',
+    'set_source_files_properties("${_knetsentry_qmlcache_loader}"',
+    'COMPILE_OPTIONS "-Wno-error=null-dereference"',
+):
+    require(token in cmake, f"Qt-generated loader warning boundary missing: {token}")
+require("NO_CACHEGEN" not in cmake and "QT_QML_NO_CACHEGEN" not in cmake,
+        "QML cache generation must remain enabled")
+require("-Wno-error=null-dereference" not in source("cmake/KnetSentryBuildOptions.cmake"),
+        "exception leaked into project-wide compiler options")
+
+if args.compile_commands:
+    path = args.compile_commands.resolve()
+    if not path.is_file():
+        errors.append(f"missing compilation database: {path}")
+    else:
+        try:
+            commands = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            commands = []
+            errors.append(f"cannot read compilation database: {exc}")
+        compiler_records = list((path.parent / "CMakeFiles").glob("*/CMakeCXXCompiler.cmake"))
+        require(len(compiler_records) == 1,
+                f"expected one configured C++ compiler identity, found {len(compiler_records)}")
+        compiler_id = ""
+        if len(compiler_records) == 1:
+            details = compiler_records[0].read_text(encoding="utf-8")
+            match = re.search(r'set\(CMAKE_CXX_COMPILER_ID "([^"]+)"\)', details)
+            if match:
+                compiler_id = match.group(1)
+        require(compiler_id in ("GNU", "Clang"),
+                f"unknown or unsupported compiler identity: {compiler_id or '(missing)'}")
+        loader = []
+        for entry in commands:
+            file = Path(entry.get("file", ""))
+            if "arguments" in entry:
+                arguments = entry["arguments"]
+            else:
+                arguments = shlex.split(entry.get("command", ""))
+            if file.name == "knetsentry_qmlcache_loader.cpp":
+                loader.append(entry)
+                for token in ("-Werror", "-Wnull-dereference"):
+                    require(token in arguments, f"generated loader missing {token}")
+                require(("-Wno-error=null-dereference" in arguments) == (compiler_id == "GNU"),
+                        f"generated loader has incorrect GCC-only exception ({compiler_id})")
+            else:
+                require("-Wno-error=null-dereference" not in arguments,
+                        f"per-source warning exception unexpectedly applies to {file.name}")
+        require(len(loader) == 1,
+                f"expected exactly one generated Qt QML cache loader command, found {len(loader)}")
+
+
 if args.build_dir:
     path = (ROOT / args.build_dir).resolve()
     binary = path / "apps/desktop/knetsentry"
@@ -107,6 +167,8 @@ if errors:
 
 print("M1.3 GUI foundation verification: PASS")
 print("  Qt QML module and Kirigami.ApplicationWindow, headless runtime test registered")
+if args.compile_commands:
+    print("  Scoped Qt-generated loader warning exception verified:", args.compile_commands)
 if args.build_dir:
     print("  Verified real Qt/Kirigami QML instantiation:", args.build_dir)
 else:
