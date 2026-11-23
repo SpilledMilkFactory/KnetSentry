@@ -164,8 +164,10 @@ administrator, third-party sensor, or approved feed provider never forwards
 information or provides false records. Firewall rule effects on other local
 software require careful installation and rollback design.
 
-M0.3 will model malicious telemetry/feed content, DNS rebinding, supply-chain
-injection, and credential compromise. M0.4 will define process/API boundaries.
+M0.3 models malicious telemetry/feed content, DNS rebinding, supply-chain
+injection, and credential compromise. M0.4 documents [process/API boundaries](../architecture/SYSTEM_ARCHITECTURE.md)
+and [interface contracts](../architecture/INTERFACE_CONTRACTS.md);
+implementation and enforcement are future work.
 M3 will implement scoped transport and egress enforcement; M5 must add the
 **minimal independently usable agentless sensor/gateway telemetry foundation**
 so the first functional SIEM is not agent-dependent; M9 will expand network

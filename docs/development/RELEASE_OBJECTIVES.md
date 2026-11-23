@@ -126,7 +126,14 @@ change the existing license or create a final GPL commitment.
   [threat register](../security/THREAT_REGISTER.md), and
   [verification matrix](../security/THREAT_VERIFICATION_MATRIX.md);
   residual risk remains unassessed pending implementation and evidence.
-- **M0.4:** Process boundaries, transport, APIs, and storage interfaces.
+- **M0.4 (defined):** [System architecture](../architecture/SYSTEM_ARCHITECTURE.md),
+  [component catalog](../architecture/COMPONENT_CATALOG.md),
+  [interface contracts](../architecture/INTERFACE_CONTRACTS.md), and
+  [traceability map](../architecture/ARCHITECTURE_TRACEABILITY.md)
+  establish proposed process boundaries, transport direction, typed envelopes,
+  storage ownership, separate public-feed egress and Qt presentation rules.
+  Interface encodings, exact privileges and implemented controls are deferred
+  to their owning issues.
 - **M0.5:** Test workloads, resource budgets, latency and capacity thresholds.
 - **M0.6:** Source/documentation/build licensing and dependency review.
 - **M0.7:** Mandatory build, test, and security qualification gates.

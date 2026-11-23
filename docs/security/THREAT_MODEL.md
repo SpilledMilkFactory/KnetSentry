@@ -35,6 +35,12 @@ It concerns **two distinct security subjects**:
    establish causation, guarantee detection, or grant permission to probe an
    unrelated Internet peer.
 
+The [M0.4 architecture](../architecture/SYSTEM_ARCHITECTURE.md) resolves
+proposed process and interface ownership; its
+[security traceability matrix](../architecture/ARCHITECTURE_TRACEABILITY.md)
+assigns `TB-01`–`TB-12` and `TH-001`–`TH-042` to logical components. This
+remains a design, not evidence of effective controls.
+
 All controls in these documents are **requirements or future mitigations**, not
 implemented or verified protections. The initial risk screen is a planning aid,
 not a formal measured assessment or attestation. M0.4 assigns final process and
@@ -96,8 +102,10 @@ feed connection is opt-in and separate from traffic observed between local
 assets and Internet peers. Unmanaged IoT endpoints have no KnetSentry agent.
 No external peer observed in telemetry becomes an authorized scan target.
 
-The graph shows logical responsibilities; M0.4 must resolve which components
-are separate operating-system processes and how source adapters authenticate.
+The graph shows logical responsibilities; M0.4 defines proposed operating-
+system process roles and how source adapters handle identity in the
+[component catalog](../architecture/COMPONENT_CATALOG.md) and
+[interface contracts](../architecture/INTERFACE_CONTRACTS.md).
 Source-originating syslog/flow exports may not provide authenticated origin;
 those records must carry an explicit trust level.
 
@@ -247,8 +255,8 @@ resolution or release blocking, not implicit acceptance.
 This model is a versioned design artifact. Reassess it whenever monitoring
 scope, capture interfaces, agent credentials, data schema, rule capabilities,
 external feed providers, AI tools, privileged helpers, or response authority
-change. In particular, M0.4 must reconcile every conceptual flow and process
-boundary; M3/M4/M5 must attach policy/authentication/agentless test evidence;
+change. M0.4 documents the proposed flow and process boundary assignments;
+M3/M4/M5 must attach policy/authentication/agentless test evidence;
 M7/M9 must prove real evidence-backed detections; M12 must expand AI misuse
 analysis; M13 must reassess residual threats before M15 release.
 

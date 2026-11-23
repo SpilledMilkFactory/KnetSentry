@@ -7,6 +7,11 @@ SPDX-License-Identifier: MIT
 
 **Status:** M0.2 planned traffic roles, not implemented endpoints.
 **Normative requirements:** [NETWORK_SCOPE_REQUIREMENTS.md](../security/NETWORK_SCOPE_REQUIREMENTS.md).
+**M0.4 design assignment:** [logical interface registry](INTERFACE_CONTRACTS.md),
+[component/process separation](COMPONENT_CATALOG.md), and
+[security traceability](ARCHITECTURE_TRACEABILITY.md).
+The communication permissions below remain conditional on approval, source
+visibility and later implementation; interface IDs are not live sockets.
 
 | Activity | Source and destination | Authorized? | Trust boundary / restriction | Future stage |
 | --- | --- | --- | --- | --- |

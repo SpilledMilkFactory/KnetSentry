@@ -62,8 +62,10 @@ The `TV-##` IDs are **future verification work items**, not GitHub issue numbers
 
 1. **M0.3:** The threat model, register, and this matrix are complete only when
    every threat ID maps to a proposed mitigation, requirement, owner, and test.
-2. **M0.4:** Verify the eventual architecture respects `TB-01`–`TB-12`;
-   assign responsibility for data origin, parser isolation, and egress.
+2. **M0.4 (design complete):** The [architecture traceability index](../architecture/ARCHITECTURE_TRACEABILITY.md)
+   maps `TB-01`–`TB-12` and `TH-001`–`TH-042` to proposed component and
+   interface ownership, including data origin, parser isolation, and egress.
+   Deployment and control-effectiveness verification remain future work.
 3. **M3–M7:** Build the network, identity, ingestion, agentless, and detection
    tests, recording CI or controlled laboratory evidence. The roadmap's
    additional `M3.9`, `M5.10`, `M7.10` and `M10.9` issues are proposed IDs

@@ -75,6 +75,12 @@ under the approved network scope.
 | --- | --- |
 | [Product vision](PRODUCT_VISION.md) | Purpose, audiences, benefits, success criteria, and non-goals |
 | [Product scope](docs/architecture/PRODUCT_SCOPE.md) | Supported deployments, boundaries, capabilities, and exclusions |
+| [Modular system architecture](docs/architecture/SYSTEM_ARCHITECTURE.md) | Process separation, data flows, privileges, and module dependencies |
+| [Component and process catalog](docs/architecture/COMPONENT_CATALOG.md) | 21 component responsibilities and 12 process roles |
+| [Interface contracts](docs/architecture/INTERFACE_CONTRACTS.md) | 23 planned logical handoffs, input trust, and fail-closed semantics |
+| [Deployment topologies](docs/architecture/DEPLOYMENT_TOPOLOGIES.md) | Agentless and optional agent deployment/visibility profiles |
+| [Architecture traceability](docs/architecture/ARCHITECTURE_TRACEABILITY.md) | Ownership of 12 threat boundaries, 42 threats, and 42 network requirements |
+| [Architecture decisions](docs/architecture/adr/0001-security-process-boundaries.md) | Recorded choices for privilege separation, evidence, egress, and Qt |
 | [Security principles](docs/security/SECURITY_PRINCIPLES.md) | Trust model, mandatory controls, and security requirements |
 | [Network scope requirements](docs/security/NETWORK_SCOPE_REQUIREMENTS.md) | Distinct monitoring, transport, and external-intelligence security boundaries |
 | [Network communication matrix](docs/architecture/NETWORK_COMMUNICATION_MATRIX.md) | Intended permitted, observed, and prohibited flows |
