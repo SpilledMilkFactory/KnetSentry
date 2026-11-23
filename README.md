@@ -15,9 +15,10 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M0.5 (design documents only):** This repository
+> **Development status — M0.7 (design documents and offline verifiers only):** This repository
 > contains the product and network-security contracts, threat model, modular
-> architecture, and initial performance/reliability qualification targets.
+> architecture, performance/reliability targets, dependency policy, and
+> planned secure development/verification gates.
 > It does **not** yet include a
 > functional SIEM, network collector, desktop application, detection engine, or
 > production security controls. The capabilities below are *planned*, not
@@ -89,6 +90,13 @@ under the approved network scope.
 | [Threat register](docs/security/THREAT_REGISTER.md) | Qualitative risk screening, proposed controls, future owners |
 | [Threat verification matrix](docs/security/THREAT_VERIFICATION_MATRIX.md) | Planned tests and evidence needed for future security claims |
 | [Release objectives](docs/development/RELEASE_OBJECTIVES.md) | v1.0.0 release bar, milestone groups, and open decisions |
+| [Secure development contract](DEVELOPMENT_CONTRACT.md) | 40 staged coding, security, testing and release requirements |
+| [Secure coding standard](docs/development/SECURE_CODING_STANDARD.md) | C++23, Qt/QML, input, privilege and concurrency rules |
+| [Toolchain and testing plan](docs/development/TOOLCHAIN_TEST_MATRIX.md) | Proposed compiler, CTest, Qt, sanitizer and fuzzing checks |
+| [CI security policy](docs/development/CI_SECURITY_POLICY.md) | PR isolation, action pinning, minimal permissions and progressive checks |
+| [Verification matrix](docs/development/VERIFICATION_MATRIX.md) | 30 future gate identifiers, owners and evidence conditions |
+| [Security review procedure](docs/development/SECURITY_REVIEW_PROCESS.md) | Threat-boundary impact and exception handling |
+| [Evidence format](docs/development/VERIFICATION_EVIDENCE.md) | PASS/FAIL/BLOCKED reporting and redacted reproducible results |
 | [Performance requirements](docs/development/PERFORMANCE_REQUIREMENTS.md) | 54 initial engineering requirements and measurement definitions |
 | [Workload profiles](docs/development/WORKLOAD_PROFILES.md) | Synthetic agentless and optional-agent benchmark cases W-00–W-09 |
 | [Benchmark plan](docs/development/BENCHMARK_PLAN.md) | 28 prospective benchmark cases and evidence methodology |
@@ -104,9 +112,11 @@ does **not** imply that KnetSentry is an official KDE project.
 ## Development and contributions
 
 The repository is in its documentation-first foundation stage. Build commands,
-contributor instructions, automated tests, and security disclosure workflows
-will be added in their scheduled milestones; do not infer that a missing test
-has passed.
+source-code test suites, CI workflows and security disclosure infrastructure
+will be implemented in their scheduled milestones. M0.7 documents the
+[development contract](DEVELOPMENT_CONTRACT.md) but has not executed
+compiler, Qt, sanitizer, network or runtime tests; never infer that a missing
+test has passed.
 
 For now, review the requirements documents above and file GitHub issues for unclear,
 conflicting, or untestable requirements. Security-sensitive implementation

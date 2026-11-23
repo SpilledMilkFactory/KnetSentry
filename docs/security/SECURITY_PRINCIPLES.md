@@ -188,3 +188,13 @@ prove that the system is vulnerability-free.
 
 Security exceptions must be explicit, justified, and tested. Convenience is
 not sufficient reason to bypass a defined security boundary.
+
+## 6. M0.7 development and verification contract
+
+The [secure development contract](../../DEVELOPMENT_CONTRACT.md) and
+[verification matrix](../development/VERIFICATION_MATRIX.md) require
+secure C++/Qt coding, bounded parsing, explicit privilege reviews, negative
+security tests, release artifact evidence, and honest reporting of unrun
+checks. Security control effectiveness remains **unverified** at M0.7.
+Local document verifiers do not substitute for namespace, firewall, agentless
+sensor, evidence-durability or independent release security testing.

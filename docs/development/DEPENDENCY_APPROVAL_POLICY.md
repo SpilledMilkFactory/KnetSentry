@@ -47,3 +47,11 @@ Review each package, Qt module, KDE Frameworks component, C/C++ library, CLI too
 M1.1/M1.3: approve the **actual** CMake/Qt/KF6/Kirigami modules and Ubuntu package versions before linking. M3/M4: review network, TLS, and capture libraries. M6/M9: review SQLite, capture and gateway integrations. M10: review Sigma imports, ATT&CK feeds and provider data licenses. M12: review AI runtimes and weights independently. M13.7: whole-graph security review. M15.5: artifact-derived distribution audit and SBOM before publication.
 
 Change-control proof: the dependency register entry, PR link, test evidence and approved version must be available to reviewers. `APPROVED_FOR_DISTRIBUTION` is only assigned after inspecting the packages actually being shipped, not inferred from an upstream description.
+
+## 5. M0.7 build and CI verification dependency
+
+The [secure development contract](../../DEVELOPMENT_CONTRACT.md) requires
+versioned toolchain checks, permission-minimized GitHub Actions and official
+REUSE verification when those jobs are introduced in M1. Approval to run a
+static analyzer or Qt module is not blanket approval to redistribute it; the
+version-and-artifact decisions above remain authoritative.

@@ -157,7 +157,10 @@ remain separate from official KDE adoption.
 - **M0.5 (defined):** Test workloads, resource budgets, latency and capacity
   thresholds; implementation, measurements and final baselines remain M14 work.
 - **M0.6 (defined):** Source/documentation/build licensing and dependency approval policy; actual package and redistribution audits remain future work.
-- **M0.7:** Mandatory build, test, and security qualification gates.
+- **M0.7 (defined):** [Stage-aware secure development contract](../../DEVELOPMENT_CONTRACT.md),
+  [planned 30-gate verification matrix](VERIFICATION_MATRIX.md),
+  [CI policy](CI_SECURITY_POLICY.md), and [evidence requirements](VERIFICATION_EVIDENCE.md);
+  the real CMake/Qt/CI/security tests remain future implementation work.
 - **M13:** Security sign-off supported by evidence.
 - **M14:** Performance and resilience qualification.
 - **M15:** Distribution verification and release publication.
