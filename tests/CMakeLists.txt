@@ -22,6 +22,14 @@ if(KNETSENTRY_BUILD_DESKTOP)
         LABELS "smoke;desktop;qml"
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
         TIMEOUT 30)
+    # The two observed third-party leak stacks are not KnetSentry leaks.
+    # Scope LSan suppressions to this specific full-QML smoke test only;
+    # keep detect_leaks=1 for the entire sanitizer preset. The negative
+    # control below proves first-party leaks remain detectable.
+    if(KNETSENTRY_ENABLE_SANITIZERS)
+        set_property(TEST knetsentry_kirigami_qml_startup APPEND PROPERTY ENVIRONMENT
+            "LSAN_OPTIONS=suppressions=${PROJECT_SOURCE_DIR}/tests/sanitizers/lsan_qml_third_party.supp:print_suppressions=1")
+    endif()
 endif()
 
 # M1.2 actual build evidence: assert active compiler flags and (on Linux)
@@ -32,3 +40,21 @@ add_test(NAME knetsentry_build_hardening
             "${PROJECT_SOURCE_DIR}/scripts/verify_m12_hardening.py"
             --build-dir "${PROJECT_BINARY_DIR}")
 set_tests_properties(knetsentry_build_hardening PROPERTIES LABELS "security;build")
+
+# Deliberately leak in a separate *test-only* process and require LSan to
+# reject it, even with the same scoped QML third-party suppressions present.
+# The fixture is never built into the GUI or manager, and only exists in
+# instrumented configurations. The Python wrapper turns expected failure
+# into a passing negative-control CTest without masking unexpected failures.
+if(KNETSENTRY_ENABLE_SANITIZERS)
+    add_executable(knetsentry_lsan_probe sanitizers/lsan_probe.cpp)
+    knetsentry_apply_project_options(knetsentry_lsan_probe)
+    add_test(NAME knetsentry_lsan_negative_control
+        COMMAND "${Python3_EXECUTABLE}"
+            "${PROJECT_SOURCE_DIR}/scripts/verify_m13_lsan.py"
+            --probe "$<TARGET_FILE:knetsentry_lsan_probe>")
+    set_tests_properties(knetsentry_lsan_negative_control PROPERTIES
+        LABELS "security;sanitizer;regression"
+        ENVIRONMENT "LSAN_OPTIONS=suppressions=${PROJECT_SOURCE_DIR}/tests/sanitizers/lsan_qml_third_party.supp:print_suppressions=1"
+        TIMEOUT 30)
+endif()

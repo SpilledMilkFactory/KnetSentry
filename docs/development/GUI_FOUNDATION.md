@@ -98,3 +98,52 @@ may receive that exception. Clang/Clazy must not receive the GCC-specific flag. 
 CTest and manual visible window launch remain mandatory acceptance checks.
 If the Qt-generated source path changes in a future Qt version, this check
 fails rather than silently allowing a broad relaxation.
+
+
+## M1.3 follow-up: sanitized Kirigami startup and external library allocations
+
+On Ubuntu 26.04 AMD64 with GCC 15.2, Qt 6.10.2, and Kirigami 6.24.0,
+`knetsentry_kirigami_qml_startup` successfully creates the real window but
+LeakSanitizer reports 5,913 bytes in 86 allocations whose recorded stacks
+originate in **Fontconfig**, the **Qt font database**, and the system-installed
+**Kirigami controls QML plugin**. This is not a verified KnetSentry allocation;
+we must **not** infer that the upstream libraries are leak-free either.
+
+Only the sanitizer build's `knetsentry_kirigami_qml_startup` CTest receives
+`LSAN_OPTIONS=suppressions=.../tests/sanitizers/lsan_qml_third_party.supp`.
+The file contains **only** `leak:libfontconfig.so.1` and
+`leak:libKirigamiControlsplugin.so`, matching the two observed external
+allocation stacks. `ASAN_OPTIONS=detect_leaks=1` is retained, as are ASan
+and UBSan memory/undefined-behavior checks. These rules do **not** apply to
+other CTest cases, to manually launched executables, or to release builds.
+
+Every sanitizer build includes `knetsentry_lsan_negative_control`: it runs
+an isolated test-only executable that **intentionally** leaks 1337 bytes, with
+the **same suppression file** and leak detection enabled. The wrapper
+requires LeakSanitizer to report the intentional leak and exit unsuccessfully;
+otherwise the verification test fails. This guards against accidentally
+masking all first-party memory leaks.
+
+```bash
+cmake --preset linux-sanitize --fresh && \
+cmake --build --preset linux-sanitize --parallel && \
+ctest --preset linux-sanitize --output-on-failure
+python3 scripts/verify_m13_lsan.py
+
+# Optional: inspect the unsuppressed upstream diagnostic. This is expected
+# to return nonzero on the affected Qt/Kirigami versions, so record it as
+# diagnostic evidence rather than as a qualification run:
+QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software QT_QUICK_CONTROLS_STYLE=Basic \
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 \
+./build/presets/linux-sanitize/apps/desktop/knetsentry --self-test-qml
+```
+
+A new leak report not matching these **two** entries is a failure requiring
+investigation. Reevaluate and ideally remove the suppressions following Qt,
+Kirigami, Fontconfig, or compiler upgrades; update documented evidence when
+upstream behavior changes. Do not generalize them to an entire Qt library,
+all QML tests, or project-wide sanitizer settings. A passing run proves
+only that this fixture exercises an operational QML startup while known
+external leak stacks are excluded; it does not prove the libraries leak-free.
+
+References: [LeakSanitizer suppressions](https://clang.llvm.org/docs/LeakSanitizer.html).

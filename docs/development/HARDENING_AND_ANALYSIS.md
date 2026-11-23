@@ -39,7 +39,7 @@ ctest --preset linux-sanitize --output-on-failure
 python3 scripts/verify_m12_hardening.py --build-dir build/presets/linux-sanitize
 ```
 
-The sanitizer CTest preset sets `ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1` and `UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1`. Run on **synthetic test data** without privileged capture or production telemetry. If sanitizers fail due to an environmental/runtime issue, preserve the failure and diagnose it; do not hide it behind `|| true` or globally disable leak checking. Never combine ASan with TSan in the same executable.
+The sanitizer CTest preset sets `ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1` and `UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1`. The M1.3 Kirigami startup smoke alone receives two narrowly scoped LSan rules for observed Fontconfig and Kirigami system-library allocations. The separate `knetsentry_lsan_negative_control` must demonstrate an unsuppressed first-party leak is detected with the same rules; no global leak-detection bypass is permitted. See [GUI foundation](GUI_FOUNDATION.md). Run on **synthetic test data** without privileged capture or production telemetry. If sanitizers fail due to an environmental/runtime issue, preserve the failure and diagnose it; do not hide it behind `|| true` or globally disable leak checking. Never combine ASan with TSan in the same executable.
 
 ## Static C++ and Qt analysis (opt-in until CI policy activates it)
 
