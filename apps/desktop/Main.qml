@@ -5,7 +5,7 @@ import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
-// M1.4: a navigable presentation-only shell, with NO live SIEM data sources.
+// M1.5: design-system-enabled navigation shell, with NO live SIEM data sources.
 Kirigami.ApplicationWindow {
     id: window
     objectName: "knetSentryMainWindow"
@@ -15,6 +15,17 @@ Kirigami.ApplicationWindow {
     minimumWidth: 700
     minimumHeight: 480
     visible: true
+
+    DesignTokens { id: designTokens }
+    readonly property string visualSystemVersion: designTokens.version
+    readonly property bool visualTokensValid: designTokens.spaceXs < designTokens.spaceS
+                                              && designTokens.spaceS < designTokens.spaceL
+                                              && designTokens.touchTarget >= 40
+                                              && !designTokens.animateStatusChanges
+    readonly property string currentPageVisualSystem: pageStack.currentItem
+                                                       ? pageStack.currentItem.visualSystemVersion : ""
+    readonly property bool currentPageCompact: pageStack.currentItem
+                                               ? pageStack.currentItem.compactLayout : false
 
     // Public, non-privileged navigation state. Used by the headless C++
     // integration test to exercise exactly the same routing as drawer actions.
@@ -141,7 +152,7 @@ Kirigami.ApplicationWindow {
                 elide: Text.ElideRight
             }
             Controls.Label {
-                text: qsTr("M1.4")
+                text: qsTr("M1.5")
             }
         }
     }

@@ -165,3 +165,11 @@ the existing Qt 6 QML module. New documentation remains CC-BY-SA-4.0.
 References: [KDE global drawer](https://develop.kde.org/docs/getting-started/kirigami/introduction-actions/),
 [KDE PageRow](https://api.kde.org/qml-org-kde-kirigami-pagerow.html),
 [M1.3 GUI foundation](GUI_FOUNDATION.md).
+
+## M1.5 visual design extension
+
+The seven destination IDs, explicit PageRow adoption, invalid-route rejection,
+28-transition regression, and shortcut mapping remain unchanged. M1.5 adds the
+[visual design system](VISUAL_DESIGN_SYSTEM.md), system-theme-aware reusable
+cards, a labeled availability indicator, and severity **samples only** on
+Settings. Monitoring remains unavailable and no security data is fabricated.
