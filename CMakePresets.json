@@ -34,6 +34,38 @@
       "cacheVariables": {
         "KNETSENTRY_BUILD_DESKTOP": "OFF"
       }
+    },
+    {
+      "name": "linux-sanitize",
+      "displayName": "Ubuntu 26.04: Debug + ASan/UBSan with Qt/KDE",
+      "inherits": "linux-debug",
+      "cacheVariables": {
+        "KNETSENTRY_ENABLE_SANITIZERS": "ON"
+      }
+    },
+    {
+      "name": "linux-sanitize-core-only",
+      "displayName": "Standalone C++ ASan/UBSan only (does NOT qualify desktop)",
+      "inherits": "linux-sanitize",
+      "cacheVariables": {
+        "KNETSENTRY_BUILD_DESKTOP": "OFF"
+      }
+    },
+    {
+      "name": "linux-analysis",
+      "displayName": "Qt/KDE build with clang-tidy (requires installed analyzer)",
+      "inherits": "linux-debug",
+      "cacheVariables": {
+        "KNETSENTRY_ENABLE_CLANG_TIDY": "ON"
+      }
+    },
+    {
+      "name": "linux-clazy",
+      "displayName": "Qt/KDE build with Clazy compiler (requires installed Clazy)",
+      "inherits": "linux-debug",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clazy"
+      }
     }
   ],
   "buildPresets": [
@@ -48,6 +80,22 @@
     {
       "name": "linux-core-only",
       "configurePreset": "linux-core-only"
+    },
+    {
+      "name": "linux-sanitize",
+      "configurePreset": "linux-sanitize"
+    },
+    {
+      "name": "linux-sanitize-core-only",
+      "configurePreset": "linux-sanitize-core-only"
+    },
+    {
+      "name": "linux-analysis",
+      "configurePreset": "linux-analysis"
+    },
+    {
+      "name": "linux-clazy",
+      "configurePreset": "linux-clazy"
     }
   ],
   "testPresets": [
@@ -74,6 +122,54 @@
     {
       "name": "linux-core-only",
       "configurePreset": "linux-core-only",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "linux-sanitize",
+      "configurePreset": "linux-sanitize",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      },
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1:abort_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      }
+    },
+    {
+      "name": "linux-sanitize-core-only",
+      "configurePreset": "linux-sanitize-core-only",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      },
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1:abort_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      }
+    },
+    {
+      "name": "linux-analysis",
+      "configurePreset": "linux-analysis",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "linux-clazy",
+      "configurePreset": "linux-clazy",
       "output": {
         "outputOnFailure": true
       },

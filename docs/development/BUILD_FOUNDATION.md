@@ -53,7 +53,7 @@ cmake --build --preset linux-core-only --parallel
 ctest --preset linux-core-only --output-on-failure
 ```
 
-**Passing `linux-core-only` never qualifies the Qt/KDE application, QML runtime, or Ubuntu 26.04 desktop release.** Never use that preset for release sign-off. The sanitizer preset (`linux-sanitize`), project warning/hardening policy, static analyzers, GUI tests and GitHub Actions are not yet implemented: M1.2, M1.7 and M1.8 own those gates.
+**Passing `linux-core-only` never qualifies the Qt/KDE application, QML runtime, or Ubuntu 26.04 desktop release.** Never use that preset for release sign-off. The M1.2 [hardening and analysis](HARDENING_AND_ANALYSIS.md) milestone implements Release warnings/hardening and the `linux-sanitize` preset. Full Qt GUI tests and GitHub Actions remain M1.7/M1.8 tasks; opt-in analyzer presets do not constitute CI enforcement.
 
 ## 4. M1.1 evidence and follow-up
 

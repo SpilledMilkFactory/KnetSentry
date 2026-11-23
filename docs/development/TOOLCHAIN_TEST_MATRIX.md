@@ -5,9 +5,9 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M1.1 CMake foundation and release/debug/core-only presets exist. The Qt
-window, Qt Test/Quick Test suites, sanitizer preset, hardening and CI still do
-**not** exist. Initial supported target is Ubuntu 26.04 AMD64. See the
+**State:** M1.2 CMake hardening, warnings-as-errors, ASan/UBSan and optional
+clang-tidy/Clazy presets exist. The Qt window, Qt Test/Quick Test suites and CI
+still do **not** exist. Initial supported target is Ubuntu 26.04 AMD64. See the
 [M1.1 build guide](BUILD_FOUNDATION.md).
 
 ## Planned build and analysis matrix
@@ -15,10 +15,10 @@ window, Qt Test/Quick Test suites, sanitizer preset, hardening and CI still do
 | Gate | Proposed mechanism | Owner | Preconditions and limits |
 | --- | --- | --- | --- |
 | Build | GCC C++23, CMake + Ninja, compiler warning flags | M1.1/M1.2 | Pin actual compiler and CMake minimum after local check; do not assume a GitHub runner image version |
-| Release | `linux-release` configure/build/test presets | M1.1/M1.7 | Warnings-as-errors for first-party code after baseline stabilization |
-| Sanitizer | `linux-sanitize` ASan + UBSan with symbols | M1.2/M1.7 | Test instrumented first-party code; dynamic third-party libraries may not be fully instrumented |
-| Static C++ | clang-tidy on compilation database | M1.8 | Versioned checks; false-positive suppression needs review and expiry |
-| Static Qt C++ | Clazy compatible with installed Clang/Qt | M1.8 | Only apply to Qt targets; do not assume available in every toolchain |
+| Release | `linux-release` configure/build/test presets | M1.1/M1.2 | First-party warnings-as-errors and ELF hardening active; final packaging inspection remains M15 |
+| Sanitizer | `linux-sanitize` ASan + UBSan with symbols | M1.2/M1.7 | Presets implemented; validate on Ubuntu 26.04; dynamic third-party libraries may not be instrumented |
+| Static C++ | opt-in `linux-analysis` clang-tidy | M1.2/M1.8 | Preset configured; mandatory CI checks remain M1.8 |
+| Static Qt C++ | opt-in `linux-clazy` compiler preset | M1.2/M1.8 | Requires installed Clazy; release CI integration remains M1.8 |
 | QML | `qmllint` and `qmlformat` | M1.8 | Require module import paths; validate available versions |
 | C++/Qt unit | CTest and Qt Test | M1.7 | Synthetic deterministic fixtures, unique test IDs |
 | GUI interaction | Qt Quick Test and offscreen smoke tests | M1.7/M8.9 | Headless result is not KDE Plasma/GNOME human acceptance |
@@ -63,8 +63,8 @@ ASAN_OPTIONS=halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ctest --preset linux-
 ```
 
 The `linux-release` configure/build/test commands are now usable after
-installing Qt/KDE build dependencies on Ubuntu 26.04. The `linux-sanitize`
-preset is still a proposal owned by M1.2; do not run or claim it until added.
+installing Qt/KDE build dependencies on Ubuntu 26.04. The `linux-sanitize` preset is implemented by M1.2; run and verify the
+full desktop on Ubuntu 26.04 before accepting that gate.
 See [verification cases](VERIFICATION_MATRIX.md) for activation and evidence.
 
 ## Authoritative reference links
@@ -76,3 +76,5 @@ See [verification cases](VERIFICATION_MATRIX.md) for activation and evidence.
 - [qmllint](https://doc.qt.io/qt-6/qtqml-tooling-qmllint.html)
 - [KDE Clazy](https://github.com/KDE/clazy)
 - [GCC instrumentation options](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html)
+
+See the [M1.2 hardening guide](HARDENING_AND_ANALYSIS.md) for current commands, flags, and evidence requirements.

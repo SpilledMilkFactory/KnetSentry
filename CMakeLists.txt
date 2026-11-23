@@ -15,6 +15,10 @@ option(KNETSENTRY_BUILD_DESKTOP "Build the Qt/Kirigami desktop bootstrap" ON)
 
 include(CTest)
 
+# M1.2: enable checks only for our own targets; never change third-party
+# Qt/KDE compilation flags or instrument their installed binaries.
+include(cmake/KnetSentryBuildOptions.cmake)
+
 # The core never depends on Qt, KDE, a GUI session, or privileged networking.
 add_subdirectory(src/core)
 

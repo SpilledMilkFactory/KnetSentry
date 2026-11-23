@@ -15,9 +15,10 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M1.1 (initial C++23/CMake foundation):** This repository
+> **Development status — M1.2 (C++23/CMake hardening foundation):** This repository
 > now includes a Qt-independent core library, a minimal Qt-linked desktop
-> bootstrap, out-of-tree CMake presets, initial CTest smoke tests, and the
+> bootstrap, out-of-tree CMake presets, warnings-as-errors, Release hardening,
+> ASan/UBSan presets, initial CTest checks, and the
 > accepted M0 security/architecture documentation. The bootstrap has **no
 > Qt Quick/Kirigami window yet** (M1.3) and is **not** a functional SIEM, network
 > sensor, management daemon, detection engine, or production security control.
@@ -69,7 +70,7 @@ segments rather than claim complete visibility. Encrypted payloads are not
 silently decrypted; local observed endpoints can be cataloged without an agent
 under the approved network scope.
 
-## Building the M1.1 foundation
+## Building the M1.2 foundation
 
 On Ubuntu 26.04 AMD64, install the [build prerequisites](docs/development/BUILD_FOUNDATION.md), then run:
 
@@ -80,13 +81,15 @@ ctest --preset linux-release --output-on-failure
 ```
 
 This currently builds a console-only Qt bootstrap; the full Kirigami window
-arrives in M1.3. A `linux-core-only` preset is available for Qt-free build
+arrives in M1.3. `linux-sanitize` adds ASan/UBSan instrumentation to the
+Qt bootstrap and first-party core. A `linux-core-only` preset is available for Qt-free build
 smoke tests but does **not** qualify the default desktop configuration.
 
 ## Product documentation
 
 | Document | Purpose |
 | --- | --- |
+| [M1.2 compiler hardening](docs/development/HARDENING_AND_ANALYSIS.md) | Target-scoped compiler warnings, sanitizers, optional analysis and ELF verification |
 | [M1.1 build foundation](docs/development/BUILD_FOUNDATION.md) | CMake presets, dependency setup, smoke tests, target ownership |
 | [Product vision](PRODUCT_VISION.md) | Purpose, audiences, benefits, success criteria, and non-goals |
 | [Product scope](docs/architecture/PRODUCT_SCOPE.md) | Supported deployments, boundaries, capabilities, and exclusions |
@@ -106,7 +109,7 @@ smoke tests but does **not** qualify the default desktop configuration.
 | [Release objectives](docs/development/RELEASE_OBJECTIVES.md) | v1.0.0 release bar, milestone groups, and open decisions |
 | [Secure development contract](DEVELOPMENT_CONTRACT.md) | 40 staged coding, security, testing and release requirements |
 | [Secure coding standard](docs/development/SECURE_CODING_STANDARD.md) | C++23, Qt/QML, input, privilege and concurrency rules |
-| [Toolchain and testing plan](docs/development/TOOLCHAIN_TEST_MATRIX.md) | Proposed compiler, CTest, Qt, sanitizer and fuzzing checks |
+| [Toolchain and testing plan](docs/development/TOOLCHAIN_TEST_MATRIX.md) | Current compiler/sanitizer gates and planned Qt, CI and fuzzing checks |
 | [CI security policy](docs/development/CI_SECURITY_POLICY.md) | PR isolation, action pinning, minimal permissions and progressive checks |
 | [Verification matrix](docs/development/VERIFICATION_MATRIX.md) | 30 future gate identifiers, owners and evidence conditions |
 | [Security review procedure](docs/development/SECURITY_REVIEW_PROCESS.md) | Threat-boundary impact and exception handling |
