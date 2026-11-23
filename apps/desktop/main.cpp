@@ -2,28 +2,87 @@
 // SPDX-License-Identifier: MIT
 #include "knetsentry/core/build_info.hpp"
 
-#include <QCoreApplication>
+#include <QCommandLineOption>
 #include <QCommandLineParser>
+#include <QCoreApplication>
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
+#include <QQuickWindow>
 #include <QString>
 
 #include <iostream>
+#include <string_view>
 
-int main(int argc, char *argv[]) {
-    QCoreApplication app(argc, argv);
+namespace {
+void set_application_metadata() {
     QCoreApplication::setApplicationName(QStringLiteral("KnetSentry"));
     QCoreApplication::setApplicationVersion(
         QString::fromUtf8(knetsentry::core::project_version().data(),
                           static_cast<qsizetype>(knetsentry::core::project_version().size())));
+    QCoreApplication::setOrganizationName(QStringLiteral("SpilledMilkFactory"));
+    QCoreApplication::setOrganizationDomain(QStringLiteral("github.com/SpilledMilkFactory"));
+}
 
-    QCommandLineParser parser;
-    parser.setApplicationDescription(
-        QStringLiteral("KnetSentry M1.1 bootstrap (no GUI or SIEM functionality yet)"));
+void configure_parser(QCommandLineParser &parser) {
+    parser.setApplicationDescription(QStringLiteral(
+        "KnetSentry M1.3 Qt Quick/Kirigami desktop foundation; no SIEM monitoring is active."));
     parser.addHelpOption();
     parser.addVersionOption();
+}
+
+bool requests_text_only(int argc, char *argv[]) {
+    for (int i = 1; i < argc; ++i) {
+        const std::string_view argument(argv[i]);
+        if (argument == "--help" || argument == "-h" || argument == "--version" ||
+            argument == "-v") {
+            return true;
+        }
+    }
+    return false;
+}
+} // namespace
+
+int main(int argc, char *argv[]) {
+    // Informational commands must work in headless consoles and on hosts
+    // without a working Wayland/X11 display. Do not construct QGuiApplication.
+    if (requests_text_only(argc, argv)) {
+        QCoreApplication app(argc, argv);
+        set_application_metadata();
+        QCommandLineParser parser;
+        configure_parser(parser);
+        parser.process(app);
+        return 0;
+    }
+
+    QGuiApplication app(argc, argv);
+    set_application_metadata();
+    QGuiApplication::setDesktopFileName(
+        QStringLiteral("io.github.spilledmilkfactory.KnetSentry"));
+
+    QCommandLineParser parser;
+    configure_parser(parser);
+    const QCommandLineOption qml_smoke_test(
+        QStringLiteral("self-test-qml"),
+        QStringLiteral("Load the embedded Kirigami window and exit; intended for tests."));
+    parser.addOption(qml_smoke_test);
     parser.process(app);
 
-    std::cout << knetsentry::core::product_name() << " "
-              << knetsentry::core::project_version() << " — "
-              << knetsentry::core::implementation_state() << '\n';
-    return 0;
+    // The UI has no privileged interfaces and exposes no operational SIEM
+    // state. Actual security data will be supplied by authorized IPC later.
+    QQmlApplicationEngine engine;
+    engine.loadFromModule("io.github.spilledmilkfactory.KnetSentry", "Main");
+    if (engine.rootObjects().size() != 1) {
+        std::cerr << "KnetSentry: failed to instantiate the QML root window.\n";
+        return 1;
+    }
+    const auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
+    if (window == nullptr || window->objectName() != QStringLiteral("knetSentryMainWindow")) {
+        std::cerr << "KnetSentry: unexpected QML root; Kirigami startup not qualified.\n";
+        return 1;
+    }
+    if (parser.isSet(qml_smoke_test)) {
+        std::cout << "KnetSentry M1.3 Kirigami QML smoke: PASS (not an operational SIEM)\n";
+        return 0;
+    }
+    return app.exec();
 }

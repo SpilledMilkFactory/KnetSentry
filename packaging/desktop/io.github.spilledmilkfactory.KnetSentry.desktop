@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2026 Chris Sutton
+# SPDX-License-Identifier: MIT
+[Desktop Entry]
+Type=Application
+Name=KnetSentry
+Comment=Local Network Security Intelligence (development preview)
+Exec=knetsentry
+Icon=network-workgroup
+Terminal=false
+Categories=System;Monitor;
+StartupNotify=true

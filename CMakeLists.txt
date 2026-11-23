@@ -5,13 +5,13 @@ cmake_minimum_required(VERSION 3.25)
 
 project(KnetSentry VERSION 0.0.0 LANGUAGES CXX)
 
-# M1.1 is a build foundation, NOT an implemented SIEM or Kirigami window.
+# M1.3 adds the desktop QML shell; SIEM services remain unimplemented.
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(KNETSENTRY_BUILD_DESKTOP "Build the Qt/Kirigami desktop bootstrap" ON)
+option(KNETSENTRY_BUILD_DESKTOP "Build the Qt/Kirigami desktop application" ON)
 
 include(CTest)
 
@@ -27,7 +27,6 @@ add_subdirectory(src/core)
 if(KNETSENTRY_BUILD_DESKTOP)
     find_package(ECM 6.0.0 REQUIRED NO_MODULE)
     list(PREPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
-    include(ECMFindQmlModule)
     find_package(Qt6 REQUIRED NO_MODULE COMPONENTS Core Gui Qml Quick QuickControls2)
 
     # The Clazy compiler wrapper uses Clang rather than the system GCC.
@@ -53,7 +52,10 @@ if(KNETSENTRY_BUILD_DESKTOP)
     endif()
 
     find_package(KF6 REQUIRED COMPONENTS Kirigami)
-    ecm_find_qmlmodule(org.kde.kirigami REQUIRED)
+    # ECM's legacy qmlplugindump path can report false negatives for modern
+    # Qt 6 Kirigami modules. A mandatory runtime CTest below loads a real
+    # Kirigami.ApplicationWindow instead of trusting metadata-only discovery.
+    qt_standard_project_setup(REQUIRES 6.5)
     add_subdirectory(apps/desktop)
 endif()
 

@@ -13,6 +13,15 @@ if(KNETSENTRY_BUILD_DESKTOP)
     add_test(NAME knetsentry_desktop_version
         COMMAND $<TARGET_FILE:knetsentry> --version)
     set_tests_properties(knetsentry_desktop_version PROPERTIES LABELS "smoke;desktop")
+
+    # A real import/instantiation test, independent of a physical display.
+    # Missing Kirigami/QML runtime modules MUST fail rather than be skipped.
+    add_test(NAME knetsentry_kirigami_qml_startup
+        COMMAND $<TARGET_FILE:knetsentry> --self-test-qml)
+    set_tests_properties(knetsentry_kirigami_qml_startup PROPERTIES
+        LABELS "smoke;desktop;qml"
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+        TIMEOUT 30)
 endif()
 
 # M1.2 actual build evidence: assert active compiler flags and (on Linux)
