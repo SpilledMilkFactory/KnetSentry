@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2026 Chris Sutton
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
 # KnetSentry — Product Scope and Deployment Boundaries
@@ -165,7 +165,7 @@ and the unprivileged Qt frontend. Agentless visibility is always contingent
 on actual gateway exports or mirrored/tapped traffic; it never requires an
 agent on the observed printer, camera, or doorbell. No processes, interfaces,
 or controls are yet implemented by M0.4.
-M0.5 defines performance and capacity thresholds. M0.6 resolves the final
+M0.5 defines performance and capacity thresholds. M0.6 defines the
 licensing, dependency, and KDE compliance policy.
 
 Any proposed expansion of collection or network scope needs a reviewed change

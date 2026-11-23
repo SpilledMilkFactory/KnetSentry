@@ -29,7 +29,7 @@ for name,rel in FILES.items():
  p=ROOT/rel
  if not p.is_file(): errors.append(f'missing: {rel}');continue
  s=p.read_text(encoding='utf-8');text[name]=s
- if name not in ('readme','release') and 'SPDX-License-Identifier: MIT' not in s:
+ if name not in ('readme','release') and 'SPDX-License-Identifier: CC-BY-SA-4.0' not in s:
   errors.append(f'missing SPDX marker in {rel}')
 
 def find_rows(name,prefix,nums):

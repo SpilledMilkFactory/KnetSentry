@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 Chris Sutton
+# SPDX-License-Identifier: MIT
+# SPDX-FileComment: Repository licensing declarations for files without inline comments.
+version = 1
+
+[[annotations]]
+path = ["LICENSE"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Chris Sutton"
+SPDX-License-Identifier = "MIT"
