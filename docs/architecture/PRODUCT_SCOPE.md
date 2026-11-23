@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 # KnetSentry — Product Scope and Deployment Boundaries
 
 **Status:** M0.1 product baseline refined by M0.2 network requirements.
-M0.3–M0.4 will specify the threat model and detailed service interfaces;
+M0.3 defines the initial threat model; M0.4 will specify detailed service interfaces;
 no network security implementation is implied here.
 
 ## 1. Initial compatibility contract
@@ -151,7 +151,9 @@ truthful. Detection explanations and reports must preserve those limitations.
 ## 7. Unresolved decisions
 
 M0.2 defines the monitoring, local transport, and optional intelligence-egress
-contracts. M0.3 supplies the threat model. M0.4 formalizes service interfaces,
+contracts. M0.3 supplies the [initial threat model](../security/THREAT_MODEL.md),
+[risk register](../security/THREAT_REGISTER.md), and future verification
+requirements. M0.4 formalizes service interfaces,
 process boundaries, and protocols.
 M0.5 defines performance and capacity thresholds. M0.6 resolves the final
 licensing, dependency, and KDE compliance policy.

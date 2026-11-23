@@ -8,6 +8,8 @@ SPDX-License-Identifier: MIT
 **Status:** M0.2 future-test specification. None of the tests described here
 has been implemented or executed by publishing this document.
 **Primary contract:** [NETWORK_SCOPE_REQUIREMENTS.md](NETWORK_SCOPE_REQUIREMENTS.md).
+**Threat expansion:** [THREAT_MODEL.md](THREAT_MODEL.md) and
+[THREAT_VERIFICATION_MATRIX.md](THREAT_VERIFICATION_MATRIX.md).
 
 ## 1. Methodology and evidence
 

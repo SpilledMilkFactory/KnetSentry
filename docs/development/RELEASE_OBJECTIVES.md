@@ -122,7 +122,10 @@ change the existing license or create a final GPL commitment.
   [future verification matrix](../security/NETWORK_SCOPE_VERIFICATION_PLAN.md).
   Implementation of external feed synchronization must be tracked as a
   dedicated later issue; this documentation alone does not supply a client.
-- **M0.3:** Threat model and residual risk register.
+- **M0.3 (defined):** [Initial threat model](../security/THREAT_MODEL.md),
+  [threat register](../security/THREAT_REGISTER.md), and
+  [verification matrix](../security/THREAT_VERIFICATION_MATRIX.md);
+  residual risk remains unassessed pending implementation and evidence.
 - **M0.4:** Process boundaries, transport, APIs, and storage interfaces.
 - **M0.5:** Test workloads, resource budgets, latency and capacity thresholds.
 - **M0.6:** Source/documentation/build licensing and dependency review.

@@ -149,7 +149,12 @@ criteria and M14 will validate them.
   and optional manager egress to approved external security-intelligence feeds.
   IPv4/IPv6, routed LAN segments, identity, privacy, and fail-closed policy
   must be addressed in subsequent implementation and tests.
-- **M0.3:** Formal adversary model and accepted residual risks.
+- **M0.3 (defined):** The [initial threat model](docs/security/THREAT_MODEL.md),
+  [risk register](docs/security/THREAT_REGISTER.md), and
+  [future verification matrix](docs/security/THREAT_VERIFICATION_MATRIX.md)
+  identify adversaries, trust boundaries, abuse cases, proposed controls, and
+  accountable future tests. No mitigations are deployed and residual risks
+  are **not yet assessed or accepted**.
 - **M0.4:** Component boundaries, APIs, and storage/transport design.
 - **M0.5:** Resource budgets and benchmark thresholds.
 - **M0.6:** Final component-level licensing, third-party obligations, and

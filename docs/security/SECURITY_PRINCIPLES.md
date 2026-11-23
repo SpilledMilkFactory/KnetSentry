@@ -17,8 +17,11 @@ systems may be compromised, records may be adversarially crafted, and
 credentials may be stolen. Authenticated transport establishes an identity,
 not proof that the sender's operating system is uncompromised.
 
-M0.3 will formalize attacker capabilities, residual risks, and the supported
-threat model. We will not claim to defeat a compromised kernel or every fully
+M0.3 defines the [initial threat model](THREAT_MODEL.md),
+[threat register](THREAT_REGISTER.md), and
+[verification ownership](THREAT_VERIFICATION_MATRIX.md). Risk mitigation
+remains planned, and residual risk is unassessed until controls are built and
+verified. We will not claim to defeat a compromised kernel or every fully
 privileged local attacker.
 
 ## 2. Foundational requirements
@@ -146,7 +149,8 @@ prove that the system is vulnerability-free.
 
 ## 5. Follow-up issue ownership
 
-- **M0.2–M0.4:** Exact LAN policy, threat model, and trust boundary design.
+- **M0.2–M0.4:** LAN policy and threat model documented in M0.2/M0.3;
+  M0.4 must reconcile conceptual flows with process/API design.
 - **M0.6–M0.7:** Licensing/supply-chain controls and quality requirements.
 - **M3–M4:** Network isolation, authenticated enrollment, secure transport.
 - **M5–M11:** Privacy-aware collection, evidence, detections, incidents.

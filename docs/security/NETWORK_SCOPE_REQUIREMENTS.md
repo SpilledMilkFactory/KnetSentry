@@ -9,7 +9,8 @@ SPDX-License-Identifier: MIT
 **Target:** Ubuntu 26.04 LTS AMD64; proposed v1.0.0 product architecture.
 **Traceability:** GitHub issue #2 / M0.2.
 **See also:** [network communication matrix](../architecture/NETWORK_COMMUNICATION_MATRIX.md),
-[network verification plan](NETWORK_SCOPE_VERIFICATION_PLAN.md).
+[network verification plan](NETWORK_SCOPE_VERIFICATION_PLAN.md), and
+[initial threat model](THREAT_MODEL.md).
 
 ## 1. Normative terms and distinct trust boundaries
 
