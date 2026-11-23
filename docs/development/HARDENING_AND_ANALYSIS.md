@@ -39,7 +39,7 @@ ctest --preset linux-sanitize --output-on-failure
 python3 scripts/verify_m12_hardening.py --build-dir build/presets/linux-sanitize
 ```
 
-The sanitizer CTest preset sets `ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1` and `UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1`. Run on **synthetic test data** without privileged capture or production telemetry. If sanitizers fail due to an environmental/runtime issue, preserve the failure and diagnose it; do not hide it behind `|| true` or globally disable leak checking. Never combine ASan with TSan in the same executable.
+The sanitizer CTest preset sets `ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1` and `UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1`. The M1.3 Kirigami startup smoke alone receives two narrowly scoped LSan rules for observed Fontconfig and Kirigami system-library allocations. The separate `knetsentry_lsan_negative_control` must demonstrate an unsuppressed first-party leak is detected with the same rules; no global leak-detection bypass is permitted. See [GUI foundation](GUI_FOUNDATION.md). Run on **synthetic test data** without privileged capture or production telemetry. If sanitizers fail due to an environmental/runtime issue, preserve the failure and diagnose it; do not hide it behind `|| true` or globally disable leak checking. Never combine ASan with TSan in the same executable.
 
 ## Static C++ and Qt analysis (opt-in until CI policy activates it)
 
@@ -73,7 +73,7 @@ cmake --build --preset linux-clazy --parallel && \
 ctest --preset linux-clazy --output-on-failure
 ```
 
-For another Clang major version, install its matching `libomp-<major>-dev` package as provided by the distribution. If the package is unavailable, investigate the actual compiler/runtime mismatch rather than forcing `KF6Kirigami_FOUND` or disabling the dependency. CMake now detects this condition early when using the Clazy compiler wrapper, with an actionable diagnostic. This does not introduce an OpenMP dependency into the KnetSentry core or the standard GCC presets. The Qt QML `qmlplugindump`/`org.kde.kirigami` warning is a **separate** M1.3 runtime-discovery issue and should be investigated after the GUI exists.
+For another Clang major version, install its matching `libomp-<major>-dev` package as provided by the distribution. If the package is unavailable, investigate the actual compiler/runtime mismatch rather than forcing `KF6Kirigami_FOUND` or disabling the dependency. CMake now detects this condition early when using the Clazy compiler wrapper, with an actionable diagnostic. This does not introduce an OpenMP dependency into the KnetSentry core or the standard GCC presets. M1.3 replaces the legacy `qmlplugindump` metadata-only Kirigami check with an actual `Kirigami.ApplicationWindow` runtime smoke test. Full desktop CTest qualification requires the QML test to pass; CMake configure alone is insufficient.
 
 ## Hardening evidence and limitations
 
@@ -81,7 +81,7 @@ For another Clang major version, install its matching `libomp-<major>-dev` packa
 - **Release** uses `-fstack-protector-strong`, `_FORTIFY_SOURCE=3`, position-independent executables, and linker `-z relro` and `-z now`. Debug and sanitizer builds do not claim those Release-only flags.
 - The M1.2 offline verifier checks the resolved compilation database, Ninja link commands, and executable ELF properties (PIE, GNU_RELRO, NOW) if a build directory is supplied. An unbuilt source-only check cannot establish binary hardening.
 - `_FORTIFY_SOURCE=3` covers eligible libc calls under appropriate optimization; it is not memory safety or proof against all overflows. ASan/UBSan coverage depends on instrumentation and test coverage. Compiler warning success does not eliminate vulnerabilities.
-- M15 separately validates **the actual released binaries** and their packaged dependencies. Qt/KDE QML runtime checks, including the existing `qmlplugindump`/Kirigami module discovery warning, belong to M1.3 and must not be confused with a working graphical application.
+- M15 separately validates **the actual released binaries** and their packaged dependencies. M1.3 adds actual Kirigami runtime tests, distinct from ELF hardening and final artifact checks.
 - Any deliberate warnings-as-errors or hardening opt-out is for local diagnosis and cannot qualify Release acceptance. Record compiler, CMake, Qt/KF6, analyzer versions and any exceptions in the verification evidence.
 
 ## References

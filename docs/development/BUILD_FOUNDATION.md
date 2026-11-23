@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M1.1 — Build and Source Architecture
 
-**Status:** Implemented build foundation, NOT a functioning SIEM or Qt/QML window.
+**Status:** M1.3 desktop foundation implemented; NOT a functioning SIEM.
 **Scope:** GitHub issue #9; Ubuntu 26.04 LTS AMD64 is the supported build target.
 
 ## 1. Rationale and ownership
@@ -14,7 +14,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 | --- | --- | --- | --- |
 | `src/core/` / `knetsentry_core` | Qt-free foundational library and immutable build identity | C++23 standard library | Shared core APIs and tests |
 | `include/knetsentry/core/` | Public, namespaced core headers | C++23 standard library | Versioned service-neutral APIs |
-| `apps/desktop/` / `knetsentry` | Minimal Qt Core bootstrap; `--help` and `--version` | Qt6::Core | M1.3 QML, Kirigami UI, desktop integration |
+| `apps/desktop/` / `knetsentry` | Real Qt Quick/Kirigami window; headless `--help`, `--version`, `--self-test-qml` | Qt6 Core/Gui/Qml/Quick/QuickControls2, Kirigami runtime | M1.4 navigation, M2+ services |
 | `tests/` / `knetsentry_core_smoke` | Initial deterministic CTest smoke | Qt-free core | M1.7 Qt Test, Quick Test, full unit/integration suite |
 | `apps/manager/`, `apps/agent/`, `apps/cli/` | **Reserved**, not yet implemented or generated | None yet | M2.1, M5.1, subsequent CLI issues |
 | `src/security/`, `src/telemetry/`, `src/storage/` | **Reserved**, not yet implemented | None yet | Respective security milestones |
@@ -30,7 +30,7 @@ sudo apt update
 sudo apt install build-essential cmake ninja-build qt6-base-dev qt6-declarative-dev extra-cmake-modules libkirigami-dev
 ```
 
-The `libkirigami-dev` package depends on the Kirigami QML runtime module on Ubuntu 26.04. CMake independently requires **Qt6 Core/Gui/Qml/Quick/QuickControls2**, **ECM 6+**, **KF6 Kirigami**, and the **org.kde.kirigami QML module** for a standard desktop configuration. If a package is missing, configuration must fail and indicate the dependency; the build must never download or silently substitute a different Qt/KDE version. Verify local package versions with `apt-cache policy` and the configure output. Dependencies remain `CANDIDATE` / `REVIEW_REQUIRED` in the [register](DEPENDENCY_REGISTER.md); configuration does **not** grant redistribution approval.
+The full desktop requires **Qt6 Core/Gui/Qml/Quick/QuickControls2**, **ECM 6+**, and **KF6 Kirigami** at configure time. Ubuntu 26.04 also needs the `qml6-module-org-kde-kirigami` QML runtime package. The `knetsentry_kirigami_qml_startup` CTest actually instantiates `Kirigami.ApplicationWindow` and **fails** if the QML runtime or required imports are missing. The legacy ECM `qmlplugindump` check produced a false negative despite installed KF6 development packages; we replaced that metadata-only probe with the runtime test. A completed CMake configure alone does **not** qualify QML. No dependency is auto-downloaded or substituted. Verify local package versions with `apt-cache policy` and the configure output. Dependencies remain `CANDIDATE` / `REVIEW_REQUIRED` in the [register](DEPENDENCY_REGISTER.md); configuration does **not** grant redistribution approval.
 
 Reference: [KDE Kirigami C++ setup](https://develop.kde.org/docs/getting-started/kirigami/setup-cpp/).
 
@@ -43,7 +43,7 @@ ctest --preset linux-release --output-on-failure
 ./build/presets/linux-release/apps/desktop/knetsentry --version
 ```
 
-The executable intentionally **does not display a window** until M1.3.
+Starting `knetsentry` without options opens the M1.3 Kirigami foundation window. It is a clearly labeled **non-operational desktop preview**, not monitoring software. `--help` and `--version` do not require a graphical display. `--self-test-qml` instantiates the actual window and exits; its CTest environment uses Qt offscreen/software rendering.
 
 For a Debug build, substitute `linux-debug`. A separate **core-only smoke build** exists for environments without Qt/KDE packages:
 
@@ -61,4 +61,4 @@ ctest --preset linux-core-only --output-on-failure
 - Record CMake, Ninja, GCC, Qt 6, KF6/ECM versions and any configure errors.
 - `scripts/verify_m11_build.py` checks repository structure, presets, licenses and staged expectations; it is **not** a substitute for a real desktop build.
 - Preserve all six M0 document-verifier passes, root MIT license, source SPDX and REUSE conventions; `CMakePresets.json` uses an explicit MIT declaration in `REUSE.toml`.
-- M1.3 adds actual QML/Kirigami resources, window and app lifecycle. M1.7 expands test coverage, M1.8 activates CI and official REUSE lint.
+- M1.3 adds actual QML/Kirigami resources, window and app lifecycle. M1.4 adds navigation; M1.7 expands Qt/QML tests and M1.8 activates CI and official REUSE lint.

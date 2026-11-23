@@ -22,9 +22,9 @@ security controls, or release artifacts already exist.
 
 M1.1 introduces the [Qt-aware CMake foundation](BUILD_FOUNDATION.md);
 M1.2 adds [target-scoped hardening and sanitizers](HARDENING_AND_ANALYSIS.md).
-The foundation still includes only
-core smoke tests and dependency discovery. Qt Quick/Kirigami UI, services,
-and actual SIEM capabilities remain future work. A passing core-only build does
+M1.3 adds a real Qt Quick/Kirigami window and a mandatory runtime import test.
+The application shell remains non-operational; navigation (M1.4), services,
+and actual SIEM capabilities are future work. A passing core-only build does
 not qualify the desktop or production security requirements.
 
 ## 2. Roadmap stages

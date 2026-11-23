@@ -15,14 +15,14 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M1.2 (C++23/CMake hardening foundation):** This repository
-> now includes a Qt-independent core library, a minimal Qt-linked desktop
-> bootstrap, out-of-tree CMake presets, warnings-as-errors, Release hardening,
-> ASan/UBSan presets, initial CTest checks, and the
-> accepted M0 security/architecture documentation. The bootstrap has **no
-> Qt Quick/Kirigami window yet** (M1.3) and is **not** a functional SIEM, network
-> sensor, management daemon, detection engine, or production security control.
-> Those capabilities remain planned and unverified.
+> **Development status — M1.3 (Qt Quick/Kirigami GUI foundation):**
+> The repository includes a Qt-independent C++23 core, CMake/Ninja presets,
+> compiler hardening, ASan/UBSan, the M0 documentation contracts and a real
+> **Qt 6/Kirigami desktop window**. The window explicitly reports that monitoring
+> is **not active**. No management daemon, agentless network sensor, detection
+> engine, alerting, or privileged security controls are implemented yet.
+> The Qt QML startup smoke test validates actual Kirigami imports; it is not a
+> security or production qualification.
 
 ## Intended platform and architecture
 
@@ -70,7 +70,7 @@ segments rather than claim complete visibility. Encrypted payloads are not
 silently decrypted; local observed endpoints can be cataloged without an agent
 under the approved network scope.
 
-## Building the M1.2 foundation
+## Building the M1.3 desktop foundation
 
 On Ubuntu 26.04 AMD64, install the [build prerequisites](docs/development/BUILD_FOUNDATION.md), then run:
 
@@ -80,10 +80,13 @@ cmake --build --preset linux-release --parallel
 ctest --preset linux-release --output-on-failure
 ```
 
-This currently builds a console-only Qt bootstrap; the full Kirigami window
-arrives in M1.3. `linux-sanitize` adds ASan/UBSan instrumentation to the
-Qt bootstrap and first-party core. A `linux-core-only` preset is available for Qt-free build
-smoke tests but does **not** qualify the default desktop configuration.
+Running `./build/presets/linux-release/apps/desktop/knetsentry` opens the first
+Kirigami window. It does not monitor or collect any traffic. `--version` and
+`--help` work without a graphical display. `--self-test-qml` is used by the
+mandatory `knetsentry_kirigami_qml_startup` CTest with an offscreen renderer.
+See the [M1.3 GUI foundation guide](docs/development/GUI_FOUNDATION.md).
+`linux-sanitize` adds ASan/UBSan for project code. The `linux-core-only` preset
+remains useful but **cannot qualify the Qt/Kirigami desktop**.
 
 ## Product documentation
 

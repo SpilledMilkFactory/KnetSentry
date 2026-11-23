@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 Chris Sutton
+# SPDX-License-Identifier: MIT
+#
+# M1.3 Ubuntu 26.04 / Qt 6.10.2 / Kirigami 6.24.0 GUI smoke only.
+# Observed with GCC 15.2.0 ASan/LSan. Review/remove when dependencies change.
+# These are third-party allocation stacks from the accepted failure log.
+# This file MUST NOT be applied to other tests or globally to KnetSentry.
+# Keep ASAN_OPTIONS=detect_leaks=1 and run the unsuppressed-leak negative control.
+leak:libfontconfig.so.1
+leak:libKirigamiControlsplugin.so

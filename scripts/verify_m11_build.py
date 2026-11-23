@@ -42,7 +42,7 @@ root = read("CMakeLists.txt")
 for token in ("LANGUAGES CXX", "CMAKE_CXX_STANDARD 23",
               "KNETSENTRY_BUILD_DESKTOP", "add_subdirectory(src/core)",
               "find_package(ECM", "find_package(Qt6", "find_package(KF6",
-              "ecm_find_qmlmodule(org.kde.kirigami REQUIRED)",
+              "qt_standard_project_setup(REQUIRES 6.5)",
               "add_subdirectory(tests)"):
     check(token in root, f"root CMake missing {token}")
 check(root.index("if(KNETSENTRY_BUILD_DESKTOP)") < root.index("find_package(Qt6"),
@@ -79,7 +79,7 @@ except (KeyError, ValueError, TypeError) as exc:
 check("0.0.0" in root and "not a functioning siem" in read("docs/development/BUILD_FOUNDATION.md").lower(),
       "foundation version/status not clearly specified")
 check("#include <QCoreApplication>" in read("apps/desktop/main.cpp"),
-      "desktop bootstrap is not Qt-linked")
+      "desktop program is not Qt-linked")
 for rel in ("README.md", "docs/development/TOOLCHAIN_TEST_MATRIX.md",
             "docs/development/RELEASE_OBJECTIVES.md"):
     check("BUILD_FOUNDATION.md" in read(rel), f"{rel} missing build guide link")
@@ -91,6 +91,6 @@ if errors:
         print(f"  - {err}", file=sys.stderr)
     sys.exit(1)
 print("M1.1 build-foundation verification: PASS")
-print("  C++23 core + Qt bootstrap targets; 3 configure/build/test presets")
-print("  Qt/KDE dependencies required for normal desktop; core-only isolated")
+print("  C++23 core + Qt desktop targets; 3 original configure/build/test presets")
+print("  Qt/KDE required for desktop; runtime Kirigami test required (M1.3); core-only isolated")
 print("  Full Ubuntu 26.04 Qt build and future security/GUI gates NOT verified here")
