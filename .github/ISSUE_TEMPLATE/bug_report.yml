@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: 2026 Chris Sutton
+# SPDX-License-Identifier: MIT
+name: Bug report
+description: Report a non-security defect without including private telemetry or credentials.
+title: "[Bug]: "
+labels: ["type:bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Security warning:** Do not submit exploitable vulnerabilities, proofs of concept,
+        secrets, live LAN captures, or private device details here. Use the repository
+        Security Advisories page for private reporting when enabled (see SECURITY.md).
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Actual behavior
+      description: Describe what happened using synthetic or redacted data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Only include authorized, non-sensitive reproduction steps.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Revision and environment
+      placeholder: "Commit hash; Ubuntu 26.04 AMD64; documentation or future release"
+    validations:
+      required: true
+  - type: checkboxes
+    id: redaction
+    attributes:
+      label: Public data safety
+      options:
+        - label: I removed private telemetry, secrets, and exploit details from this public report.
+          required: true

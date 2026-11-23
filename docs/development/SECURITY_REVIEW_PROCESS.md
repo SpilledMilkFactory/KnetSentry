@@ -6,8 +6,9 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # KnetSentry — Security Impact Review and Exception Policy
 
 **State:** M0.7 approved *process design*, not evidence that future pull
-requests have received these reviews. M0.8 will formalize repository
-participation/governance and M1.9 adds templates to support this policy.
+requests have received these reviews. M0.8 defines [repository governance](../../GOVERNANCE.md),
+[private reporting](../../SECURITY.md), and PR templates; M1.9 will integrate
+them with the first implemented C++/Qt workflows and actual required checks.
 
 ## Review intake for each implementation PR
 
@@ -46,7 +47,8 @@ come from the exact revised code, not an older local build.
 Classification depends on actual preconditions, exploitability, exposure and
 impact, not solely on scanner output. Unknown severity is `UNASSESSED`, not
 assumed low. Never post secret-bearing proofs of concept to a public issue.
-Use the project's coordinated disclosure process from M0.8.
+Use the [coordinated disclosure policy](../../SECURITY.md) and
+[maintainer handling procedure](../security/VULNERABILITY_HANDLING.md).
 
 ## Exception controls
 
