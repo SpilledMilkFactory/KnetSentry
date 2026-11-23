@@ -10,12 +10,14 @@ SPDX-License-Identifier: MIT
 KnetSentry is a planned open-source, local-first Security Information and Event
 Management (SIEM) platform for systems and security operators monitoring
 **explicitly authorized devices on their own local networks**. Its intended
-architecture combines a central management service, enrolled Ubuntu endpoint
-agents, a security-event pipeline, detection and investigation tools, and an
-optional offline AI assistant.
+architecture combines a central management service, **first-class agentless
+network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
+security-event pipeline, detection and investigation tools, and optional
+offline AI assistance.
 
-> **Development status — M0.1 (requirements only):** This repository currently
-> contains the initial product definition. It does **not** yet include a
+> **Development status — M0.2 (requirements only):** This repository currently
+> contains the product definition and a proposed network-security contract.
+> It does **not** yet include a
 > functional SIEM, network collector, desktop application, detection engine, or
 > production security controls. The capabilities below are *planned*, not
 > implemented or security-certified.
@@ -29,29 +31,42 @@ optional offline AI assistant.
 - **Desktop:** Qt 6, Qt Quick/QML, KDE Frameworks 6, and Kirigami. The desktop
   is unprivileged and communicates with the management service over authorized
   local IPC; security services do not depend on GUI libraries.
-- **Network:** No KnetSentry-initiated Internet communications. Connections and
-  collection must stay within explicitly administrator-approved local
-  interfaces, peers, and network scopes, with independent host-level policy
-  enforcement. A private IP address is not by itself proof of LAN membership.
+- **Monitoring:** Administrator-approved local networks can be monitored
+  **without endpoint installations**, using passive sensors and available
+  router, switch, access-point, DHCP, DNS, and firewall telemetry. Optional
+  agents provide deeper host-specific evidence. Observed local devices may be
+  inventoried under an approved network scope without individual enrollment.
+  Available inbound/outbound Internet flows are in scope; external conversation
+  peers are never automatically enrolled or probed.
+- **Network access:** Agent/manager transport is locally scoped; optional,
+  explicitly approved HTTPS access to CVE, MITRE ATT&CK, and other trusted
+  intelligence sources is permitted through a restricted manager component.
+  Private addresses alone are not proof of LAN membership.
 - **AI:** Optional, offline and restricted to local inference; normal SIEM
   operation must not depend on a model or a cloud provider.
 
 ## Planned security workflow
 
-1. An administrator approves the local network scope and enrolls authorized
-   endpoint agents.
-2. Agents collect selected security-relevant system telemetry with the minimum
-   necessary permissions and transmit it over authenticated, encrypted links.
+1. An administrator authorizes one or more local network segments and
+   configures a passive sensor, gateway export, or other legitimate telemetry
+   source. **No agent is required on observed devices.**
+2. The platform inventories visible LAN devices and analyzes observable flows,
+   DNS events, device communication patterns, and available firewall/gateway
+   records. Optional enrolled agents add host-level logs where supported.
 3. The manager validates, normalizes, indexes, and retains selected events.
 4. Deterministic rules and correlation logic generate traceable alerts.
 5. An analyst investigates, records evidence, manages incidents, and exports
    reports. Offline AI may suggest summaries or investigative leads, but cannot
    independently take privileged response actions.
 
-Detailed host telemetry requires an enrolled agent or an explicitly configured
-telemetry source. Merely being present on the LAN does not make a device fully
-observable. Passive monitoring and network-device ingestion are planned as
-separate, opt-in integrations, not unrestricted discovery or interception.
+**Coverage is determined by network topology and sensor placement.** On a
+switched or encrypted network, an ordinary workstation often cannot see
+traffic exchanged by other devices. Comprehensive agentless monitoring may
+require gateway logging, switch port mirroring, an authorized tap, or access
+point/controller exports. KnetSentry must identify uncovered devices and
+segments rather than claim complete visibility. Encrypted payloads are not
+silently decrypted; local observed endpoints can be cataloged without an agent
+under the approved network scope.
 
 ## Product documentation
 
@@ -60,6 +75,9 @@ separate, opt-in integrations, not unrestricted discovery or interception.
 | [Product vision](PRODUCT_VISION.md) | Purpose, audiences, benefits, success criteria, and non-goals |
 | [Product scope](docs/architecture/PRODUCT_SCOPE.md) | Supported deployments, boundaries, capabilities, and exclusions |
 | [Security principles](docs/security/SECURITY_PRINCIPLES.md) | Trust model, mandatory controls, and security requirements |
+| [Network scope requirements](docs/security/NETWORK_SCOPE_REQUIREMENTS.md) | Distinct monitoring, transport, and external-intelligence security boundaries |
+| [Network communication matrix](docs/architecture/NETWORK_COMMUNICATION_MATRIX.md) | Intended permitted, observed, and prohibited flows |
+| [Network verification plan](docs/security/NETWORK_SCOPE_VERIFICATION_PLAN.md) | Future M3 and integration test specifications |
 | [Release objectives](docs/development/RELEASE_OBJECTIVES.md) | v1.0.0 release bar, milestone groups, and open decisions |
 
 The GitHub roadmap covers M0–M15 for v1.0.0, followed by a separate optional
@@ -73,7 +91,7 @@ contributor instructions, automated tests, and security disclosure workflows
 will be added in their scheduled milestones; do not infer that a missing test
 has passed.
 
-For now, review the four documents above and file GitHub issues for unclear,
+For now, review the requirements documents above and file GitHub issues for unclear,
 conflicting, or untestable requirements. Security-sensitive implementation
 should not begin until its relevant trust and network boundaries are defined.
 

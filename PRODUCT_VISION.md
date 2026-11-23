@@ -28,8 +28,8 @@ It is not intended to assert complete knowledge of every connected device.
 
 | User | Need | Intended workflow |
 | --- | --- | --- |
-| Home-lab administrator | Understand security activity on owned hosts | Enroll agents, review host health and alerts |
-| Small-network operator | Centralize locally available evidence | Search events, tune rules, manage retention |
+| Home-lab administrator | Observe smart-home devices, printers, and managed hosts | Configure agentless sensor/gateway sources; optionally enroll agents |
+| Small-network operator | Centralize locally available network and host evidence | Search events, inspect coverage, tune rules, manage retention |
 | Security analyst or student | Investigate multi-host activity | Pivot across sources, build timelines, document findings |
 | Detection engineer | Develop and validate defensible detections | Write rules, run positive/negative fixtures, inspect evidence |
 | Researcher or contributor | Study secure C++ security-system design | Review threat models, tests, and documented architecture |
@@ -40,13 +40,19 @@ configuration and privacy controls that support this responsibility.
 
 ## 3. Core product goals
 
-1. **Local-only operations:** KnetSentry components do not initiate Internet
-   connections; network activity is restricted to approved LAN destinations,
-   interfaces, routes, and enrolled peers. Both IPv4 and IPv6 are in scope.
+1. **LAN-focused monitoring with controlled intelligence egress:** Monitor only
+   approved local assets and authorized network sources, including available
+   Internet-bound/inbound activity involving those assets. Restrict agent
+   transport to approved LAN paths; allow opt-in manager HTTPS access to vetted
+   CVE, MITRE ATT&CK, and other public security-information providers.
 2. **Strong system boundaries:** Separate the unprivileged Qt desktop from the
    manager, agent, narrow privileged collectors, storage, and optional AI.
-3. **Trustworthy collection:** Enroll devices explicitly; authenticate agents;
-   encrypt transport; preserve event provenance and record source limitations.
+3. **Agentless-first, trustworthy collection:** Observe local devices—including
+   printers, cameras, doorbells, and IoT appliances—without installing software
+   on them. Approve the **network/sensor monitoring scope**, not every passively
+   observed device individually; identify devices through available network
+   records with confidence limits. Enroll and authenticate **optional** host
+   agents for deeper telemetry; protect sensor transport and evidence provenance.
 4. **Interoperable event processing:** Validate, normalize, store, index, query,
    and retain telemetry using versioned formats; OCSF is the planned schema
    reference, subject to a pinned implementation profile.
@@ -70,27 +76,38 @@ configuration and privacy controls that support this responsibility.
 
 ## 4. Intended end-to-end experience
 
-For an authorized three-machine LAN, one Ubuntu workstation runs the manager
-and Qt desktop while two enrolled Ubuntu endpoints run agents. A controlled,
-authorized SSH authentication test generates events. KnetSentry is expected to
-collect, authenticate, normalize, and persist selected records; a deterministic
-rule detects the documented pattern; an analyst can view evidence, create an
-incident, annotate findings, and export a report. An optional local AI summary
-may assist but is not required or authoritative.
+For an authorized home/small-office LAN, an Ubuntu workstation runs the
+manager and desktop and receives mirrored traffic or supported gateway
+telemetry. A printer or smart-home device **without an installed agent** makes
+an observable connection to a new external destination. KnetSentry is expected
+to associate the connection with the correct local asset when evidence permits,
+normalize and persist it, flag a reproducible suspicious-behavior scenario,
+show what source observed it and which traffic remains unseen, and support
+investigation and reporting. An enrolled Ubuntu endpoint may contribute deeper
+host telemetry, but is not required for this **agentless** scenario. An optional
+local AI summary may assist but is not required or authoritative.
 
 This is a **future v1.0.0 acceptance scenario**, not a claim that it works today.
 
 ## 5. Non-goals for the initial release
 
-- Cloud-hosted management, externally hosted AI, third-party telemetry upload,
-  Internet-based update checks, external analytics, or remote SaaS dependency.
-- Automatic discovery, probing, scanning, or enrollment of arbitrary LAN
-  devices without an explicit administrative authorization and source policy.
-- Guaranteeing visibility into devices that do not provide authorized telemetry,
-  or decrypting communications that KnetSentry is not entitled to access.
-- Monitoring the public Internet or network segments outside configured LAN
-  scope; VPN and routed subnets are excluded unless explicitly supported and
-  approved by the future network-scope policy.
+- Cloud-hosted management, externally hosted AI, unsolicited telemetry upload,
+  automatic Internet browsing, external analytics, or remote SaaS dependency.
+  Approved public vulnerability/ATT&CK feeds and update metadata are allowed
+  as separately authorized, privacy-conscious outbound requests.
+- Unapproved **active** probing, intrusive scanning, or device enrollment.
+  **Passive identification and inventory of previously unknown devices is in
+  scope within an explicitly approved local network/sensor scope**, without
+  per-device agent enrollment. Any future active local discovery must be
+  separately opted in, rate-limited, and scope-restricted.
+- Guaranteeing observation of traffic that a configured gateway, sensor, or
+  mirror cannot actually see; decrypting private communications without
+  authorized key access; or claiming reliable firmware/CVE attribution solely
+  from a MAC address or manufacturer guess.
+- Active monitoring, scanning, probing, or enrolling unrelated Internet hosts.
+  Observing external conversation peers in authorized LAN traffic is in scope;
+  locally routed VLANs require explicit approval and policy validation, while
+  unapproved VPNs, tunnels, and network interfaces remain excluded.
 - Windows or non-Ubuntu endpoint agents, ARM targets, or broadly supported
   distribution packages in the initial v1.0.0 release.
 - Enterprise multi-region clustering, infinite retention, lossless operation
@@ -108,9 +125,11 @@ The initial release is successful only when evidence shows that:
 
 - An authorized Ubuntu 26.04 AMD64 deployment can install and operate a
   manager, desktop, and supported agent configuration.
-- An enrolled agent can deliver authentic telemetry through the approved
-  network scope; unauthorized enrollment and out-of-scope traffic are rejected
-  under a documented threat model.
+- An agentless sensor or gateway source can provide security-relevant flows
+  for a local printer/IoT device without installing software on that device;
+  the operator can see its known coverage limits.
+- Optional enrolled agents can deliver authentic host telemetry; unauthorized
+  enrollment and out-of-scope agent transport are rejected.
 - Stored events are searchable and source-attributed; deterministic alerts
   link to supporting evidence; an incident can be investigated and exported.
 - The Qt desktop remains usable under GNOME and KDE Plasma and does not require
@@ -125,7 +144,11 @@ criteria and M14 will validate them.
 
 ## 7. Governance and decisions still to be made
 
-- **M0.2:** Precise interface, route, subnet, IPv6, VLAN, and egress policy.
+- **M0.2 (defined):** The [network-security contract](docs/security/NETWORK_SCOPE_REQUIREMENTS.md)
+  separates authorized LAN observation, local authenticated agent transport,
+  and optional manager egress to approved external security-intelligence feeds.
+  IPv4/IPv6, routed LAN segments, identity, privacy, and fail-closed policy
+  must be addressed in subsequent implementation and tests.
 - **M0.3:** Formal adversary model and accepted residual risks.
 - **M0.4:** Component boundaries, APIs, and storage/transport design.
 - **M0.5:** Resource budgets and benchmark thresholds.
