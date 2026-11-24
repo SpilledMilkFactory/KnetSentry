@@ -5,8 +5,9 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Component and Process Catalog
 
-**Issue:** M0.4. **Status:** proposed architecture; M2.1 implements only the
-`C-01` / `P-01` lifecycle foundation, not its planned security services.
+**Issue:** M0.4. **Status:** proposed architecture; M2.1 implements the
+`C-01` / `P-01` lifecycle foundation and M2.2 adds a strict, non-operational
+configuration contract; the planned security services remain unimplemented.
 See [system architecture](SYSTEM_ARCHITECTURE.md),
 [interfaces](INTERFACE_CONTRACTS.md) and [security traceability](ARCHITECTURE_TRACEABILITY.md).
 
@@ -116,3 +117,12 @@ review, and a specific negative test.
   event-driven URL fetching; exact provider APIs deferred to M10.9.
 - **Optional inference:** independent no-network worker (`C-18`), format and
   resource decisions deferred to M12.
+
+
+### M2.2 — configuration boundary (non-operational)
+
+The `P-01` manager can validate a narrowly typed schema-v1 configuration
+file before readiness; all monitoring, network, capture, public egress, and
+privileged actions must remain disabled. This is **not** an implementation of
+the `C-02` authorization/scoping engine or `TB-05` IPC. See the
+[versioned configuration guide](../development/MANAGER_CONFIGURATION_M22.md).

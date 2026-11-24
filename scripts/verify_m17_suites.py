@@ -22,6 +22,7 @@ CORE_TESTS = {
     "knetsentry_core_boundary_contract", "knetsentry_configuration_contract",
     "knetsentry_build_hardening",
     "knetsentry_manager_state_contract", "knetsentry_manager_signal_lifecycle",
+    "knetsentry_manager_configuration_contract", "knetsentry_manager_configuration_runtime",
 }
 DESKTOP_TESTS = {
     "knetsentry_desktop_version", "knetsentry_kirigami_qml_startup",

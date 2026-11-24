@@ -105,3 +105,12 @@ with every configuration, including core-only. `knetsentry_manager_state_contrac
 rejects illegal transitions; `knetsentry_manager_signal_lifecycle` launches
 a real non-root process and verifies SIGTERM/SIGINT, fixed JSON diagnostics,
 unsupported arguments and root rejection. See [manager lifecycle](MANAGER_DAEMON_M21.md).
+
+## M2.2 manager configuration tests
+
+`knetsentry_manager_configuration_contract` and
+`knetsentry_manager_configuration_runtime` verify strict schema v1 parsing,
+unsafe-file rejection, no-fallback behavior and clean configured shutdown.
+New expected counts: desktop Release/Debug/Clazy/analysis **17**, full
+sanitizer **14**, core-only **9**, core-only sanitizer **10**.
+See [manager configuration](MANAGER_CONFIGURATION_M22.md).

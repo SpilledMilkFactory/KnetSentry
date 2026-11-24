@@ -108,3 +108,9 @@ qualify executable behavior.
 **Expected totals after M2.1:** desktop Release/Debug/Clazy/analysis **15**;
 full sanitizer **12**; core-only **7**; core-only sanitizer **8**. These are
 planned inventories until executed on the exact revision and in GitHub Actions.
+
+
+**M2.2 addition:** A strict versioned configuration loader now validates an
+explicit `--config` file before readiness; see
+[manager configuration](MANAGER_CONFIGURATION_M22.md). The M2.1 tests and
+four-event lifecycle behavior remain mandatory.

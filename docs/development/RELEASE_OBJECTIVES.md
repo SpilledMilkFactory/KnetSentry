@@ -222,3 +222,11 @@ cleanly after SIGTERM/SIGINT. The only output is fixed-code non-authoritative
 JSONL diagnostics. [M2.1 contract](MANAGER_DAEMON_M21.md) documents its scope.
 No authenticated IPC, sensors, database, feed client, agent, privilege policy,
 background service installation or audit store exists at this stage.
+
+
+## M2.2 manager configuration foundation
+
+A strict versioned schema-v1 config reader, owner-only file gate, and
+fail-closed manager integration are implemented. They cannot activate any
+operational network or security-monitoring capability. See the
+[M2.2 configuration contract](MANAGER_CONFIGURATION_M22.md).

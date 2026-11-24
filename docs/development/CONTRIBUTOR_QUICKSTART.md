@@ -148,3 +148,11 @@ including core-only. See [M2.1 daemon guide](MANAGER_DAEMON_M21.md).
 
 No network listeners, IPC, telemetry, persistent audit logs, or GUI integration
 are active. Two new CTests exercise real SIGTERM/SIGINT shutdown.
+
+
+### M2.2 configuration verification
+
+The Qt-independent manager accepts an optional, secure, versioned lifecycle
+configuration file. See [M2.2 manager configuration](MANAGER_CONFIGURATION_M22.md).
+Run `python3 scripts/verify_m22_configuration.py` and the compiled CTests;
+never interpret a source-only PASS as runtime proof.
