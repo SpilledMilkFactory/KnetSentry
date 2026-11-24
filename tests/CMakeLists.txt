@@ -61,6 +61,16 @@ add_test(NAME knetsentry_network_prefix_validation
 set_tests_properties(knetsentry_network_prefix_validation PROPERTIES
     LABELS "unit;security;network;regression" TIMEOUT 15)
 
+# M3.3: read-only Linux topology, strict fixtures and actual kernel replies.
+add_executable(knetsentry_network_topology_test network_topology_m33.cpp)
+target_include_directories(knetsentry_network_topology_test PRIVATE "${PROJECT_SOURCE_DIR}/src/core")
+target_link_libraries(knetsentry_network_topology_test PRIVATE KnetSentry::Core Threads::Threads)
+knetsentry_apply_project_options(knetsentry_network_topology_test)
+add_test(NAME knetsentry_network_topology_awareness
+    COMMAND $<TARGET_FILE:knetsentry_network_topology_test>)
+set_tests_properties(knetsentry_network_topology_awareness PROPERTIES
+    LABELS "unit;security;network;regression" TIMEOUT 15)
+
 # M2.1 management process: test explicit state transitions and real POSIX
 # shutdown from a separate process, including both supported stop signals.
 add_executable(knetsentry_service_lifecycle_test service_lifecycle_m21.cpp)

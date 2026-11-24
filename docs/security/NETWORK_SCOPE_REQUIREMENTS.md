@@ -10,7 +10,9 @@ implemented (live IP enforcement not qualified). See the
 [M3.1 policy contract](../development/NETWORK_SCOPE_POLICY_M31.md).
 M3.2 extends that preflight with strict dual-stack prefix validation; see
 [the M3.2 validation contract](../development/NETWORK_SCOPE_VALIDATION_M32.md).
-No live topology or operating-system enforcement is qualified by these tests.
+M3.3 adds read-only Linux topology inspection and invalidation; see
+[the M3.3 topology contract](../development/NETWORK_TOPOLOGY_M33.md).
+Operational IP transport and OS enforcement remain unqualified.
 **Target:** Ubuntu 26.04 LTS AMD64; proposed v1.0.0 product architecture.
 **Traceability:** GitHub issue #2 / M0.2.
 **See also:** [network communication matrix](../architecture/NETWORK_COMMUNICATION_MATRIX.md),
