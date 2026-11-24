@@ -14,9 +14,10 @@ namespace knetsentry::core {
 // Only fixed catalog values may enter structured diagnostic metadata.
 // These are application diagnostics, NOT a durable or privileged audit trail.
 enum class DiagnosticLevel : std::uint8_t { Debug, Info, Warning, Error, Critical };
-enum class DiagnosticComponent : std::uint8_t { Core, Desktop, Verification };
+enum class DiagnosticComponent : std::uint8_t { Core, Desktop, Verification, Manager };
 enum class DiagnosticEvent : std::uint8_t {
-    GuiStarting, GuiReady, GuiLoadRejected, SelfTest, VerificationRejected
+    GuiStarting, GuiReady, GuiLoadRejected, SelfTest, VerificationRejected,
+    ManagerStarting, ManagerReady, ManagerStopping, ManagerStopped, ManagerFailed
 };
 enum class DiagnosticOutcome : std::uint8_t { Started, Success, Failure, Rejected };
 

@@ -49,7 +49,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **13 CTest tests**, including
+The Release desktop suite currently contains **15 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -88,7 +88,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **10 CTests**, including the
+The full sanitizer suite currently contains **12 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -96,7 +96,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **5 CTests**) and `linux-sanitize-core-only` for **6**.
+C++ test (currently **7 CTests**) and `linux-sanitize-core-only` for **8**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -134,3 +134,17 @@ of a documentation/test change.
 
 The repository's future KDE adoption is an aspiration; it is not an official
 KDE project, and no binary redistribution has been cleared by this guide.
+
+## M2.1 — Local management daemon (non-operational)
+
+The independent unprivileged foreground process builds with *every* preset,
+including core-only. See [M2.1 daemon guide](MANAGER_DAEMON_M21.md).
+
+```bash
+./build/presets/linux-release/apps/manager/knetsentryd --help
+./build/presets/linux-release/apps/manager/knetsentryd
+# Stop with Ctrl+C (or SIGTERM from another terminal). Do not run as root.
+```
+
+No network listeners, IPC, telemetry, persistent audit logs, or GUI integration
+are active. Two new CTests exercise real SIGTERM/SIGINT shutdown.

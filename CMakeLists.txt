@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.25)
 
 project(KnetSentry VERSION 0.0.0 LANGUAGES CXX)
 
-# M1.3 adds the desktop QML shell; SIEM services remain unimplemented.
+# M2.1 adds an independent, non-operational manager lifecycle process.
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -21,6 +21,10 @@ include(cmake/KnetSentryBuildOptions.cmake)
 
 # The core never depends on Qt, KDE, a GUI session, or privileged networking.
 add_subdirectory(src/core)
+
+# The manager is a separate, Qt-independent process in all build presets.
+add_subdirectory(src/service)
+add_subdirectory(apps/manager)
 
 # Default configuration checks real, system-installed Qt/KDE packages; it
 # never downloads dependencies or silently falls back to a fake GUI.

@@ -138,7 +138,7 @@ def check_docs() -> None:
                     'reuse lint', 'scripts/verify_m17_suites.py',
                     'scripts/verify_m18_ci.py --format'):
         require(command in quick, f'quickstart missing command: {command}')
-    for required in ('13 CTest', '10 CTests', 'core-only', 'non-operational',
+    for required in ('15 CTest', '12 CTests', 'core-only', 'non-operational',
                      'security', 'private advisory'):
         require(required.lower() in quick.lower(),
                 f'quickstart missing qualification/safety statement: {required}')
