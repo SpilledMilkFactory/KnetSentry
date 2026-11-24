@@ -29,15 +29,19 @@ public:
     [[nodiscard]] bool pulse() const noexcept { return pulse_; }
     [[nodiscard]] bool canStart() const;
     [[nodiscard]] bool canStop() const;
+    // C++ only: normal application exit, also used by the destructor.
+    [[nodiscard]] bool shutdown();
     Q_INVOKABLE void startManager();
     Q_INVOKABLE void stopManager();
 Q_SIGNALS:
     void changed();
 private:
+    friend class DaemonControlTest;
     enum class Phase { Idle, Stopped, Starting, Running, Stopping, Failed };
     void healthChanged();
     void finished(int code, QProcess::ExitStatus status);
     void tick();
+    [[nodiscard]] bool removeEmptyDirectory();
     ServiceHealthModel& health_;
     const bool external_;
     const QString program_;
@@ -49,5 +53,7 @@ private:
     Phase phase_{Phase::Idle};
     bool pulse_{false};
     bool timed_out_{false};
+    bool shutting_down_{false};
+    bool shutdown_clean_{true};
 };
 } // namespace knetsentry::desktop

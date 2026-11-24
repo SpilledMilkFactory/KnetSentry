@@ -28,6 +28,30 @@ def main() -> None:
                   'media-playback-stop', 'daemonControl.startManager()', 'daemonControl.stopManager()'):
         if token not in qml:
             raise ValueError('missing toolbar binding: ' + token)
+    for token in ('pragma ComponentBehavior: Bound',
+                  'pageStack.currentItem as SectionPage', 'visible: heartbeat.activePulse',
+                  'visible: !heartbeat.activePulse'):
+        if token not in qml:
+            raise ValueError('missing typed or geometry toolbar contract: ' + token)
+    if 'Canvas {' in qml or 'getContext(' in qml or 'requestPaint()' in qml:
+        raise ValueError('heartbeat must not allocate a raster-backed Canvas')
+    for token in ('shutdown()', 'waitForStarted(1000)', 'child_.waitForFinished(3000)',
+                  'QDir().rmdir(directory_->path())'):
+        if token not in source:
+            raise ValueError('missing owned shutdown contract: ' + token)
+    if 'removeRecursively' in source:
+        raise ValueError('recursive owned endpoint removal is forbidden')
+    qt_tests = (ROOT / 'tests/qt/daemon_control_qtest.cpp').read_text()
+    for token in ('closeWhileRunning', 'closeDuringStartup', 'preservesUnexpectedData',
+                  '::waitpid(', 'ECHILD', 'ESRCH'):
+        if token not in qt_tests:
+            raise ValueError('missing shutdown regression: ' + token)
+    from check_qml_lint import lint_passed
+    if not lint_passed(0, 'clean lint output') or any(lint_passed(0, output) for output in (
+        'Warning: synthetic missing-property', 'Info: synthetic unused-imports',
+        'Error: synthetic syntax error', '\x1b[33mWarning:\x1b[0m synthetic',
+    )) or lint_passed(1, ''):
+        raise ValueError('strict QML lint diagnostic gate regression')
     if 'DESKTOP_DAEMON_TOOLBAR_M29.md' not in (ROOT / 'README.md').read_text():
         raise ValueError('missing documentation link')
     print('M2.9 toolbar source registration: PASS (runtime not verified)', flush=True)

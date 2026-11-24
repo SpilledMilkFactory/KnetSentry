@@ -45,7 +45,7 @@ def check_workflow(path: Path) -> None:
             'required CI triggers absent')
     for preset in EXPECTED:
         require(preset in s, f'missing CI preset: {preset}')
-    for step in ('reuse lint', 'knetsentry_qmllint', 'ctest --preset',
+    for step in ('reuse lint', 'knetsentry_qmllint', 'python3 scripts/check_qml_lint.py', 'ctest --preset',
                  'verify_m12_hardening.py', 'verify_m17_suites.py',
                  'verify_m18_ci.py', 'scripts/ci/install_dependencies.sh'):
         require(step in s, f'missing required gate: {step}')

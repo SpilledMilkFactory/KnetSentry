@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Chris Sutton
 // SPDX-License-Identifier: MIT
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
@@ -29,25 +30,26 @@ Kirigami.ApplicationWindow {
                                               && designTokens.spaceS < designTokens.spaceL
                                               && designTokens.touchTarget >= 40
                                               && !designTokens.animateStatusChanges
-    readonly property string currentPageVisualSystem: pageStack.currentItem
-                                                       ? pageStack.currentItem.visualSystemVersion : ""
-    readonly property bool currentPageCompact: pageStack.currentItem
-                                               ? pageStack.currentItem.compactLayout : false
+    readonly property SectionPage currentSectionPage: pageStack.currentItem as SectionPage
+    readonly property string currentPageVisualSystem: currentSectionPage
+                                                       ? currentSectionPage.visualSystemVersion : ""
+    readonly property bool currentPageCompact: currentSectionPage
+                                               ? currentSectionPage.compactLayout : false
 
     // Public, non-privileged navigation state. Used by the headless C++
     // integration test to exercise exactly the same routing as drawer actions.
     property string activeSection: "dashboard"
     property string navigationRequest: ""
-    readonly property string currentPageHealthStatus: pageStack.currentItem
-        ? pageStack.currentItem.displayedHealthStatus : ""
-    readonly property string currentPageHealthResources: pageStack.currentItem
-        ? pageStack.currentItem.displayedHealthResources : ""
-    readonly property string currentPageHealthErrors: pageStack.currentItem
-        ? pageStack.currentItem.displayedHealthErrors : ""
-    readonly property string currentPageHealthComponents: pageStack.currentItem
-        ? pageStack.currentItem.displayedHealthComponents : ""
-    readonly property string currentPageSection: pageStack.currentItem
-                                                 ? pageStack.currentItem.sectionId : ""
+    readonly property string currentPageHealthStatus: currentSectionPage
+        ? currentSectionPage.displayedHealthStatus : ""
+    readonly property string currentPageHealthResources: currentSectionPage
+        ? currentSectionPage.displayedHealthResources : ""
+    readonly property string currentPageHealthErrors: currentSectionPage
+        ? currentSectionPage.displayedHealthErrors : ""
+    readonly property string currentPageHealthComponents: currentSectionPage
+        ? currentSectionPage.displayedHealthComponents : ""
+    readonly property string currentPageSection: currentSectionPage
+                                                 ? currentSectionPage.sectionId : ""
     readonly property int navigationDepth: pageStack.depth
     readonly property string activeSectionTitle: {
         switch (activeSection) {
@@ -205,7 +207,7 @@ Kirigami.ApplicationWindow {
                     width: 10; height: 10; radius: width / 2
                     color: indicator.stateColor
                 }
-                Canvas {
+                Item {
                     id: heartbeat
                     x: 18
                     width: 98
@@ -213,25 +215,51 @@ Kirigami.ApplicationWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     readonly property color lineColor: indicator.stateColor
                     readonly property bool activePulse: window.toolbarPulse
-                    onLineColorChanged: requestPaint()
-                    onActivePulseChanged: requestPaint()
-                    onPaint: {
-                        const ctx = getContext("2d")
-                        ctx.clearRect(0, 0, width, height)
-                        ctx.strokeStyle = lineColor
-                        ctx.lineWidth = 2
-                        ctx.lineJoin = "round"
-                        ctx.beginPath()
-                        ctx.moveTo(1, 12)
-                        if (activePulse) {
-                            ctx.lineTo(32, 12)
-                            ctx.lineTo(40, 5)
-                            ctx.lineTo(49, 20)
-                            ctx.lineTo(57, 2)
-                            ctx.lineTo(65, 12)
+                    // Fixed scene geometry: no raster-backed Canvas or paint context.
+                    Rectangle {
+                        x: 1; y: 11; width: 96; height: 2
+                        color: heartbeat.lineColor
+                        visible: !heartbeat.activePulse
+                    }
+                    Item {
+                        anchors.fill: parent
+                        visible: heartbeat.activePulse
+                        Rectangle {
+                            x: 0.60; y: 11.00
+                            width: 31.80; height: 2; rotation: 0.00
+                            color: heartbeat.lineColor
+                            antialiasing: true
                         }
-                        ctx.lineTo(width - 1, 12)
-                        ctx.stroke()
+                        Rectangle {
+                            x: 30.28; y: 7.50
+                            width: 11.43; height: 2; rotation: -41.19
+                            color: heartbeat.lineColor
+                            antialiasing: true
+                        }
+                        Rectangle {
+                            x: 35.35; y: 11.50
+                            width: 18.29; height: 2; rotation: 59.04
+                            color: heartbeat.lineColor
+                            antialiasing: true
+                        }
+                        Rectangle {
+                            x: 42.75; y: 10.00
+                            width: 20.50; height: 2; rotation: -66.04
+                            color: heartbeat.lineColor
+                            antialiasing: true
+                        }
+                        Rectangle {
+                            x: 54.20; y: 6.00
+                            width: 13.61; height: 2; rotation: 51.34
+                            color: heartbeat.lineColor
+                            antialiasing: true
+                        }
+                        Rectangle {
+                            x: 64.60; y: 11.00
+                            width: 32.80; height: 2; rotation: 0.00
+                            color: heartbeat.lineColor
+                            antialiasing: true
+                        }
                     }
                 }
             }

@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "KnetSentry: failed to instantiate the QML root window.\n";
         return 1;
     }
-    const auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
+    auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
     if (window == nullptr || window->objectName() != QStringLiteral("knetSentryMainWindow")) {
         publish(knetsentry::core::DiagnosticLevel::Error,
                 knetsentry::core::DiagnosticEvent::GuiLoadRejected,
@@ -227,15 +227,15 @@ int main(int argc, char *argv[]) {
                     root->property("activeSection").toString() != QStringLiteral("settings") ||
                     !QMetaObject::invokeMethod(stop, "clicked")) { loop.exit(1); return; }
                 ++stage;
+            } else if (stage == 4 && control.tone() == 2 && health.available()) {
+                // Exercise the actual window close, not the Stop button.
+                if (!window->close()) { loop.exit(1); return; }
+                ++stage;
+                loop.exit(0);
             } else if ((stage == 1 || stage == 3) && control.tone() == 0 && control.canStart()) {
                 if (health.available() || control.pulse() || stop->property("enabled").toBool() ||
                     control.status() != QStringLiteral("Desktop-owned daemon stopped")) {
                     loop.exit(1); return;
-                }
-                if (stage == 3) {
-                    std::cout << "M2.9 toolbar start, stop, restart and navigation: PASS\n";
-                    loop.exit(0);
-                    return;
                 }
                 ++stage;
                 if (!QMetaObject::invokeMethod(play, "clicked")) { loop.exit(1); }
@@ -244,7 +244,13 @@ int main(int argc, char *argv[]) {
         if (!QMetaObject::invokeMethod(play, "clicked")) { return 1; }
         check.start(50);
         deadline.start(20000);
-        return loop.exec();
+        const int result = loop.exec();
+        check.stop();
+        deadline.stop();
+        if (!control.shutdown() || result != 0 || stage != 5 || window->isVisible()) { return 1; }
+        std::cout << "M2.9 toolbar start, stop, restart and navigation: PASS\n";
+        std::cout << "M2.9 window close with running owned manager: PASS\n";
+        return 0;
     }
     if (parser.isSet(health_smoke_test)) {
         // The external synthetic test harness controls the real daemon. This
@@ -294,5 +300,10 @@ int main(int argc, char *argv[]) {
         return loop.exec();
     }
     health.start();
-    return app.exec();
+    const int result = app.exec();
+    if (!control.shutdown()) {
+        std::cerr << "KnetSentry: owned manager shutdown incomplete; private entries preserved.\n";
+        return 1;
+    }
+    return result;
 }

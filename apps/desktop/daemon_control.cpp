@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #include "daemon_control.hpp"
 
+#include <QDir>
 #include <QFileInfo>
 #include <QStringList>
 #include <unistd.h>
@@ -31,35 +32,70 @@ DaemonControl::DaemonControl(ServiceHealthModel& health, bool external, const QS
 }
 
 DaemonControl::~DaemonControl() {
-    // No signals into the model while the controller is being dismantled.
+    static_cast<void>(shutdown());
+}
+
+bool DaemonControl::removeEmptyDirectory() {
+    if (!directory_) { return true; }
+    // Never recursively delete unexpected data or a stale socket. Only the
+    // empty private directory created by this controller may be removed.
+    const bool removed = QDir().rmdir(directory_->path());
+    directory_.reset();
+    return removed;
+}
+
+bool DaemonControl::shutdown() {
+    if (shutting_down_) { return shutdown_clean_; }
+    shutting_down_ = true;
     disconnect(&health_, nullptr, this, nullptr);
     disconnect(&child_, nullptr, this, nullptr);
     transition_.stop();
     pulse_timer_.stop();
+    pulse_ = false;
     if (!external_) { health_.setDirectory(QString{}); }
+    if (child_.state() == QProcess::Starting) {
+        // A terminate() issued before QProcess has a child PID is not reliable.
+        static_cast<void>(child_.waitForStarted(1000));
+    }
+    if (phase_ == Phase::Starting && child_.state() == QProcess::Running && directory_) {
+        // The manager blocks SIGTERM before creating its socket. Give a newly
+        // exec'd child a short bounded opportunity to install that signal mask.
+        QElapsedTimer readiness;
+        readiness.start();
+        while (child_.state() == QProcess::Running && readiness.elapsed() < 1000 &&
+               !QFileInfo::exists(directory_->filePath(QStringLiteral("manager.sock")))) {
+            static_cast<void>(child_.waitForFinished(20));
+        }
+    }
     if (child_.state() != QProcess::NotRunning) {
         child_.terminate();
-        if (!child_.waitForFinished(3000)) {
-            // Last resort during desktop shutdown, only our own child.
-            if (directory_) { directory_->setAutoRemove(false); }
+        if (!child_.waitForFinished(3000) && child_.state() != QProcess::NotRunning) {
+            shutdown_clean_ = false;
             child_.kill();
             static_cast<void>(child_.waitForFinished(3000));
         }
-        if (directory_ && (child_.exitStatus() != QProcess::NormalExit || child_.exitCode() != 0)) {
-            directory_->setAutoRemove(false);
+    }
+    if (child_.state() != QProcess::NotRunning) {
+        // QProcess's destructor remains the last child-only cleanup fallback.
+        // Never remove its directory while a process may still be using it.
+        shutdown_clean_ = false;
+        return false;
+    }
+    if (directory_) {
+        if (child_.exitStatus() != QProcess::NormalExit || child_.exitCode() != 0) {
+            shutdown_clean_ = false;
         }
+        if (!removeEmptyDirectory()) { shutdown_clean_ = false; }
     }
-    if (directory_ && QFileInfo::exists(directory_->filePath(QStringLiteral("manager.sock")))) {
-        directory_->setAutoRemove(false);
-    }
+    return shutdown_clean_;
 }
 
 bool DaemonControl::canStart() const {
-    return !external_ && ::geteuid() != 0 && child_.state() == QProcess::NotRunning &&
+    return !shutting_down_ && !external_ && ::geteuid() != 0 && child_.state() == QProcess::NotRunning &&
            (phase_ == Phase::Idle || phase_ == Phase::Stopped || phase_ == Phase::Failed);
 }
 bool DaemonControl::canStop() const {
-    return !external_ && child_.state() == QProcess::Running &&
+    return !shutting_down_ && !external_ && child_.state() == QProcess::Running &&
            (phase_ == Phase::Running || phase_ == Phase::Failed);
 }
 int DaemonControl::tone() const {
@@ -101,6 +137,7 @@ void DaemonControl::startManager() {
         Q_EMIT changed();
         return;
     }
+    directory_->setAutoRemove(false);
     phase_ = Phase::Starting;
     timed_out_ = false;
     health_.setDirectory(directory_->path());
@@ -162,11 +199,8 @@ void DaemonControl::finished(int code, QProcess::ExitStatus status) {
     pulse_ = false;
     phase_ = stopped && !timed_out_ ? Phase::Stopped : Phase::Failed;
     health_.setDirectory(QString{});
-    // Preserve a stale entry after an abnormal exit; never reuse its directory.
-    if (directory_ && stale) {
-        directory_->setAutoRemove(false);
-    }
-    directory_.reset();
+    // Preserve stale entries and any unexpected data; never reuse a directory.
+    if (!removeEmptyDirectory()) { phase_ = Phase::Failed; }
     Q_EMIT changed();
 }
 } // namespace knetsentry::desktop
