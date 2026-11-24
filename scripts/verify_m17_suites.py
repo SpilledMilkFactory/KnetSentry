@@ -27,7 +27,7 @@ CORE_TESTS = {
     "knetsentry_service_health_contract", "knetsentry_service_health_runtime",
     "knetsentry_service_audit_contract", "knetsentry_service_audit_runtime",
     "knetsentry_health_client_contract", "knetsentry_health_client_runtime",
-    "knetsentry_systemd_policy_contract",
+    "knetsentry_systemd_policy_contract", "knetsentry_service_lifecycle_ipc_integration",
 }
 DESKTOP_TESTS = {
     "knetsentry_desktop_version", "knetsentry_kirigami_qml_startup",

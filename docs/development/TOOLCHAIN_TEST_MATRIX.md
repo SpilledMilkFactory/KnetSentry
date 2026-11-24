@@ -155,3 +155,12 @@ counts: desktop 28/24 (normal/sanitized), core-only 18/19 (normal/sanitized).
 Systemd parser and separate privileged installed-unit qualification are described
 in [the service contract](SYSTEMD_SERVICE_M27.md); hosted source-only CI is not
 proof of live isolation.
+
+### M2.8 service lifecycle and IPC integration
+
+One new mandatory real-process CTest runs in every preset, including both
+sanitizer presets. Expected counts: desktop 29/25 (normal/sanitized),
+core-only 19/20 (normal/sanitized). See
+[the lifecycle integration contract](SERVICE_LIFECYCLE_IPC_M28.md).
+The M2.7 live systemd gate and M2.6 actual QML lifecycle regression remain
+separate; hosted CI does not claim installed-service qualification.

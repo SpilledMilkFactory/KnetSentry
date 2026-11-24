@@ -143,6 +143,13 @@ add_test(NAME knetsentry_systemd_policy_contract
 set_tests_properties(knetsentry_systemd_policy_contract PROPERTIES
     LABELS "security;service;configuration;regression" TIMEOUT 15)
 
+# M2.8: real foreground process transitions and authenticated IPC recovery.
+add_test(NAME knetsentry_service_lifecycle_ipc_integration
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/check_m28_lifecycle_ipc.py"
+        --manager $<TARGET_FILE:knetsentryd> --probe $<TARGET_FILE:knetsentry_health_client_test>)
+set_tests_properties(knetsentry_service_lifecycle_ipc_integration PROPERTIES
+    LABELS "integration;security;ipc;service;privacy;regression" TIMEOUT 90)
+
 if(KNETSENTRY_BUILD_DESKTOP)
     # Qt Test is required for full desktop test qualification, not silently
     # skipped if unavailable. The core-only preset remains Qt-independent.
