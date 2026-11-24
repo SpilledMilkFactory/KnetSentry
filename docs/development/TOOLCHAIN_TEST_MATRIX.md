@@ -190,3 +190,13 @@ Run `python3 scripts/verify_m32_network_prefix.py --build-dir
 build/presets/linux-release` for configured verification. See the
 [M3.2 validation contract](NETWORK_SCOPE_VALIDATION_M32.md). No real IP network
 I/O or new permissions are introduced.
+
+### M3.3 Linux interface and route awareness
+
+The mandatory `knetsentry_network_topology_awareness` test runs in all seven
+presets. Current expected inventories: desktop 34/29 (normal/sanitized),
+core-only 22/23 (normal/sanitized). Run `python3
+scripts/verify_m33_network_topology.py --build-dir build/presets/linux-release`
+for configured verification. The optional isolated namespace regression and
+its prerequisites are documented in the [M3.3 topology contract](NETWORK_TOPOLOGY_M33.md).
+No real IP network transport is enabled.

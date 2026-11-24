@@ -37,8 +37,9 @@ struct PrefixApproval final {
     std::uint16_t port{};
 };
 
-// Future trusted topology adapter input, never telemetry or remote fields.
-// This component does not acquire or verify live route evidence itself.
+// Trusted topology adapter input, never telemetry or remote fields.
+// This pure policy does not acquire live evidence. See LinuxTopology for
+// the separate kernel-facing preflight adapter.
 struct RouteEvidence final {
     RouteKind kind{RouteKind::Unknown};
     std::string_view destination;
@@ -73,6 +74,7 @@ public:
         std::span<const EndpointApproval> approvals,
         std::span<const PrefixApproval> prefixes) noexcept;
     [[nodiscard]] bool valid() const noexcept { return valid_; }
+    [[nodiscard]] std::uint64_t generation() const noexcept { return generation_; }
     [[nodiscard]] ScopeDecision evaluate(const NetworkProposal& proposal) const noexcept;
 
 private:
