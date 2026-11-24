@@ -32,7 +32,7 @@ reports a PID, UID, and GID at connection time; the daemon requires a positive
 PID and both UID and GID to match the current service process. Authentication
 of the local process identity does *not* imply that submitted payloads are
 trustworthy. A **default-deny** operation matrix grants this identity only
-read-only `STATUS`; no administrative operation exists in M2.3. Other UIDs,
+read-only `STATUS` at M2.3; no administrative operation exists in M2.3. Other UIDs,
 GIDs, unknown roles, unsupported versions and all other actions are rejected.
 There are no client-supplied UID/role claims or secret tokens.
 
@@ -47,8 +47,8 @@ interpret this milestone as complete operator authentication or access control.
 
 ## Framing / message contract
 
-Wire encoding v1 has a four-byte **big-endian unsigned payload length**, then
-strict ASCII. Maximum request and response payload: **64 bytes**. Empty,
+At M2.3, wire encoding v1 has a four-byte **big-endian unsigned payload length**, then
+strict ASCII. Maximum request and STATUS response payload: **64 bytes**. Empty,
 overlong, partial, unsupported or malformed frames close the connection.
 One request per connection; no sessions, streaming or pipelining.
 
@@ -68,7 +68,7 @@ The request ID is only a correlation token, **not** an authentication secret,
 anti-replay token or audit identifier. The response does not disclose service
 configuration, user data, security telemetry or monitoring health.
 `LIFECYCLE_ONLY` explicitly means the operational SIEM is not available.
-All other operations are denied; no setting, state or policy is mutated.
+At M2.3 all other operations were denied; no setting, state or policy is mutated.
 
 A serial, nonblocking listener caps pending connection backlog to eight and
 individual read/write waits to 250 ms per direction. Peer credentials are
@@ -161,3 +161,8 @@ Tests never create TCP sockets or privileged monitoring operations.
 A secure local transport is a prerequisite, not itself proof of a complete
 protected control plane. Future changes to operations require explicit
 per-action authorization and new negative tests before any privilege is added.
+
+**M2.4 extension:** The same authenticated principal can also issue read-only
+`HEALTH`. The original STATUS exchange and 64-byte request ceiling are retained;
+only HEALTH responses may reach 256 bytes. See [service health](SERVICE_HEALTH_M24.md)
+for the current contract. No administrative authority is added.

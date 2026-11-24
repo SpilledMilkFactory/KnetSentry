@@ -162,3 +162,10 @@ never interpret a source-only PASS as runtime proof.
 `python3 scripts/verify_m23_ipc.py --build-dir build/presets/linux-release`
 executes the real Unix-domain transport and negative authorization tests.
 See [M2.3 IPC](LOCAL_AUTHENTICATED_IPC_M23.md).
+
+### M2.4 service health verification
+
+Run `python3 scripts/verify_m24_health.py --build-dir build/presets/linux-release`
+after the applicable build and CTest. See [health contract](SERVICE_HEALTH_M24.md)
+for the authenticated HEALTH exchange and units. The expected CTest inventory
+is 21/18 desktop (normal/sanitized), 13/14 core-only (normal/sanitized).

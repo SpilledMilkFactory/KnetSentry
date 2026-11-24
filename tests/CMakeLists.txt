@@ -94,6 +94,21 @@ add_test(NAME knetsentry_local_ipc_runtime
 set_tests_properties(knetsentry_local_ipc_runtime PROPERTIES
     LABELS "integration;security;ipc;service;regression" TIMEOUT 60)
 
+# M2.4: bounded health encoding, measured resources and authorized live IPC.
+add_executable(knetsentry_service_health_test service_health_m24.cpp)
+target_link_libraries(knetsentry_service_health_test PRIVATE KnetSentry::Service)
+knetsentry_apply_project_options(knetsentry_service_health_test)
+add_test(NAME knetsentry_service_health_contract
+    COMMAND $<TARGET_FILE:knetsentry_service_health_test>)
+set_tests_properties(knetsentry_service_health_contract PROPERTIES
+    LABELS "unit;security;service;regression" TIMEOUT 20)
+add_test(NAME knetsentry_service_health_runtime
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/scripts/check_m24_health_runtime.py"
+        --binary "$<TARGET_FILE:knetsentryd>")
+set_tests_properties(knetsentry_service_health_runtime PROPERTIES
+    LABELS "integration;security;ipc;service;regression" TIMEOUT 60)
+
 if(KNETSENTRY_BUILD_DESKTOP)
     # Qt Test is required for full desktop test qualification, not silently
     # skipped if unavailable. The core-only preset remains Qt-independent.
