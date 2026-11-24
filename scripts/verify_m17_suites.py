@@ -32,12 +32,12 @@ CORE_TESTS = {
 DESKTOP_TESTS = {
     "knetsentry_desktop_version", "knetsentry_kirigami_qml_startup",
     "knetsentry_primary_navigation", "knetsentry_qt_model_contract",
-    "knetsentry_qt_health_model",
+    "knetsentry_qt_health_model", "knetsentry_qt_daemon_control",
 }
 NONSAN_DESKTOP_TESTS = {
     "knetsentry_navigation_qml_diagnostics", "knetsentry_visual_system",
     "knetsentry_desktop_diagnostic_lifecycle", "knetsentry_qt_application_lifecycle",
-    "knetsentry_gui_health_runtime",
+    "knetsentry_gui_health_runtime", "knetsentry_gui_daemon_toolbar",
 }
 SANITIZER_TEST = "knetsentry_lsan_negative_control"
 

@@ -91,7 +91,8 @@ def check_workflow() -> None:
     require('sudo apt-get update' not in workflow and 'sudo apt-get install' not in workflow,
             'unconditional APT provisioning reintroduced in workflow')
     require('ctest --preset' in workflow and 'reuse lint' in workflow
-            and 'knetsentry_qmllint' in workflow,
+            and 'knetsentry_qmllint' in workflow
+            and 'python3 scripts/check_qml_lint.py' in workflow,
             'mandatory CI gates missing')
     for preset in PRESETS:
         require(preset in workflow, f'missing required CI preset {preset}')

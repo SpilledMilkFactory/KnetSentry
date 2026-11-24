@@ -69,7 +69,8 @@ require("isValidSection(sectionId)" in main and "onNavigationRequestChanged" in 
         "navigation authorization/verification entry point missing")
 require("readonly property int navigationDepth: pageStack.depth" in main,
         "depth must be observable in the runtime test")
-require("readonly property string currentPageSection: pageStack.currentItem" in main,
+require("readonly property SectionPage currentSectionPage: pageStack.currentItem as SectionPage" in main and
+        "readonly property string currentPageSection: currentSectionPage" in main,
         "actual displayed page must be observable in the runtime test")
 require("monitoring is not active" in main.lower(),
         "persistent inactive-monitoring notice missing")

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Chris Sutton
 // SPDX-License-Identifier: MIT
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
@@ -10,6 +11,11 @@ import io.github.spilledmilkfactory.KnetSentry
 Kirigami.ApplicationWindow {
     id: window
     required property ServiceHealthModel healthModel
+    required property DaemonControl daemonControl
+    readonly property alias toolbarStartButton: startButton
+    readonly property alias toolbarStopButton: stopButton
+    readonly property int toolbarTone: window.daemonControl.tone
+    readonly property bool toolbarPulse: window.daemonControl.pulse
     objectName: "knetSentryMainWindow"
     title: qsTr("KnetSentry — %1").arg(activeSectionTitle)
     width: 1100
@@ -24,25 +30,26 @@ Kirigami.ApplicationWindow {
                                               && designTokens.spaceS < designTokens.spaceL
                                               && designTokens.touchTarget >= 40
                                               && !designTokens.animateStatusChanges
-    readonly property string currentPageVisualSystem: pageStack.currentItem
-                                                       ? pageStack.currentItem.visualSystemVersion : ""
-    readonly property bool currentPageCompact: pageStack.currentItem
-                                               ? pageStack.currentItem.compactLayout : false
+    readonly property SectionPage currentSectionPage: pageStack.currentItem as SectionPage
+    readonly property string currentPageVisualSystem: currentSectionPage
+                                                       ? currentSectionPage.visualSystemVersion : ""
+    readonly property bool currentPageCompact: currentSectionPage
+                                               ? currentSectionPage.compactLayout : false
 
     // Public, non-privileged navigation state. Used by the headless C++
     // integration test to exercise exactly the same routing as drawer actions.
     property string activeSection: "dashboard"
     property string navigationRequest: ""
-    readonly property string currentPageHealthStatus: pageStack.currentItem
-        ? pageStack.currentItem.displayedHealthStatus : ""
-    readonly property string currentPageHealthResources: pageStack.currentItem
-        ? pageStack.currentItem.displayedHealthResources : ""
-    readonly property string currentPageHealthErrors: pageStack.currentItem
-        ? pageStack.currentItem.displayedHealthErrors : ""
-    readonly property string currentPageHealthComponents: pageStack.currentItem
-        ? pageStack.currentItem.displayedHealthComponents : ""
-    readonly property string currentPageSection: pageStack.currentItem
-                                                 ? pageStack.currentItem.sectionId : ""
+    readonly property string currentPageHealthStatus: currentSectionPage
+        ? currentSectionPage.displayedHealthStatus : ""
+    readonly property string currentPageHealthResources: currentSectionPage
+        ? currentSectionPage.displayedHealthResources : ""
+    readonly property string currentPageHealthErrors: currentSectionPage
+        ? currentSectionPage.displayedHealthErrors : ""
+    readonly property string currentPageHealthComponents: currentSectionPage
+        ? currentSectionPage.displayedHealthComponents : ""
+    readonly property string currentPageSection: currentSectionPage
+                                                 ? currentSectionPage.sectionId : ""
     readonly property int navigationDepth: pageStack.depth
     readonly property string activeSectionTitle: {
         switch (activeSection) {
@@ -94,7 +101,10 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    pageStack.globalToolBar.style: Kirigami.ApplicationHeaderStyle.None
+
     globalDrawer: Kirigami.GlobalDrawer {
+        handleVisible: false
         title: qsTr("KnetSentry")
         titleIcon: "security-high"
         isMenu: false
@@ -154,6 +164,136 @@ Kirigami.ApplicationWindow {
         healthModel: window.healthModel
     }
 
+    header: Controls.ToolBar {
+        implicitHeight: Math.max(44, toolbarRow.implicitHeight + 8)
+        RowLayout {
+            id: toolbarRow
+            anchors.fill: parent
+            anchors.leftMargin: Kirigami.Units.smallSpacing
+            anchors.rightMargin: Kirigami.Units.smallSpacing
+            spacing: Kirigami.Units.smallSpacing
+            Controls.ToolButton {
+                text: qsTr("Navigation")
+                Layout.preferredWidth: designTokens.touchTarget
+                Layout.preferredHeight: designTokens.touchTarget
+                display: Controls.AbstractButton.IconOnly
+                icon.name: "application-menu"
+                icon.source: "icons/menu.svg"
+                Accessible.name: text
+                onClicked: window.globalDrawer.drawerOpen = !window.globalDrawer.drawerOpen
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: text
+            }
+            Controls.Label {
+                text: window.activeSectionTitle
+                font.pixelSize: designTokens.sectionSize
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+            }
+            Item {
+                id: indicator
+                Layout.preferredWidth: 120
+                Layout.preferredHeight: 32
+                readonly property color stateColor: window.toolbarTone === 2 ? Kirigami.Theme.positiveTextColor
+                    : window.toolbarTone === 1 ? Kirigami.Theme.neutralTextColor : Kirigami.Theme.negativeTextColor
+                Accessible.role: Accessible.StaticText
+                Accessible.name: window.daemonControl.status
+                HoverHandler { id: indicatorHover }
+                Controls.ToolTip.visible: indicatorHover.hovered
+                Controls.ToolTip.text: window.daemonControl.status + qsTr(" — pulse: successful health exchange, not monitoring activity")
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 10; height: 10; radius: width / 2
+                    color: indicator.stateColor
+                }
+                Item {
+                    id: heartbeat
+                    x: 18
+                    width: 98
+                    height: 24
+                    anchors.verticalCenter: parent.verticalCenter
+                    readonly property color lineColor: indicator.stateColor
+                    readonly property bool activePulse: window.toolbarPulse
+                    // Fixed scene geometry: no raster-backed Canvas or paint context.
+                    Rectangle {
+                        x: 1; y: 11; width: 96; height: 2
+                        color: heartbeat.lineColor
+                        visible: !heartbeat.activePulse
+                    }
+                    Item {
+                        anchors.fill: parent
+                        visible: heartbeat.activePulse
+                        Rectangle {
+                            x: 0.60; y: 11.00
+                            width: 31.80; height: 2; rotation: 0.00
+                            color: heartbeat.lineColor
+                            antialiasing: true
+                        }
+                        Rectangle {
+                            x: 30.28; y: 7.50
+                            width: 11.43; height: 2; rotation: -41.19
+                            color: heartbeat.lineColor
+                            antialiasing: true
+                        }
+                        Rectangle {
+                            x: 35.35; y: 11.50
+                            width: 18.29; height: 2; rotation: 59.04
+                            color: heartbeat.lineColor
+                            antialiasing: true
+                        }
+                        Rectangle {
+                            x: 42.75; y: 10.00
+                            width: 20.50; height: 2; rotation: -66.04
+                            color: heartbeat.lineColor
+                            antialiasing: true
+                        }
+                        Rectangle {
+                            x: 54.20; y: 6.00
+                            width: 13.61; height: 2; rotation: 51.34
+                            color: heartbeat.lineColor
+                            antialiasing: true
+                        }
+                        Rectangle {
+                            x: 64.60; y: 11.00
+                            width: 32.80; height: 2; rotation: 0.00
+                            color: heartbeat.lineColor
+                            antialiasing: true
+                        }
+                    }
+                }
+            }
+            Controls.ToolButton {
+                id: startButton
+                text: qsTr("Start desktop-owned daemon")
+                Layout.preferredWidth: designTokens.touchTarget
+                Layout.preferredHeight: designTokens.touchTarget
+                display: Controls.AbstractButton.IconOnly
+                icon.name: "media-playback-start"
+                icon.source: "icons/play.svg"
+                enabled: window.daemonControl.canStart
+                Accessible.name: text
+                onClicked: window.daemonControl.startManager()
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: enabled ? text : window.daemonControl.status
+            }
+            Controls.ToolButton {
+                id: stopButton
+                text: qsTr("Stop desktop-owned daemon")
+                Layout.preferredWidth: designTokens.touchTarget
+                Layout.preferredHeight: designTokens.touchTarget
+                display: Controls.AbstractButton.IconOnly
+                icon.name: "media-playback-stop"
+                icon.source: "icons/stop.svg"
+                enabled: window.daemonControl.canStop
+                Accessible.name: text
+                onClicked: window.daemonControl.stopManager()
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: enabled ? text : window.daemonControl.status
+            }
+        }
+    }
+
     footer: Controls.ToolBar {
         RowLayout {
             anchors.fill: parent
@@ -165,7 +305,7 @@ Kirigami.ApplicationWindow {
                 elide: Text.ElideRight
             }
             Controls.Label {
-                text: qsTr("M2.6")
+                text: qsTr("M2.9")
             }
         }
     }

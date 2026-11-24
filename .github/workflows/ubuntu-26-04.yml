@@ -85,5 +85,5 @@ jobs:
         run: bash scripts/ci/install_dependencies.sh qml
       - name: Configure Qt QML module
         run: cmake --preset linux-release --fresh
-      - name: Run Qt generated QML lint target
-        run: cmake --build --preset linux-release --target knetsentry_qmllint --parallel 2
+      - name: Run Qt generated knetsentry_qmllint target (strict diagnostics)
+        run: python3 scripts/check_qml_lint.py

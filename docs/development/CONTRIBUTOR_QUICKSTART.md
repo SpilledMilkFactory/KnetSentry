@@ -203,3 +203,10 @@ See [service lifecycle and IPC integration](SERVICE_LIFECYCLE_IPC_M28.md) for
 scenario coverage, conditional distinct-identity evidence, and limits.
 The foreground test uses private temporary directories and never installs,
 starts, stops or modifies an installed systemd service.
+
+### M2.9 desktop toolbar
+
+See [M2.9 toolbar contract](DESKTOP_DAEMON_TOOLBAR_M29.md). The existing explicit
+IPC endpoint remains read-only; desktop-owned foreground lifecycle is separate.
+The new desktop CTests are `knetsentry_qt_daemon_control` (including sanitizer)
+and `knetsentry_gui_daemon_toolbar` (non-sanitized). Core-only counts are unchanged.

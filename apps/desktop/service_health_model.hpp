@@ -31,6 +31,8 @@ public:
     [[nodiscard]] QString errors() const;
     [[nodiscard]] bool available() const noexcept;
     void start();
+    void setDirectory(const QString& directory);
+    [[nodiscard]] service::HealthQueryState queryState() const noexcept;
     // C++ only: periodic refresh and deterministic test orchestration.
     void refresh();
 Q_SIGNALS:

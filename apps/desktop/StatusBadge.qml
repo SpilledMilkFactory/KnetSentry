@@ -24,7 +24,7 @@ Rectangle {
         anchors.centerIn: parent
         spacing: tokens.spaceS
         Rectangle {
-            width: 9; height: 9; radius: width / 2
+            implicitWidth: 9; implicitHeight: 9; radius: width / 2
             color: Kirigami.Theme.highlightColor
             Layout.alignment: Qt.AlignVCenter
         }

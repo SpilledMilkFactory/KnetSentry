@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 import QtQuick
 import QtQuick.Controls as Controls
-import org.kde.kirigami as Kirigami
 
 // Only for explicit severity levels. Settings shows sample tokens, not alerts.
 Rectangle {

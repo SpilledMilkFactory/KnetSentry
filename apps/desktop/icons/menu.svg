@@ -1,0 +1,7 @@
+<!--
+SPDX-FileCopyrightText: 2026 Chris Sutton
+SPDX-License-Identifier: MIT
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <path fill="#808080" d="M3 5h18v2H3z M3 11h18v2H3z M3 17h18v2H3z"/>
+</svg>
