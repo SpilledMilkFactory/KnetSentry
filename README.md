@@ -15,15 +15,14 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M1.4 (Qt Quick/Kirigami primary navigation):**
-> The repository includes a Qt-independent C++23 core, CMake/Ninja presets,
-> compiler hardening, ASan/UBSan, the M0 documentation contracts and a real
-> **Qt 6/Kirigami desktop shell** with seven navigable sections (Dashboard,
-> Assets, Events, Detections, Alerts, Investigations, and Settings). Every
-> section explicitly reports monitoring is **not active**. No management daemon, agentless network sensor, detection
-> engine, alerting, or privileged security controls are implemented yet.
-> The Qt QML startup smoke test validates actual Kirigami imports; it is not a
-> security or production qualification.
+> **Development status — M1.9 (contributor onboarding and CI efficiency):**
+> The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
+> Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
+> Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
+> 26.04 GitHub Actions checks reported for M1.8**. The graphical interface is
+> **not an operational SIEM**. No manager, agentless network sensor, host agent,
+> event database, threat detection or privileged security controls exist yet.
+> A green CI run validates only its documented tests, not release readiness.
 
 The M1.4 follow-up includes a page-lifecycle warning regression test and an
 optional, reversible [GNOME development desktop-entry helper](docs/development/GUI_NAVIGATION.md#desktop-portal-registration-on-gnome).
@@ -74,9 +73,9 @@ segments rather than claim complete visibility. Encrypted payloads are not
 silently decrypted; local observed endpoints can be cataloged without an agent
 under the approved network scope.
 
-## Building the M1.6 diagnostics-enabled visual shell
+## Build and test the current graphical foundation
 
-On Ubuntu 26.04 AMD64, install the [build prerequisites](docs/development/BUILD_FOUNDATION.md), then run:
+New contributors should follow the [Ubuntu 26.04 contributor quickstart](docs/development/CONTRIBUTOR_QUICKSTART.md), including its exact package list, test commands, GUI instructions and security-review steps. To build locally:
 
 ```bash
 cmake --preset linux-release
@@ -134,6 +133,9 @@ See [M1.7 testing and acceptance](docs/development/TEST_SUITE_FOUNDATION.md).
 
 | Document | Purpose |
 | --- | --- |
+| [Contributor quickstart](docs/development/CONTRIBUTOR_QUICKSTART.md) | Clean Ubuntu 26.04 AMD64 build, CTest, REUSE and GUI reproduction steps |
+| [M1.9 repository metadata audit](docs/development/REPOSITORY_METADATA_M19.md) | Existing licenses, templates and contributor policies; optional GitHub About metadata |
+| [M1.9 CI efficiency](docs/development/CI_EFFICIENCY_M19.md) | Scoped runner packages, installed-package reuse and future caching risk |
 | [M1.7 CTest and Qt Test foundation](docs/development/TEST_SUITE_FOUNDATION.md) | Compiled C++/Qt Test suites, CMake inventory gate, negative checks and acceptance commands |
 | [M1.6 structured diagnostics](docs/development/STRUCTURED_DIAGNOSTICS.md) | Typed event catalog, redaction boundary, JSONL limits and test instructions |
 | [M1.5 visual design system](docs/development/VISUAL_DESIGN_SYSTEM.md) | KDE/Qt palettes, severity/status separation, spacing, responsive UI and accessibility foundations |
@@ -177,25 +179,22 @@ does **not** imply that KnetSentry is an official KDE project.
 
 ## Development and contributions
 
-The repository is in its documentation-first foundation stage. Build commands,
-source-code test suites and CI workflows will be implemented in their scheduled
-milestones. M0.8 adds governance and public issue/PR templates; **private vulnerability
-reporting must still be enabled and verified in GitHub settings**. M0.7 documents the
-[development contract](DEVELOPMENT_CONTRACT.md) but has not executed
-compiler, Qt, sanitizer, network or runtime tests; never infer that a missing
-test has passed.
-
-For now, review the requirements documents above and file GitHub issues for unclear,
-conflicting, or untestable requirements. Security-sensitive implementation
-should not begin until its relevant trust and network boundaries are defined.
+The repository now has compiled C++/Qt Test suites and successful M1.8
+GitHub-hosted CI checks, but the operational SIEM remains unimplemented.
+Start with the [contributor quickstart](docs/development/CONTRIBUTOR_QUICKSTART.md)
+and [CONTRIBUTING.md](CONTRIBUTING.md). Use the accepted PR template,
+security-review guidance, official REUSE lint, and actual CTest results.
+The maintainer reports that private vulnerability reporting is enabled;
+GitHub's current private-advisory availability and branch rules are separate
+platform settings, not automatically enforced by documentation.
 
 ## Project governance and security reports
 
 [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md) · [Security policy](SECURITY.md) · [Governance](GOVERNANCE.md) · [Repository setup checklist](docs/development/REPOSITORY_ADMIN_CHECKLIST.md).
 
 **Do not publish vulnerabilities or private LAN evidence in public issues.** Security
-reports use GitHub private advisories when explicitly enabled; see the security
-policy for the current setup limitation. KnetSentry is not yet an official KDE project.
+reports should use GitHub private advisories; verify the reporting button
+before submitting sensitive details. KnetSentry is not yet an official KDE project.
 
 ## License
 
@@ -212,6 +211,16 @@ See the [licensing policy](docs/development/LICENSING_POLICY.md),
 M0.6 records policies; it does **not** approve Qt modules, bundled libraries,
 third-party detection corpora, AI weights, or any release distribution.
 
-## M1.8 — Ubuntu 26.04 CI candidate
+## M1.8 CI acceptance and M1.9 efficiency
 
-The new [CI implementation guide](docs/development/CI_IMPLEMENTATION_M18.md) describes the read-only Ubuntu 26.04 GitHub Actions matrix and security-policy checks. **Hosted checks and branch protection remain unverified until executed/configured on GitHub.**
+The [CI implementation guide](docs/development/CI_IMPLEMENTATION_M18.md)
+documents the read-only Ubuntu 26.04 GitHub Actions matrix. The maintainer
+reports **nine successful M1.8 PR checks**, including seven build/test lanes,
+policy/REUSE, and QML lint. Whether all nine are configured as *required*
+branch-protection checks still requires separate GitHub settings verification.
+
+M1.9 reduces unnecessary runner provisioning with explicit dependency profiles:
+core-only jobs do **not** install Qt/Kirigami, and installed packages are not
+reinstalled. No shared binary or privileged APT cache is introduced. See
+[CI efficiency and cache decision](docs/development/CI_EFFICIENCY_M19.md).
+Full hosted timing and CI success for the **M1.9 revision** remain pending.

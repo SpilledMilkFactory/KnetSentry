@@ -7,18 +7,18 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 ## Project status and supported versions
 
-KnetSentry is currently **pre-release design documentation**. There is no production SIEM executable, supported package, release branch, or security support SLA. A listed milestone is not a released security control. Future release-support periods and maintained versions will be documented when packages are published.
+KnetSentry currently has a **pre-release C++/Qt graphical foundation and test infrastructure**, not an operational SIEM. There is no supported production SIEM package, release branch, or security support SLA. A listed milestone is not a released security control. Future release-support periods and maintained versions will be documented when packages are published.
 
 | Version | Security support status |
 | --- | --- |
-| `main` (pre-release design) | Best-effort review of repository and development-process vulnerabilities; no production guarantee |
+| `main` (pre-release development) | Best-effort review of repository and development-process vulnerabilities; no production guarantee |
 | v1.0.0 | **Not released**; support policy to be defined before publication |
 
 ## Privately report a suspected vulnerability
 
 **Do not open a public GitHub issue, discussion, or pull request revealing an exploitable security flaw or proof of concept.** Please visit the repository's [Security Advisories page](https://github.com/SpilledMilkFactory/KnetSentry/security/advisories) and choose **Report a vulnerability** *if private vulnerability reporting is enabled*. Include a concise impact statement, relevant component and revision, authorized sanitized reproduction steps, and any proposed fix or mitigations. Avoid live LAN logs, credentials, actual private addresses, or sensitive evidence unless an explicitly agreed safe transfer method exists.
 
-**Enablement is a maintainer action, not accomplished by this file.** Until the button is available, ask the repository owner for a private security contact via the [GitHub profile](https://github.com/SpilledMilkFactory) **without public vulnerability details**. The owner should configure an appropriate alternate confidential contact before accepting public vulnerability submissions; this repository does not invent or publish an unverified email address. If no safe channel is available, do not post exploit details publicly.
+**The maintainer reports that GitHub private vulnerability reporting was enabled in M0.8.** A checked-in policy is not proof of the button's current availability or a response-time guarantee. If the option is unavailable, request a confidential contact method from the repository owner via the [GitHub profile](https://github.com/SpilledMilkFactory) **without public vulnerability details**. The owner should configure an appropriate alternate confidential contact before accepting public vulnerability submissions; this repository does not invent or publish an unverified email address. If no safe channel is available, do not post exploit details publicly.
 
 ## Coordinated disclosure procedure
 

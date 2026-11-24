@@ -5,9 +5,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M1.2 hardening, ASan/UBSan, optional clang-tidy/Clazy presets,
-M1.3–M1.5 Qt/Kirigami window/navigation/design, and M1.6 diagnostic tests
-exist. Full Qt Test/Quick Test suites and GitHub Actions CI remain future work. Initial supported target is Ubuntu 26.04 AMD64. See the
+**State:** M1.2 hardening and sanitizer/analysis presets, M1.3–M1.5 Qt/Kirigami
+window/navigation/design, M1.6 diagnostics, M1.7 CTest/Qt Test suites and M1.8
+Ubuntu 26.04 GitHub Actions CI exist. Nine M1.8 PR checks were reported green;
+M1.9's CI dependency optimization is not yet qualified on hosted runners.
+Initial supported target is Ubuntu 26.04 AMD64. See the
 [M1.1 build guide](BUILD_FOUNDATION.md).
 
 ## Planned build and analysis matrix

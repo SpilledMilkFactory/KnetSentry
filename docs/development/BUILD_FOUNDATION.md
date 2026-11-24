@@ -43,7 +43,7 @@ ctest --preset linux-release --output-on-failure
 ./build/presets/linux-release/apps/desktop/knetsentry --version
 ```
 
-Starting `knetsentry` without options opens the M1.3 Kirigami foundation window. It is a clearly labeled **non-operational desktop preview**, not monitoring software. `--help` and `--version` do not require a graphical display. `--self-test-qml` instantiates the actual window and exits; its CTest environment uses Qt offscreen/software rendering.
+Starting `knetsentry` without options opens the current M1.5 Kirigami visual and navigation shell. It is a clearly labeled **non-operational desktop preview**, not monitoring software. `--help` and `--version` do not require a graphical display. `--self-test-qml` instantiates the actual window and exits; its CTest environment uses Qt offscreen/software rendering.
 
 For a Debug build, substitute `linux-debug`. A separate **core-only smoke build** exists for environments without Qt/KDE packages:
 
@@ -62,3 +62,12 @@ ctest --preset linux-core-only --output-on-failure
 - `scripts/verify_m11_build.py` checks repository structure, presets, licenses and staged expectations; it is **not** a substitute for a real desktop build.
 - Preserve all six M0 document-verifier passes, root MIT license, source SPDX and REUSE conventions; `CMakePresets.json` uses an explicit MIT declaration in `REUSE.toml`.
 - M1.3 adds actual QML/Kirigami resources, window and app lifecycle. M1.4 adds navigation; M1.7 expands Qt/QML tests and M1.8 activates CI and official REUSE lint.
+
+## M1.9 contributor instructions
+
+For the maintained Ubuntu 26.04 package list, actual **13-test desktop** and
+**10-test sanitizer** commands, and the required REUSE/security checks, follow
+[CONTRIBUTOR_QUICKSTART.md](CONTRIBUTOR_QUICKSTART.md). Earlier milestone
+sections above are historical; this quickstart is the current onboarding
+procedure. CI now installs per-preset dependencies rather than installing
+Qt/Kirigami into core-only jobs; see [CI_EFFICIENCY_M19.md](CI_EFFICIENCY_M19.md).
