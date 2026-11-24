@@ -206,3 +206,7 @@ See the [licensing policy](docs/development/LICENSING_POLICY.md),
 [KDE compatibility policy](docs/development/KDE_COMPATIBILITY_POLICY.md).
 M0.6 records policies; it does **not** approve Qt modules, bundled libraries,
 third-party detection corpora, AI weights, or any release distribution.
+
+## M1.8 — Ubuntu 26.04 CI candidate
+
+The new [CI implementation guide](docs/development/CI_IMPLEMENTATION_M18.md) describes the read-only Ubuntu 26.04 GitHub Actions matrix and security-policy checks. **Hosted checks and branch protection remain unverified until executed/configured on GitHub.**

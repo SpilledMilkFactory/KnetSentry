@@ -90,3 +90,7 @@ package is a configuration failure, not a skipped test. Expected inventories:
 Release/Debug/Clazy/analysis 13; sanitizer 10; core-only 5; sanitized
 core-only 6. See [M1.7 test-suite contract](TEST_SUITE_FOUNDATION.md).
 All counts are targets until CTest has run on the intended revision.
+
+## M1.8 hosted CI implementation
+
+The [Ubuntu 26.04 workflow](../../.github/workflows/ubuntu-26-04.yml) covers the seven accepted M1.7 presets, source policy verification and Qt-generated QML lint. **Host-run evidence pending.** See [CI implementation details](CI_IMPLEMENTATION_M18.md).
