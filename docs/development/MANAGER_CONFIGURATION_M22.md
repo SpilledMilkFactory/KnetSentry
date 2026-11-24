@@ -122,3 +122,9 @@ inventory:** desktop Release/Debug/Clazy/analysis **17**, full sanitizer
 **14**, core-only **9**, core-only sanitizer **10**. Source-only checks do not
 prove runtime behavior; the full Ubuntu 26.04 and GitHub-hosted matrix remains
 subject to acceptance on the exact revision.
+
+**M2.3 compatibility:** Optional `--ipc-dir` enables a local Unix-domain
+listener only; schema-v1 `network_listeners_enabled = false` remains required.
+The explicit configuration is validated before IPC socket creation, and no
+rejected configuration is replaced by a fallback. See
+[local authenticated IPC](LOCAL_AUTHENTICATED_IPC_M23.md).

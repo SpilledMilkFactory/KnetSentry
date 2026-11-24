@@ -156,3 +156,9 @@ The Qt-independent manager accepts an optional, secure, versioned lifecycle
 configuration file. See [M2.2 manager configuration](MANAGER_CONFIGURATION_M22.md).
 Run `python3 scripts/verify_m22_configuration.py` and the compiled CTests;
 never interpret a source-only PASS as runtime proof.
+
+### M2.3 local IPC verification
+
+`python3 scripts/verify_m23_ipc.py --build-dir build/presets/linux-release`
+executes the real Unix-domain transport and negative authorization tests.
+See [M2.3 IPC](LOCAL_AUTHENTICATED_IPC_M23.md).

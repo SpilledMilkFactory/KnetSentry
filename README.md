@@ -255,3 +255,12 @@ The standalone manager now supports strict schema v1 configuration validation
 without Qt/Kirigami. See the [configuration guide](docs/development/MANAGER_CONFIGURATION_M22.md)
 and [safe example](examples/manager-v1.conf). Explicit configuration errors
 are rejected with no fallback or operational monitoring.
+
+### M2.3 — Authenticated local IPC foundation
+
+`knetsentryd` optionally supports a **Unix-domain socket** via `--ipc-dir ABS_DIR`
+(an existing 0700 directory owned by the daemon user). The socket is 0600;
+Linux `SO_PEERCRED` plus an explicit allowlist authorizes **only** a bounded,
+read-only lifecycle-status request from the same UID/GID. No administrative
+methods, remote listeners, telemetry or monitoring are enabled. See the
+[M2.3 local IPC contract](docs/development/LOCAL_AUTHENTICATED_IPC_M23.md).

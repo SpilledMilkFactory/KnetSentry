@@ -114,3 +114,13 @@ unsafe-file rejection, no-fallback behavior and clean configured shutdown.
 New expected counts: desktop Release/Debug/Clazy/analysis **17**, full
 sanitizer **14**, core-only **9**, core-only sanitizer **10**.
 See [manager configuration](MANAGER_CONFIGURATION_M22.md).
+
+### M2.3 local IPC qualification
+
+M2.3 registers `knetsentry_local_ipc_authorization_contract` and
+`knetsentry_local_ipc_runtime` across all configurations. Expected counts:
+19 Release/Debug/Clazy/analysis; 16 full ASan/UBSan; 11 core-only Release;
+12 core-only sanitizer. All nine CI jobs are unchanged. Source-only checks
+are not proof of actual peer-credential enforcement; use compiled tests and
+Linux runtime negative tests. The read-only `TB-05` subset must not be
+represented as a completed management authorization implementation.

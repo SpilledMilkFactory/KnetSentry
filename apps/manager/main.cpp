@@ -4,6 +4,7 @@
 #include "knetsentry/core/diagnostics.hpp"
 #include "knetsentry/service/lifecycle.hpp"
 #include "knetsentry/service/configuration.hpp"
+#include "knetsentry/service/local_ipc.hpp"
 
 #include <csignal>
 #include <iostream>
@@ -30,7 +31,7 @@ using knetsentry::service::Lifecycle;
     });
 }
 
-[[nodiscard]] int run(std::string_view configuration_path) {
+[[nodiscard]] int run(std::string_view configuration_path, std::string_view ipc_dir = {}) {
     // A management service must never accidentally inherit root authority.
     if (geteuid() == 0) {
         std::cerr << "knetsentryd: root execution prohibited\n";
@@ -72,8 +73,19 @@ using knetsentry::service::Lifecycle;
         return 4;
     }
 
-    // M2.2 has no listeners, sockets, external egress, privileged operations
-    // or security telemetry to enable. "ready" means lifecycle-only readiness.
+    // M2.3: local socket is strictly opt-in; bind and validate BEFORE ready.
+    // Invalid directories, existing socket entries, and bind errors deny startup.
+    knetsentry::service::LocalIpcServer ipc;
+    if (!ipc_dir.empty() && !ipc.open(ipc_dir, stop_signals)) {
+        static_cast<void>(lifecycle.mark_failed());
+        static_cast<void>(publish(logger, DiagnosticLevel::Error,
+            DiagnosticEvent::ManagerFailed, DiagnosticOutcome::Rejected));
+        std::cerr << "knetsentryd: local IPC unavailable (no fallback)\n";
+        return 5;
+    }
+
+    // Readiness means lifecycle operation and optional local IPC only; there
+    // is no monitoring, database, remote listener or privileged authority.
     if (!lifecycle.mark_ready() ||
         !publish(logger, DiagnosticLevel::Info, DiagnosticEvent::ManagerReady,
                  DiagnosticOutcome::Success)) {
@@ -84,8 +96,11 @@ using knetsentry::service::Lifecycle;
     }
 
     int received = 0;
-    if (sigwait(&stop_signals, &received) != 0 ||
-        (received != SIGINT && received != SIGTERM)) {
+    const bool completed = ipc_dir.empty()
+        ? (sigwait(&stop_signals, &received) == 0 &&
+           (received == SIGINT || received == SIGTERM))
+        : ipc.serve();
+    if (!completed) {
         static_cast<void>(lifecycle.mark_failed());
         static_cast<void>(publish(logger, DiagnosticLevel::Error,
             DiagnosticEvent::ManagerFailed, DiagnosticOutcome::Failure));
@@ -113,9 +128,9 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
-        std::cout << "Usage: knetsentryd [--help|--version|--config ABS_PATH|--check-config ABS_PATH]\n"
+        std::cout << "Usage: knetsentryd [--help|--version|--config ABS_PATH|--check-config ABS_PATH|--ipc-dir ABS_DIR]\n"
                      "Foreground-only, unprivileged lifecycle foundation.\n"
-                     "Stop with SIGTERM or SIGINT; no monitoring or listeners.\n";
+                     "Stop with SIGTERM or SIGINT; no monitoring or remote listeners.\n";
         return 0;
     }
     if (argc == 3 && std::string_view(argv[1]) == "--check-config") {
@@ -128,6 +143,13 @@ int main(int argc, char* argv[]) {
     }
     if (argc == 3 && std::string_view(argv[1]) == "--config") {
         return run(argv[2]);
+    }
+    if (argc == 3 && std::string_view(argv[1]) == "--ipc-dir") {
+        return run({}, argv[2]);
+    }
+    if (argc == 5 && std::string_view(argv[1]) == "--config" &&
+        std::string_view(argv[3]) == "--ipc-dir") {
+        return run(argv[2], argv[4]);
     }
     if (argc != 1) {
         std::cerr << "knetsentryd: unsupported argument (see --help)\n";
