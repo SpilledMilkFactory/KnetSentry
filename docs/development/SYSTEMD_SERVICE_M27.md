@@ -115,3 +115,9 @@ counts: desktop 28/24 (normal/sanitized), core-only 18/19 (normal/sanitized).
 The live test requires actual systemd PID 1, cgroup v2 and the target host;
 parser success or ordinary CI does not qualify confinement. No independent
 security audit or complete TV-27 closure is claimed.
+
+The local acceptance runner may use umask 0077 for private reports. The M2.3
+IPC negative fixture explicitly establishes and verifies unsafe mode 0755;
+no daemon permission checks or test deadlines are relaxed. The live gate
+requires the Release build and its CTest suite to pass. Successful installation
+and parser verification alone remain insufficient for runtime acceptance.
