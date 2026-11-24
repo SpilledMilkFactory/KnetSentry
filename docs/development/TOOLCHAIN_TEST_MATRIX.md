@@ -199,4 +199,7 @@ core-only 22/23 (normal/sanitized). Run `python3
 scripts/verify_m33_network_topology.py --build-dir build/presets/linux-release`
 for configured verification. The optional isolated namespace regression and
 its prerequisites are documented in the [M3.3 topology contract](NETWORK_TOPOLOGY_M33.md).
+A recognized pre-entry namespace permission denial is BLOCKED (exit 77),
+not a successful mutation test; an entered fixture failure remains FAIL.
+Keep host security restrictions intact and use an approved test environment.
 No real IP network transport is enabled.

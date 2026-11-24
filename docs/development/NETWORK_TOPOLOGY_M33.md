@@ -86,7 +86,26 @@ gateway-free default-route rejection and veth attachment rejection. Synthetic
 interfaces and routes are confined to the disposable namespace. No packets are
 intentionally sent by the test, and no host route/interface or firewall is
 modified. A blocked namespace test is not a passing live-change qualification.
-The local acceptance runner can request it with `--topology-namespace`.
+The optional launcher reports three distinct outcomes:
+
+- Exit 0 (`PASS`): the isolated child entered and completed all fixtures.
+- Exit 77 (`BLOCKED`): a required launcher tool is missing or a recognized
+  namespace setup permission denial occurred before any child output.
+- Exit 1 (`FAIL`): all other failures, including actual fixture failures,
+  unexpected launcher errors, missing/invalid compiled binary, missing
+  completion evidence, and timeouts.
+
+The launcher uses a fixed C locale to recognize specific `unshare` setup
+errors (including `/proc/self/uid_map` permission denial). An error from an
+entered child is never classified as blocked. Do not disable AppArmor, change
+host namespace restrictions, or use sudo to bypass the optional test.
+The source verifier exercises outcome classification without namespace changes.
+The local acceptance runner can request it with `--topology-namespace`;
+if blocked it reports a distinct BLOCKED count and partial acceptance (exit
+77 unless another check fails). Omitting that option runs the standard
+mandatory suite; it does not qualify live topology mutation on that host.
+Run the optional fixture on a separate approved host or disposable VM where
+unprivileged namespaces are permitted.
 
 ## Remaining constraints
 

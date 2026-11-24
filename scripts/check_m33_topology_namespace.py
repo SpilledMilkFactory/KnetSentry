@@ -12,6 +12,63 @@ import subprocess
 import sys
 
 
+PASS = 0
+FAIL = 1
+BLOCKED = 77
+ENTERED = 'M3.3 isolated namespace child: ENTERED'
+COMPLETED = 'M3.3 isolated namespace child: COMPLETED'
+# LC_ALL=C is set on the launcher. Recognize only exact setup diagnostics,
+# not arbitrary permission errors produced by the fixture or the binary.
+SETUP_DENIALS = frozenset(
+    f'unshare: {operation}: {reason}'
+    for operation in ('unshare failed', 'write failed /proc/self/uid_map',
+                      'write failed /proc/self/gid_map',
+                      'write failed /proc/self/setgroups')
+    for reason in ('Operation not permitted', 'Permission denied')
+)
+
+
+def classify_namespace_result(result: subprocess.CompletedProcess) -> int:
+    """Only a known pre-entry setup refusal can produce BLOCKED."""
+    lines = result.stdout.splitlines()
+    if (result.returncode == 0 and lines and lines[0] == ENTERED
+            and lines[-1] == COMPLETED and lines.count(ENTERED) == 1
+            and lines.count(COMPLETED) == 1):
+        return PASS
+    if (result.returncode == 1 and not result.stdout.strip()
+            and result.stderr.strip() in SETUP_DENIALS):
+        return BLOCKED
+    return FAIL
+
+
+def launch_namespace(binary: Path) -> int:
+    if os.geteuid() == 0:
+        raise RuntimeError('run as ordinary user, not sudo/root')
+    unshare = shutil.which('unshare')
+    if unshare is None or shutil.which('ip') is None:
+        print('M3.3 isolated namespace check: BLOCKED (requires unshare and iproute2)',
+              file=sys.stderr)
+        return BLOCKED
+    result = subprocess.run(
+        [unshare, '--user', '--map-root-user', '--net', '--',
+         sys.executable, '-B', str(Path(__file__).resolve()),
+         '--binary', str(binary), '--inside', namespace_identity()],
+        capture_output=True, text=True, errors='replace',
+        env={**os.environ, 'LC_ALL': 'C'}, timeout=45)
+    print(result.stdout, end='', flush=True)
+    print(result.stderr, end='', file=sys.stderr, flush=True)
+    status = classify_namespace_result(result)
+    if status == BLOCKED:
+        print('M3.3 isolated namespace check: BLOCKED (host denied namespace setup; '
+              'no mutation fixtures executed)', file=sys.stderr)
+    elif status == PASS:
+        print('M3.3 isolated namespace check: PASS (all mutation fixtures completed)')
+    else:
+        print(f'M3.3 isolated namespace check: FAIL (child/launcher exit {result.returncode}; '
+              'completion not established)', file=sys.stderr)
+    return status
+
+
 def namespace_identity() -> str:
     info = os.stat('/proc/self/ns/net')
     return f'{info.st_dev}:{info.st_ino}'
@@ -76,27 +133,22 @@ def main() -> int:
     args = parser.parse_args()
     try:
         binary = args.binary.resolve(strict=True)
+        if not binary.is_file() or not os.access(binary, os.X_OK):
+            raise RuntimeError('compiled test binary must be an executable file')
         if args.inside is not None:
+            print(ENTERED, flush=True)
             # Do not accept a caller-supplied arbitrary namespace ID as sole
             # evidence: require a distinct namespace and a mapped single UID.
             mapping = Path('/proc/self/uid_map').read_text().split()
             if len(mapping) != 3 or mapping[0] != '0' or mapping[2] != '1' or os.getuid() != 0:
                 raise RuntimeError('requires a disposable single-UID user namespace')
             inside(binary, args.inside)
-        else:
-            if os.geteuid() == 0:
-                raise RuntimeError('run as ordinary user, not sudo/root')
-            unshare = shutil.which('unshare')
-            if unshare is None:
-                raise RuntimeError('unshare is required')
-            subprocess.run([unshare, '--user', '--map-root-user', '--net', '--',
-                            sys.executable, '-B', str(Path(__file__).resolve()),
-                            '--binary', str(binary), '--inside', namespace_identity()],
-                           check=True, timeout=45)
-        return 0
+            print(COMPLETED, flush=True)
+            return PASS
+        return launch_namespace(binary)
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
-        print(f'M3.3 isolated namespace check: FAIL or BLOCKED ({error})', file=sys.stderr)
-        return 1
+        print(f'M3.3 isolated namespace check: FAIL ({error})', file=sys.stderr)
+        return FAIL
 
 
 if __name__ == '__main__':
