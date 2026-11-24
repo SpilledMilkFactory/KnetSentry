@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CORE_TESTS = {
     "knetsentry_core_build_identity", "knetsentry_structured_diagnostics",
     "knetsentry_core_boundary_contract", "knetsentry_configuration_contract",
-    "knetsentry_build_hardening",
+    "knetsentry_build_hardening", "knetsentry_network_scope_policy",
     "knetsentry_manager_state_contract", "knetsentry_manager_signal_lifecycle",
     "knetsentry_manager_configuration_contract", "knetsentry_manager_configuration_runtime",
     "knetsentry_local_ipc_authorization_contract", "knetsentry_local_ipc_runtime",
