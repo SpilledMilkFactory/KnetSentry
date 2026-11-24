@@ -43,6 +43,23 @@ add_test(NAME knetsentry_core_boundary_contract
 set_tests_properties(knetsentry_core_boundary_contract PROPERTIES
     LABELS "unit;security;privacy;regression" TIMEOUT 30)
 
+# M2.1 management process: test explicit state transitions and real POSIX
+# shutdown from a separate process, including both supported stop signals.
+add_executable(knetsentry_service_lifecycle_test service_lifecycle_m21.cpp)
+target_link_libraries(knetsentry_service_lifecycle_test PRIVATE KnetSentry::Service)
+knetsentry_apply_project_options(knetsentry_service_lifecycle_test)
+add_test(NAME knetsentry_manager_state_contract
+    COMMAND $<TARGET_FILE:knetsentry_service_lifecycle_test>)
+set_tests_properties(knetsentry_manager_state_contract PROPERTIES
+    LABELS "unit;security;service;regression" TIMEOUT 15)
+
+add_test(NAME knetsentry_manager_signal_lifecycle
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/scripts/check_m21_manager_runtime.py"
+        --binary "$<TARGET_FILE:knetsentryd>")
+set_tests_properties(knetsentry_manager_signal_lifecycle PROPERTIES
+    LABELS "integration;security;service;regression" TIMEOUT 45)
+
 if(KNETSENTRY_BUILD_DESKTOP)
     # Qt Test is required for full desktop test qualification, not silently
     # skipped if unavailable. The core-only preset remains Qt-independent.

@@ -50,13 +50,17 @@ module = source("cmake/KnetSentryBuildOptions.cmake")
 root = source("CMakeLists.txt")
 cmake_files = (
     "cmake/KnetSentryBuildOptions.cmake",
-    "src/core/CMakeLists.txt", "apps/desktop/CMakeLists.txt", "tests/CMakeLists.txt",
+    "src/core/CMakeLists.txt", "src/service/CMakeLists.txt",
+    "apps/manager/CMakeLists.txt", "apps/desktop/CMakeLists.txt",
+    "tests/CMakeLists.txt",
 )
 for rel in cmake_files:
     require(source(rel).startswith("# SPDX-FileCopyrightText: 2026 Chris Sutton\n"
                                    "# SPDX\x2dLicense-Identifier: BSD-2-Clause\n"),
             f"{rel} must use BSD-2-Clause SPDX header")
 for rel, target in (("src/core/CMakeLists.txt", "knetsentry_core"),
+                    ("src/service/CMakeLists.txt", "knetsentry_service"),
+                    ("apps/manager/CMakeLists.txt", "knetsentryd"),
                     ("apps/desktop/CMakeLists.txt", "knetsentry"),
                     ("tests/CMakeLists.txt", "knetsentry_core_smoke")):
     require(f"knetsentry_apply_project_options({target})" in source(rel),
@@ -150,7 +154,7 @@ if args.build_dir:
         except (ValueError, TypeError) as exc:
             ERRORS.append(f"invalid compilation database: {exc}")
             commands = []
-        source_names = ("build_info.cpp", "core_smoke.cpp") + (("main.cpp",) if desktop else ())
+        source_names = ("build_info.cpp", "core_smoke.cpp", "lifecycle.cpp", "main.cpp")
         for filename in source_names:
             entries = [item for item in commands if Path(item["file"]).name == filename]
             require(len(entries) >= 1, f"no actual compile command for {filename}")
@@ -177,7 +181,8 @@ if args.build_dir:
         if build_type == "Release":
             for flag in ("-z,relro", "-z,now"):
                 require(flag in ninja_text, f"Release linker flags missing {flag}")
-        executables = [directory / "tests/knetsentry_core_smoke"]
+        executables = [directory / "tests/knetsentry_core_smoke",
+                       directory / "apps/manager/knetsentryd"]
         if desktop:
             executables.append(directory / "apps/desktop/knetsentry")
         for exe in executables:

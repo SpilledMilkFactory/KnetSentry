@@ -15,12 +15,13 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M1.9 (contributor onboarding and CI efficiency):**
+> **Development status — M2.1 (management daemon lifecycle foundation):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
 > 26.04 GitHub Actions checks reported for M1.8**. The graphical interface is
-> **not an operational SIEM**. No manager, agentless network sensor, host agent,
+> **not an operational SIEM**. A non-operational manager process exists, but no
+> management IPC, agentless network sensor, host agent,
 > event database, threat detection or privileged security controls exist yet.
 > A green CI run validates only its documented tests, not release readiness.
 
@@ -223,4 +224,27 @@ M1.9 reduces unnecessary runner provisioning with explicit dependency profiles:
 core-only jobs do **not** install Qt/Kirigami, and installed packages are not
 reinstalled. No shared binary or privileged APT cache is introduced. See
 [CI efficiency and cache decision](docs/development/CI_EFFICIENCY_M19.md).
-Full hosted timing and CI success for the **M1.9 revision** remain pending.
+The maintainer reported nine passing M1.9 PR checks; the core-only lane
+completed in approximately 19 seconds, down from about ten minutes in M1.8.
+
+## M2.1 management daemon lifecycle
+
+The new **unprivileged, Qt-independent** `knetsentryd` executable implements
+explicit service states and graceful SIGINT/SIGTERM shutdown. It runs in the
+foreground, refuses root execution, and emits only allowlisted M1.6 lifecycle
+diagnostics. There are **no sockets, IPC APIs, packet capture, databases, or
+security monitoring functions** yet. The GUI remains a separate process.
+See [M2.1 daemon contract](docs/development/MANAGER_DAEMON_M21.md).
+
+```bash
+cmake --preset linux-release --fresh
+cmake --build --preset linux-release --parallel
+ctest --preset linux-release --output-on-failure
+./build/presets/linux-release/apps/manager/knetsentryd --help
+./build/presets/linux-release/apps/manager/knetsentryd
+# Stop with Ctrl+C. Do not launch as root.
+```
+
+Expected M2.1 CTest totals: desktop **15**, full sanitizer **12**, core-only
+**7**, core-only sanitizer **8**. These counts require actual local and hosted
+execution before acceptance.

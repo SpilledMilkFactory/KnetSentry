@@ -5,7 +5,8 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Component and Process Catalog
 
-**Issue:** M0.4. **Status:** proposed architecture, not implemented.
+**Issue:** M0.4. **Status:** proposed architecture; M2.1 implements only the
+`C-01` / `P-01` lifecycle foundation, not its planned security services.
 See [system architecture](SYSTEM_ARCHITECTURE.md),
 [interfaces](INTERFACE_CONTRACTS.md) and [security traceability](ARCHITECTURE_TRACEABILITY.md).
 

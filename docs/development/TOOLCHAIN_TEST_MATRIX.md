@@ -89,10 +89,19 @@ read-only section catalog with Qt Test model-contract coverage, Qt Test
 application initialization via actual desktop QProcess, and a configured
 CTest inventory gate. Full desktop builds **require** Qt6::Test; a missing
 package is a configuration failure, not a skipped test. Expected inventories:
-Release/Debug/Clazy/analysis 13; sanitizer 10; core-only 5; sanitized
-core-only 6. See [M1.7 test-suite contract](TEST_SUITE_FOUNDATION.md).
+M1.7 historical totals were Release/Debug/Clazy/analysis 13; sanitizer 10;
+core-only 5; sanitized core-only 6. M2.1 adds two manager tests to every
+configuration: desktop 15, sanitizer 12, core-only 7, sanitized core-only 8. See [M1.7 test-suite contract](TEST_SUITE_FOUNDATION.md).
 All counts are targets until CTest has run on the intended revision.
 
 ## M1.8 hosted CI implementation
 
 The [Ubuntu 26.04 workflow](../../.github/workflows/ubuntu-26-04.yml) covers the seven accepted M1.7 presets, source policy verification and Qt-generated QML lint. **Host-run evidence pending.** See [CI implementation details](CI_IMPLEMENTATION_M18.md).
+
+## M2.1 manager lifecycle verification
+
+The independent `knetsentryd` executable and explicit state machine are built
+with every configuration, including core-only. `knetsentry_manager_state_contract`
+rejects illegal transitions; `knetsentry_manager_signal_lifecycle` launches
+a real non-root process and verifies SIGTERM/SIGINT, fixed JSON diagnostics,
+unsupported arguments and root rejection. See [manager lifecycle](MANAGER_DAEMON_M21.md).

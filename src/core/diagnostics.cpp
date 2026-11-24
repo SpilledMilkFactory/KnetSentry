@@ -27,6 +27,7 @@ constexpr const char* name(DiagnosticComponent value) noexcept {
     case DiagnosticComponent::Core: return "core";
     case DiagnosticComponent::Desktop: return "desktop";
     case DiagnosticComponent::Verification: return "verification";
+    case DiagnosticComponent::Manager: return "manager";
     }
     return "unknown";
 }
@@ -37,6 +38,11 @@ constexpr const char* name(DiagnosticEvent value) noexcept {
     case DiagnosticEvent::GuiLoadRejected: return "gui_load_rejected";
     case DiagnosticEvent::SelfTest: return "self_test";
     case DiagnosticEvent::VerificationRejected: return "verification_rejected";
+    case DiagnosticEvent::ManagerStarting: return "manager_starting";
+    case DiagnosticEvent::ManagerReady: return "manager_ready";
+    case DiagnosticEvent::ManagerStopping: return "manager_stopping";
+    case DiagnosticEvent::ManagerStopped: return "manager_stopped";
+    case DiagnosticEvent::ManagerFailed: return "manager_failed";
     }
     return "unknown";
 }

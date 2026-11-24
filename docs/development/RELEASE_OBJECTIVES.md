@@ -213,3 +213,12 @@ Qt-independent negative security units, and an executed CTest configuration
 inventory gate. These are first-party test foundations and do not verify
 SIEM runtime authorization, network monitoring, sensor coverage or durable
 audit storage. Passing core-only tests is not full desktop qualification.
+
+## M2.1 independent manager lifecycle (non-operational)
+
+The first `P-01` / `C-01` management daemon starts independently of the GUI,
+rejects root execution, exposes explicit lifecycle transitions, and exits
+cleanly after SIGTERM/SIGINT. The only output is fixed-code non-authoritative
+JSONL diagnostics. [M2.1 contract](MANAGER_DAEMON_M21.md) documents its scope.
+No authenticated IPC, sensors, database, feed client, agent, privilege policy,
+background service installation or audit store exists at this stage.
