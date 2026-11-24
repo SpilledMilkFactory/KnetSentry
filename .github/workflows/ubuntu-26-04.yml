@@ -29,10 +29,8 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Install policy tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends reuse python3-yaml
+      - name: Install only missing policy tools
+        run: bash scripts/ci/install_dependencies.sh policy
       - name: Verify workflow security and source formatting hygiene
         run: python3 scripts/verify_m18_ci.py --workflow .github/workflows/ubuntu-26-04.yml --format
       - name: Verify documented development contracts
@@ -61,28 +59,8 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Check runner and install Ubuntu 26.04 dependencies
-        run: |
-          set -euo pipefail
-          test "$(. /etc/os-release; echo "$VERSION_ID")" = '26.04'
-          test "$(uname -m)" = x86_64
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential cmake ninja-build python3 \
-            qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools \
-            extra-cmake-modules libkirigami-dev \
-            qml6-module-org-kde-kirigami qml6-module-qtquick \
-            qml6-module-qtquick-controls qml6-module-qtquick-layouts \
-            clang-tidy clazy libomp-dev
-          cmake --version
-          g++ --version | head -1
-          if [[ '${{ matrix.preset }}' == linux-clazy ]]; then
-            command -v clazy
-            clang --version | head -1
-          fi
-          if [[ '${{ matrix.preset }}' == linux-analysis ]]; then
-            command -v clang-tidy
-          fi
+      - name: Install only required Ubuntu 26.04 dependencies
+        run: bash scripts/ci/install_dependencies.sh '${{ matrix.preset }}'
       - name: Configure
         run: cmake --preset '${{ matrix.preset }}' --fresh
       - name: Build all required targets
@@ -104,13 +82,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install QML dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            cmake ninja-build g++ qt6-base-dev qt6-declarative-dev \
-            qt6-declarative-dev-tools extra-cmake-modules libkirigami-dev \
-            qml6-module-org-kde-kirigami qml6-module-qtquick \
-            qml6-module-qtquick-controls qml6-module-qtquick-layouts
+        run: bash scripts/ci/install_dependencies.sh qml
       - name: Configure Qt QML module
         run: cmake --preset linux-release --fresh
       - name: Run Qt generated QML lint target

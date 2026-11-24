@@ -43,3 +43,18 @@ Set up a separate, confidential conduct channel that cannot be read by the perso
 - Keep release signing and publication authorization separate from ordinary PR checks, as specified in the [CI policy](CI_SECURITY_POLICY.md).
 
 Record each manual action as `PASS`, `FAIL`, or `BLOCKED` in a review note only after actually performing it. The local documentation verifier intentionally reports these as **not exercised**.
+
+## M1.9 maintainer-reported setup evidence
+
+- GitHub private vulnerability reporting was explicitly enabled by the owner
+  during the initial repository setup. Recheck the actual advisories reporting
+  control as part of repository administration; source documentation cannot
+  independently confirm current platform settings.
+- The owner reports **nine successful M1.8 GitHub Actions checks** before
+  merging PR #16: seven build matrix jobs, policy/REUSE, and QML. This proves
+  that workflow executed successfully for the referenced PR revision, but
+  **does not establish that the main-branch ruleset currently requires them**.
+- Verify actual ruleset checks in GitHub **Settings → Rules → Rulesets**. Select
+  the nine job names shown by GitHub; do not invent job or check identifiers.
+- Record governance status as `PASS` only after checking GitHub settings.
+  Otherwise retain `MANUAL` or `BLOCKED`. Self-review is not independent review.

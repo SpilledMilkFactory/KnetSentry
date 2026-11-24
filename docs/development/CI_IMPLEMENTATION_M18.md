@@ -5,9 +5,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M1.8 — Ubuntu 26.04 GitHub Actions qualification
 
-**State:** Implemented workflow, **unverified on GitHub-hosted runners** until
-all required Actions jobs execute against the final PR commit. This document
-is not evidence of a successful Actions run.
+**State as of M1.9 planning:** Maintainer reports all **nine M1.8 PR checks
+passed** (seven build matrix jobs, policy, and QML static analysis), and local
+`reuse lint` passed with 111/111 files covered. This is user-supplied M1.8
+acceptance evidence, **not** a new M1.9 hosted-run result. Repository ruleset
+configuration remains a separate manual verification step.
 
 ## Scope
 
@@ -50,8 +52,9 @@ for script in scripts/verify_m*.py; do python3 "$script" || exit 1; done
 reuse lint
 ```
 
-GitHub runners alone establish whether packages, clang-tidy/Clazy, Qt-generated
-QML lint, all seven build/test lanes and policy checks run successfully.
+GitHub-hosted M1.8 PR results established that packages, clang-tidy/Clazy,
+QML lint, all seven build/test lanes and policy checks ran successfully on
+that accepted revision. A new workflow revision must qualify independently.
 
 ## Required GitHub administrator action
 
@@ -66,9 +69,12 @@ modify CI instructions. Maintainer self-review is not independent review.
 
 ## Outstanding gates
 
-- Hosted GitHub Actions execution: **NOT VERIFIED**.
-- Official `reuse lint` against final PR source: **NOT VERIFIED** here.
-- `knetsentry_qmllint` on GitHub's Qt/KF6 versions: **NOT VERIFIED**.
+- M1.8 GitHub Actions PR execution: **PASS reported by maintainer (9 jobs)**;
+  M1.9 changed workflow: **NOT YET VERIFIED**.
+- Official `reuse lint` on accepted M1.8: **PASS (111/111 reported)**;
+  M1.9 final source must be rechecked.
+- `knetsentry_qmllint` for accepted M1.8: **PASS reported**;
+  M1.9 final revision requires another hosted run.
 - Full clang-format/qmlformat baseline and enforceable style policy: **NOT
   IMPLEMENTED**; whitespace/newline formatting hygiene is implemented.
 - Artifact signing, SBOM, package rights, and full security qualification:
@@ -114,3 +120,14 @@ This local source-level correction was prepared without a working `reuse`
 installation in the build environment. Therefore **official REUSE compliance
 is not claimed until the user's Ubuntu host or GitHub Actions policy job
 executes the tool successfully**.
+
+## M1.9 runner provisioning improvement
+
+CI now uses `scripts/ci/install_dependencies.sh` for per-preset package
+selection, avoiding Qt/Kirigami in the two core-only lanes. The helper skips
+APT refresh/install when direct packages are installed. No shared cache or
+root-owned APT-state restore is introduced. See
+[CI efficiency details](CI_EFFICIENCY_M19.md) and the separate M1.9
+verification gate. Existing named jobs and required test counts remain
+unchanged. Actual speed improvement is **not quantified** until the updated
+GitHub job logs are inspected.

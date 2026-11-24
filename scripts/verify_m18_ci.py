@@ -47,8 +47,14 @@ def check_workflow(path: Path) -> None:
         require(preset in s, f'missing CI preset: {preset}')
     for step in ('reuse lint', 'knetsentry_qmllint', 'ctest --preset',
                  'verify_m12_hardening.py', 'verify_m17_suites.py',
-                 'verify_m18_ci.py', 'clang-tidy', 'clazy', 'libomp-dev'):
+                 'verify_m18_ci.py', 'scripts/ci/install_dependencies.sh'):
         require(step in s, f'missing required gate: {step}')
+    require("bash scripts/ci/install_dependencies.sh '${{ matrix.preset }}'" in s,
+            'build-matrix jobs must use preset-specific dependency provisioning')
+    require('bash scripts/ci/install_dependencies.sh qml' in s,
+            'QML job must install its own explicit dependency profile')
+    require('sudo apt-get update' not in s,
+            'do not perform unconditional APT refresh in build/QML matrix jobs')
     require('fail-fast: false' in s, 'CI must report every matrix lane')
     require('timeout-minutes:' in s and 'cancel-in-progress: true' in s,
             'CI needs bounded runtime and cancellation')

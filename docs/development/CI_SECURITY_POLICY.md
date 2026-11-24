@@ -5,9 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — GitHub Actions and CI Security Policy
 
-**State:** M0.7 planned policy. No GitHub Actions build workflows or automated
-security qualification are established by this change. M1.8 owns their
-implementation; M13–M15 own deeper qualification and release gates.
+**State:** Original policy from M0.7, now with an implemented Ubuntu 26.04
+GitHub Actions workflow (M1.8). The maintainer reports nine passing hosted
+M1.8 PR checks. This is not release security qualification; M13–M15 own the
+deeper gates. M1.9 introduces more selective CI dependency provisioning.
 
 ## CI trust levels and event separation
 
@@ -84,4 +85,4 @@ settings only after the affected workflows are functioning.
 
 ## M1.8 implementation status
 
-A read-only Ubuntu 26.04 workflow candidate is now provided at `.github/workflows/ubuntu-26-04.yml`; see [M1.8 CI implementation](CI_IMPLEMENTATION_M18.md). This updates the earlier M0.7 planned-only state. CI success, branch protection, formatting style completeness and distribution clearance are **not yet established**.
+A read-only Ubuntu 26.04 workflow exists at `.github/workflows/ubuntu-26-04.yml`; see [M1.8 CI implementation](CI_IMPLEMENTATION_M18.md). The maintainer reports all nine checks passing on the merged M1.8 PR. Required ruleset enforcement remains unconfirmed, full style enforcement is incomplete, and release distribution clearance is not claimed. M1.9's targeted dependency provisioning requires its own hosted acceptance.
