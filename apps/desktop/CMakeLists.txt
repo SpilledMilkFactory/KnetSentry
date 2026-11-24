@@ -21,8 +21,9 @@ target_link_libraries(knetsentry PRIVATE
 qt_add_qml_module(knetsentry
     URI io.github.spilledmilkfactory.KnetSentry
     VERSION 1.0
-    SOURCES service_health_model.cpp service_health_model.hpp
+    SOURCES service_health_model.cpp service_health_model.hpp daemon_control.cpp daemon_control.hpp
     QML_FILES Main.qml SectionPage.qml DesignTokens.qml StatusBadge.qml SeverityBadge.qml SurfaceCard.qml
+    RESOURCES icons/menu.svg icons/play.svg icons/stop.svg
 )
 
 # Qt 6.10's generated QML cache registry can trigger GCC 15's

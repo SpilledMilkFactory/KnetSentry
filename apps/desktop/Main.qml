@@ -10,6 +10,11 @@ import io.github.spilledmilkfactory.KnetSentry
 Kirigami.ApplicationWindow {
     id: window
     required property ServiceHealthModel healthModel
+    required property DaemonControl daemonControl
+    readonly property alias toolbarStartButton: startButton
+    readonly property alias toolbarStopButton: stopButton
+    readonly property int toolbarTone: window.daemonControl.tone
+    readonly property bool toolbarPulse: window.daemonControl.pulse
     objectName: "knetSentryMainWindow"
     title: qsTr("KnetSentry — %1").arg(activeSectionTitle)
     width: 1100
@@ -94,7 +99,10 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    pageStack.globalToolBar.style: Kirigami.ApplicationHeaderStyle.None
+
     globalDrawer: Kirigami.GlobalDrawer {
+        handleVisible: false
         title: qsTr("KnetSentry")
         titleIcon: "security-high"
         isMenu: false
@@ -154,6 +162,110 @@ Kirigami.ApplicationWindow {
         healthModel: window.healthModel
     }
 
+    header: Controls.ToolBar {
+        implicitHeight: Math.max(44, toolbarRow.implicitHeight + 8)
+        RowLayout {
+            id: toolbarRow
+            anchors.fill: parent
+            anchors.leftMargin: Kirigami.Units.smallSpacing
+            anchors.rightMargin: Kirigami.Units.smallSpacing
+            spacing: Kirigami.Units.smallSpacing
+            Controls.ToolButton {
+                text: qsTr("Navigation")
+                Layout.preferredWidth: designTokens.touchTarget
+                Layout.preferredHeight: designTokens.touchTarget
+                display: Controls.AbstractButton.IconOnly
+                icon.name: "application-menu"
+                icon.source: "icons/menu.svg"
+                Accessible.name: text
+                onClicked: window.globalDrawer.drawerOpen = !window.globalDrawer.drawerOpen
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: text
+            }
+            Controls.Label {
+                text: window.activeSectionTitle
+                font.pixelSize: designTokens.sectionSize
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+            }
+            Item {
+                id: indicator
+                Layout.preferredWidth: 120
+                Layout.preferredHeight: 32
+                readonly property color stateColor: window.toolbarTone === 2 ? Kirigami.Theme.positiveTextColor
+                    : window.toolbarTone === 1 ? Kirigami.Theme.neutralTextColor : Kirigami.Theme.negativeTextColor
+                Accessible.role: Accessible.StaticText
+                Accessible.name: window.daemonControl.status
+                HoverHandler { id: indicatorHover }
+                Controls.ToolTip.visible: indicatorHover.hovered
+                Controls.ToolTip.text: window.daemonControl.status + qsTr(" — pulse: successful health exchange, not monitoring activity")
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 10; height: 10; radius: width / 2
+                    color: indicator.stateColor
+                }
+                Canvas {
+                    id: heartbeat
+                    x: 18
+                    width: 98
+                    height: 24
+                    anchors.verticalCenter: parent.verticalCenter
+                    readonly property color lineColor: indicator.stateColor
+                    readonly property bool activePulse: window.toolbarPulse
+                    onLineColorChanged: requestPaint()
+                    onActivePulseChanged: requestPaint()
+                    onPaint: {
+                        const ctx = getContext("2d")
+                        ctx.clearRect(0, 0, width, height)
+                        ctx.strokeStyle = lineColor
+                        ctx.lineWidth = 2
+                        ctx.lineJoin = "round"
+                        ctx.beginPath()
+                        ctx.moveTo(1, 12)
+                        if (activePulse) {
+                            ctx.lineTo(32, 12)
+                            ctx.lineTo(40, 5)
+                            ctx.lineTo(49, 20)
+                            ctx.lineTo(57, 2)
+                            ctx.lineTo(65, 12)
+                        }
+                        ctx.lineTo(width - 1, 12)
+                        ctx.stroke()
+                    }
+                }
+            }
+            Controls.ToolButton {
+                id: startButton
+                text: qsTr("Start desktop-owned daemon")
+                Layout.preferredWidth: designTokens.touchTarget
+                Layout.preferredHeight: designTokens.touchTarget
+                display: Controls.AbstractButton.IconOnly
+                icon.name: "media-playback-start"
+                icon.source: "icons/play.svg"
+                enabled: window.daemonControl.canStart
+                Accessible.name: text
+                onClicked: window.daemonControl.startManager()
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: enabled ? text : window.daemonControl.status
+            }
+            Controls.ToolButton {
+                id: stopButton
+                text: qsTr("Stop desktop-owned daemon")
+                Layout.preferredWidth: designTokens.touchTarget
+                Layout.preferredHeight: designTokens.touchTarget
+                display: Controls.AbstractButton.IconOnly
+                icon.name: "media-playback-stop"
+                icon.source: "icons/stop.svg"
+                enabled: window.daemonControl.canStop
+                Accessible.name: text
+                onClicked: window.daemonControl.stopManager()
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: enabled ? text : window.daemonControl.status
+            }
+        }
+    }
+
     footer: Controls.ToolBar {
         RowLayout {
             anchors.fill: parent
@@ -165,7 +277,7 @@ Kirigami.ApplicationWindow {
                 elide: Text.ElideRight
             }
             Controls.Label {
-                text: qsTr("M2.6")
+                text: qsTr("M2.9")
             }
         }
     }

@@ -101,3 +101,10 @@ M2.7 introduces a separate dedicated system-service identity; its private socket
 is intentionally inaccessible to ordinary desktop users under the existing
 matching UID/GID policy. See [systemd deployment](SYSTEMD_SERVICE_M27.md).
 The same-user foreground GUI workflow remains unchanged.
+
+### M2.9 desktop toolbar
+
+See [M2.9 toolbar contract](DESKTOP_DAEMON_TOOLBAR_M29.md). The existing explicit
+IPC endpoint remains read-only; desktop-owned foreground lifecycle is separate.
+The new desktop CTests are `knetsentry_qt_daemon_control` (including sanitizer)
+and `knetsentry_gui_daemon_toolbar` (non-sanitized). Core-only counts are unchanged.

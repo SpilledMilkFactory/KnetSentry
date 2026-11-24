@@ -164,3 +164,10 @@ core-only 19/20 (normal/sanitized). See
 [the lifecycle integration contract](SERVICE_LIFECYCLE_IPC_M28.md).
 The M2.7 live systemd gate and M2.6 actual QML lifecycle regression remain
 separate; hosted CI does not claim installed-service qualification.
+
+### M2.9 desktop toolbar
+
+See [M2.9 toolbar contract](DESKTOP_DAEMON_TOOLBAR_M29.md). The existing explicit
+IPC endpoint remains read-only; desktop-owned foreground lifecycle is separate.
+The new desktop CTests are `knetsentry_qt_daemon_control` (including sanitizer)
+and `knetsentry_gui_daemon_toolbar` (non-sanitized). Core-only counts are unchanged.

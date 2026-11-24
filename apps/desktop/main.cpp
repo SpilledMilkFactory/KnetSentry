@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: MIT
 #include "knetsentry/core/build_info.hpp"
 #include "service_health_model.hpp"
+#include "daemon_control.hpp"
 #include "knetsentry/core/diagnostics.hpp"
 
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
+#include <QDir>
+#include <QMetaObject>
+#include <unistd.h>
 #include <QGuiApplication>
 #include <QEventLoop>
 #include <QQmlEngine>
@@ -32,7 +36,7 @@ void set_application_metadata() {
 
 void configure_parser(QCommandLineParser &parser) {
     parser.setApplicationDescription(QStringLiteral(
-        "KnetSentry M2.6 local manager health; no SIEM monitoring is active."));
+        "KnetSentry M2.9 local manager health and desktop-owned lifecycle; no SIEM monitoring is active."));
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addOption(QCommandLineOption(QStringLiteral("ipc-dir"),
@@ -102,13 +106,20 @@ int main(int argc, char *argv[]) {
         QStringLiteral("self-test-health"),
         QStringLiteral("Bounded live health/disconnect/reconnect integration test."));
     parser.addOption(health_smoke_test);
+    const QCommandLineOption control_smoke_test(QStringLiteral("self-test-daemon-controls"),
+        QStringLiteral("Exercise toolbar controls against a private foreground manager."));
+    parser.addOption(control_smoke_test);
     parser.process(app);
 
     // The model outlives QML and is not a management authority.
     knetsentry::desktop::ServiceHealthModel health(parser.value(QStringLiteral("ipc-dir")));
+    knetsentry::desktop::DaemonControl control(health, parser.isSet(QStringLiteral("ipc-dir")),
+        QDir::cleanPath(QCoreApplication::applicationDirPath() + QStringLiteral("/../manager/knetsentryd")));
     QQmlApplicationEngine engine;
     QQmlEngine::setObjectOwnership(&health, QQmlEngine::CppOwnership);
-    engine.setInitialProperties({{QStringLiteral("healthModel"), QVariant::fromValue(&health)}});
+    QQmlEngine::setObjectOwnership(&control, QQmlEngine::CppOwnership);
+    engine.setInitialProperties({{QStringLiteral("healthModel"), QVariant::fromValue(&health)},
+                                 {QStringLiteral("daemonControl"), QVariant::fromValue(&control)}});
     engine.loadFromModule("io.github.spilledmilkfactory.KnetSentry", "Main");
     if (engine.rootObjects().size() != 1) {
         publish(knetsentry::core::DiagnosticLevel::Error,
@@ -193,6 +204,48 @@ int main(int argc, char *argv[]) {
         std::cout << "KnetSentry M1.4 primary navigation: PASS (7 sections; no telemetry)\n";
         return 0;
     }
+    if (parser.isSet(control_smoke_test)) {
+        if (::geteuid() == 0 || parser.isSet(QStringLiteral("ipc-dir"))) { return 1; }
+        QObject* root = engine.rootObjects().constFirst();
+        QObject* play = root->property("toolbarStartButton").value<QObject*>();
+        QObject* stop = root->property("toolbarStopButton").value<QObject*>();
+        if (play == nullptr || stop == nullptr || !play->property("enabled").toBool() ||
+            stop->property("enabled").toBool()) { return 1; }
+        QEventLoop loop;
+        QTimer check;
+        QTimer deadline;
+        deadline.setSingleShot(true);
+        QObject::connect(&deadline, &QTimer::timeout, &loop, [&loop] { loop.exit(1); });
+        int stage = 0;
+        QObject::connect(&check, &QTimer::timeout, &loop, [&] {
+            if (root->property("toolbarTone").toInt() != control.tone() ||
+                root->property("toolbarPulse").toBool() != control.pulse()) { loop.exit(1); return; }
+            if ((stage == 0 || stage == 2) && control.tone() == 2 && control.pulse()) {
+                if (!health.available() || play->property("enabled").toBool() ||
+                    !stop->property("enabled").toBool()) { loop.exit(1); return; }
+                if (!root->setProperty("navigationRequest", QStringLiteral("settings")) ||
+                    root->property("activeSection").toString() != QStringLiteral("settings") ||
+                    !QMetaObject::invokeMethod(stop, "clicked")) { loop.exit(1); return; }
+                ++stage;
+            } else if ((stage == 1 || stage == 3) && control.tone() == 0 && control.canStart()) {
+                if (health.available() || control.pulse() || stop->property("enabled").toBool() ||
+                    control.status() != QStringLiteral("Desktop-owned daemon stopped")) {
+                    loop.exit(1); return;
+                }
+                if (stage == 3) {
+                    std::cout << "M2.9 toolbar start, stop, restart and navigation: PASS\n";
+                    loop.exit(0);
+                    return;
+                }
+                ++stage;
+                if (!QMetaObject::invokeMethod(play, "clicked")) { loop.exit(1); }
+            }
+        });
+        if (!QMetaObject::invokeMethod(play, "clicked")) { return 1; }
+        check.start(50);
+        deadline.start(20000);
+        return loop.exec();
+    }
     if (parser.isSet(health_smoke_test)) {
         // The external synthetic test harness controls the real daemon. This
         // bounded test-only cadence never changes normal 30-second polling.
@@ -203,8 +256,14 @@ int main(int argc, char *argv[]) {
         deadline.setSingleShot(true);
         QObject::connect(&deadline, &QTimer::timeout, &loop, [&loop] { loop.exit(1); });
         QObject* root = engine.rootObjects().constFirst();
+        QObject* play = root->property("toolbarStartButton").value<QObject*>();
+        QObject* stop = root->property("toolbarStopButton").value<QObject*>();
+        if (play == nullptr || stop == nullptr || play->property("enabled").toBool() ||
+            stop->property("enabled").toBool()) { return 1; }
         int stage = 0;
         QObject::connect(&check, &QTimer::timeout, &loop, [&] {
+            if (play->property("enabled").toBool() || stop->property("enabled").toBool() ||
+                root->property("toolbarTone").toInt() != control.tone()) { loop.exit(1); return; }
             const bool matches = root->property("currentPageHealthStatus").toString() == health.status() &&
                 root->property("currentPageHealthResources").toString() == health.resources() &&
                 root->property("currentPageHealthErrors").toString() == health.errors() &&

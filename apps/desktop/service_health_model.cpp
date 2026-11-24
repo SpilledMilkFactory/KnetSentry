@@ -26,6 +26,18 @@ ServiceHealthModel::ServiceHealthModel(const QString& directory, QObject* parent
     connect(&exchange_timer_, &QTimer::timeout, this, &ServiceHealthModel::advance);
 }
 
+void ServiceHealthModel::setDirectory(const QString& directory) {
+    refresh_timer_.stop();
+    exchange_timer_.stop();
+    client_.cancel();
+    directory_ = QFile::encodeName(directory);
+    Q_EMIT changed();
+}
+
+service::HealthQueryState ServiceHealthModel::queryState() const noexcept {
+    return client_.state();
+}
+
 void ServiceHealthModel::start() {
     if (directory_.isEmpty() || ::geteuid() == 0 || refresh_timer_.isActive()) { return; }
     refresh();

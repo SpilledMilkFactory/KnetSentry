@@ -164,6 +164,27 @@ if(KNETSENTRY_BUILD_DESKTOP)
     add_test(NAME knetsentry_qt_health_model COMMAND $<TARGET_FILE:knetsentry_qt_health_test>)
     set_tests_properties(knetsentry_qt_health_model PROPERTIES
         LABELS "qt;model;security;regression" TIMEOUT 15)
+    add_executable(knetsentry_qt_daemon_control_test qt/daemon_control_qtest.cpp
+        ../apps/desktop/daemon_control.cpp ../apps/desktop/daemon_control.hpp
+        ../apps/desktop/service_health_model.cpp ../apps/desktop/service_health_model.hpp)
+    set_target_properties(knetsentry_qt_daemon_control_test PROPERTIES AUTOMOC ON)
+    target_include_directories(knetsentry_qt_daemon_control_test PRIVATE "${PROJECT_SOURCE_DIR}/apps/desktop")
+    target_compile_definitions(knetsentry_qt_daemon_control_test PRIVATE
+        KNETSENTRY_MANAGER_EXECUTABLE="$<TARGET_FILE:knetsentryd>")
+    target_link_libraries(knetsentry_qt_daemon_control_test PRIVATE KnetSentry::Service Qt6::Core Qt6::Qml Qt6::Test)
+    knetsentry_apply_project_options(knetsentry_qt_daemon_control_test)
+    add_dependencies(knetsentry_qt_daemon_control_test knetsentryd)
+    add_test(NAME knetsentry_qt_daemon_control COMMAND $<TARGET_FILE:knetsentry_qt_daemon_control_test>)
+    set_tests_properties(knetsentry_qt_daemon_control PROPERTIES
+        LABELS "qt;model;security;integration;regression" TIMEOUT 35)
+    if(NOT KNETSENTRY_ENABLE_SANITIZERS)
+        add_test(NAME knetsentry_gui_daemon_toolbar
+            COMMAND $<TARGET_FILE:knetsentry> --self-test-daemon-controls)
+        set_tests_properties(knetsentry_gui_daemon_toolbar PROPERTIES
+            ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+            LABELS "qt;desktop;qml;integration;security;regression" TIMEOUT 30)
+    endif()
+
     # No new QML leak suppression: the model is always instrumented, and the
     # existing sanitized QML startup/navigation tests instantiate its bindings.
     if(NOT KNETSENTRY_ENABLE_SANITIZERS)
