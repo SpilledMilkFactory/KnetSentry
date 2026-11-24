@@ -95,3 +95,6 @@ Expected CTest counts: 21 desktop Release/Debug/Clazy/analysis; 18 full
 sanitizer; 13 core-only Release; 14 core-only sanitizer. The seven presets
 and nine CI jobs remain unchanged. These are acceptance targets, not a
 claim of hosted or Ubuntu desktop execution.
+
+M2.6 adds the read-only desktop client described in
+[desktop health](DESKTOP_HEALTH_M26.md); the M2.4 wire contract remains unchanged.

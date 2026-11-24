@@ -11,15 +11,17 @@ knetsentry_apply_project_options(knetsentry_section_catalog)
 
 add_executable(knetsentry main.cpp)
 target_compile_features(knetsentry PRIVATE cxx_std_23)
+target_include_directories(knetsentry PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 knetsentry_apply_project_options(knetsentry)
 target_link_libraries(knetsentry PRIVATE
-    KnetSentry::Core knetsentry_section_catalog Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2)
+    KnetSentry::Core KnetSentry::Service knetsentry_section_catalog Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::QuickControls2)
 
 # Qt 6-managed QML module and embedded resources; no loose QML directory
 # searched at runtime and no handwritten resource path assumptions.
 qt_add_qml_module(knetsentry
     URI io.github.spilledmilkfactory.KnetSentry
     VERSION 1.0
+    SOURCES service_health_model.cpp service_health_model.hpp
     QML_FILES Main.qml SectionPage.qml DesignTokens.qml StatusBadge.qml SeverityBadge.qml SurfaceCard.qml
 )
 

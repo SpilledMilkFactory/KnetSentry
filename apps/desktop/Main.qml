@@ -4,10 +4,12 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import io.github.spilledmilkfactory.KnetSentry
 
-// M1.5: design-system-enabled navigation shell, with NO live SIEM data sources.
+// M2.6: read-only daemon health; no live SIEM telemetry sources.
 Kirigami.ApplicationWindow {
     id: window
+    required property ServiceHealthModel healthModel
     objectName: "knetSentryMainWindow"
     title: qsTr("KnetSentry — %1").arg(activeSectionTitle)
     width: 1100
@@ -31,6 +33,14 @@ Kirigami.ApplicationWindow {
     // integration test to exercise exactly the same routing as drawer actions.
     property string activeSection: "dashboard"
     property string navigationRequest: ""
+    readonly property string currentPageHealthStatus: pageStack.currentItem
+        ? pageStack.currentItem.displayedHealthStatus : ""
+    readonly property string currentPageHealthResources: pageStack.currentItem
+        ? pageStack.currentItem.displayedHealthResources : ""
+    readonly property string currentPageHealthErrors: pageStack.currentItem
+        ? pageStack.currentItem.displayedHealthErrors : ""
+    readonly property string currentPageHealthComponents: pageStack.currentItem
+        ? pageStack.currentItem.displayedHealthComponents : ""
     readonly property string currentPageSection: pageStack.currentItem
                                                  ? pageStack.currentItem.sectionId : ""
     readonly property int navigationDepth: pageStack.depth
@@ -136,10 +146,13 @@ Kirigami.ApplicationWindow {
 
     Component {
         id: sectionPageComponent
-        SectionPage {}
+        SectionPage { healthModel: window.healthModel }
     }
 
-    pageStack.initialPage: SectionPage { sectionId: "dashboard" }
+    pageStack.initialPage: SectionPage {
+        sectionId: "dashboard"
+        healthModel: window.healthModel
+    }
 
     footer: Controls.ToolBar {
         RowLayout {
@@ -147,12 +160,12 @@ Kirigami.ApplicationWindow {
             anchors.leftMargin: Kirigami.Units.largeSpacing
             anchors.rightMargin: Kirigami.Units.largeSpacing
             Controls.Label {
-                text: qsTr("Monitoring is not active — navigation preview only")
+                text: qsTr("Monitoring is not active — daemon health is not security coverage")
                 Layout.fillWidth: true
                 elide: Text.ElideRight
             }
             Controls.Label {
-                text: qsTr("M1.5")
+                text: qsTr("M2.6")
             }
         }
     }

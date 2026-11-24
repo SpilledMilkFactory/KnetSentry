@@ -111,3 +111,7 @@ runtime tests are conditional on a harness able to change identity; a normal
 unprivileged runner reports NOT_APPLICABLE for that subcase. Source checks
 are not runtime evidence. Expected CTest counts: 23 desktop normal, 20 desktop
 sanitized, 15 core-only normal and 16 core-only sanitized.
+
+M2.6's configured desktop health polling consumes one audit authorization
+record per successful query when auditing is enabled. See
+[desktop health](DESKTOP_HEALTH_M26.md) for cadence and capacity limitations.

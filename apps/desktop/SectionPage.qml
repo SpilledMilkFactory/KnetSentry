@@ -4,12 +4,18 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import io.github.spilledmilkfactory.KnetSentry
 
 // M1.5: presentation-only visual language. No device, event or alert models.
 Kirigami.Page {
     id: page
     objectName: "knetSentrySectionPage"
     required property string sectionId
+    required property ServiceHealthModel healthModel
+    readonly property string displayedHealthStatus: managerCard.description
+    readonly property string displayedHealthResources: resourceCard.description
+    readonly property string displayedHealthErrors: errorCard.description
+    readonly property string displayedHealthComponents: componentCard.description
     title: sectionTitle
     DesignTokens { id: tokens }
     readonly property string visualSystemVersion: tokens.version
@@ -31,7 +37,7 @@ Kirigami.Page {
     readonly property string sectionDescription: {
         switch (sectionId) {
         case "dashboard":
-            return qsTr("An overview of monitoring coverage, system health, and security activity will appear here when the relevant services exist.")
+            return qsTr("Management daemon health is shown below. Monitoring coverage and security activity remain unavailable.")
         case "assets":
             return qsTr("Authorized LAN devices, including agentless IoT equipment, will appear here when asset inventory and telemetry are implemented.")
         case "events":
@@ -98,11 +104,58 @@ Kirigami.Page {
                 Layout.fillWidth: true
             }
             Controls.Label {
-                text: qsTr("This is an application-shell preview. No devices, alerts, detections, or incidents are simulated.")
+                text: qsTr("No devices, alerts, detections, or incidents are simulated. Service health is not evidence of network protection.")
                 font.pixelSize: tokens.captionSize
                 color: Kirigami.Theme.textColor
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
+            }
+
+            ColumnLayout {
+                visible: page.sectionId === "dashboard"
+                Layout.fillWidth: true
+                spacing: tokens.spaceM
+                Controls.Label {
+                    text: qsTr("Management daemon health")
+                    font.pixelSize: tokens.sectionSize
+                    font.weight: Font.DemiBold
+                    Layout.fillWidth: true
+                    Accessible.role: Accessible.Heading
+                }
+                SurfaceCard {
+                    id: managerCard
+                    objectName: "managerHealthCard"
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: implicitHeight
+                    heading: qsTr("Daemon status")
+                    description: page.healthModel.status
+                }
+                Controls.Label {
+                    text: qsTr("Read-only snapshot; refreshed every 30 seconds when configured. A disconnected service has no current health values.")
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                }
+                SurfaceCard {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: implicitHeight
+                    id: componentCard
+                    heading: qsTr("Component health")
+                    description: page.healthModel.components
+                }
+                SurfaceCard {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: implicitHeight
+                    id: resourceCard
+                    heading: qsTr("Process resources")
+                    description: page.healthModel.resources
+                }
+                SurfaceCard {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: implicitHeight
+                    id: errorCard
+                    heading: qsTr("Operational counters — not incidents")
+                    description: page.healthModel.errors
+                }
             }
 
             Flow {
@@ -114,7 +167,7 @@ Kirigami.Page {
                     width: cards.width > tokens.compactBreakpoint
                            ? (cards.width - cards.spacing) / 2 : cards.width
                     heading: qsTr("Implementation status")
-                    description: qsTr("Presentation foundation only. No collectors, manager, database, or detection engine is running.")
+                    description: qsTr("Collectors, event storage and detection are not implemented. Manager health is available through explicitly configured local IPC.")
                     iconName: "dialog-information"
                 }
                 SurfaceCard {

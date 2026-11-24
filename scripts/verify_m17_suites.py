@@ -26,14 +26,17 @@ CORE_TESTS = {
     "knetsentry_local_ipc_authorization_contract", "knetsentry_local_ipc_runtime",
     "knetsentry_service_health_contract", "knetsentry_service_health_runtime",
     "knetsentry_service_audit_contract", "knetsentry_service_audit_runtime",
+    "knetsentry_health_client_contract", "knetsentry_health_client_runtime",
 }
 DESKTOP_TESTS = {
     "knetsentry_desktop_version", "knetsentry_kirigami_qml_startup",
     "knetsentry_primary_navigation", "knetsentry_qt_model_contract",
+    "knetsentry_qt_health_model",
 }
 NONSAN_DESKTOP_TESTS = {
     "knetsentry_navigation_qml_diagnostics", "knetsentry_visual_system",
     "knetsentry_desktop_diagnostic_lifecycle", "knetsentry_qt_application_lifecycle",
+    "knetsentry_gui_health_runtime",
 }
 SANITIZER_TEST = "knetsentry_lsan_negative_control"
 

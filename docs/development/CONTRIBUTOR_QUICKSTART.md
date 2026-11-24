@@ -175,3 +175,11 @@ is 21/18 desktop (normal/sanitized), 13/14 core-only (normal/sanitized).
 Run `python3 scripts/verify_m25_audit.py --build-dir build/presets/linux-release`
 after CTest. Keep local audit records out of public artifacts.
 See [audit contract](SERVICE_AUDIT_M25.md).
+
+### M2.6 desktop health verification
+
+Run `python3 scripts/verify_m26_desktop_health.py` for source policy and
+`python3 scripts/verify_m26_desktop_health.py --build-dir build/presets/linux-release`
+after building. The native client is tested in core-only builds too; only the
+real desktop configuration qualifies Qt model and QML behavior. See
+[desktop health](DESKTOP_HEALTH_M26.md) for manual start/stop/reconnect checks.

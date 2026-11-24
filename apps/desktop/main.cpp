@@ -1,12 +1,16 @@
 // SPDX-FileCopyrightText: 2026 Chris Sutton
 // SPDX-License-Identifier: MIT
 #include "knetsentry/core/build_info.hpp"
+#include "service_health_model.hpp"
 #include "knetsentry/core/diagnostics.hpp"
 
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
 #include <QGuiApplication>
+#include <QEventLoop>
+#include <QQmlEngine>
+#include <QTimer>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QString>
@@ -28,9 +32,12 @@ void set_application_metadata() {
 
 void configure_parser(QCommandLineParser &parser) {
     parser.setApplicationDescription(QStringLiteral(
-        "KnetSentry M1.5 Qt Quick/Kirigami visual system; no SIEM monitoring is active."));
+        "KnetSentry M2.6 local manager health; no SIEM monitoring is active."));
     parser.addHelpOption();
     parser.addVersionOption();
+    parser.addOption(QCommandLineOption(QStringLiteral("ipc-dir"),
+        QStringLiteral("Explicit private manager IPC directory for read-only health."),
+        QStringLiteral("absolute-directory")));
 }
 
 bool requests_text_only(int argc, char *argv[]) {
@@ -91,11 +98,17 @@ int main(int argc, char *argv[]) {
         QStringLiteral("self-test-visual"),
         QStringLiteral("Verify the embedded visual design tokens and QML pages."));
     parser.addOption(visual_smoke_test);
+    const QCommandLineOption health_smoke_test(
+        QStringLiteral("self-test-health"),
+        QStringLiteral("Bounded live health/disconnect/reconnect integration test."));
+    parser.addOption(health_smoke_test);
     parser.process(app);
 
-    // The UI has no privileged interfaces and exposes no operational SIEM
-    // state. Actual security data will be supplied by authorized IPC later.
+    // The model outlives QML and is not a management authority.
+    knetsentry::desktop::ServiceHealthModel health(parser.value(QStringLiteral("ipc-dir")));
     QQmlApplicationEngine engine;
+    QQmlEngine::setObjectOwnership(&health, QQmlEngine::CppOwnership);
+    engine.setInitialProperties({{QStringLiteral("healthModel"), QVariant::fromValue(&health)}});
     engine.loadFromModule("io.github.spilledmilkfactory.KnetSentry", "Main");
     if (engine.rootObjects().size() != 1) {
         publish(knetsentry::core::DiagnosticLevel::Error,
@@ -180,5 +193,47 @@ int main(int argc, char *argv[]) {
         std::cout << "KnetSentry M1.4 primary navigation: PASS (7 sections; no telemetry)\n";
         return 0;
     }
+    if (parser.isSet(health_smoke_test)) {
+        // The external synthetic test harness controls the real daemon. This
+        // bounded test-only cadence never changes normal 30-second polling.
+        if (!parser.isSet(QStringLiteral("ipc-dir"))) { return 1; }
+        QEventLoop loop;
+        QTimer check;
+        QTimer deadline;
+        deadline.setSingleShot(true);
+        QObject::connect(&deadline, &QTimer::timeout, &loop, [&loop] { loop.exit(1); });
+        QObject* root = engine.rootObjects().constFirst();
+        int stage = 0;
+        QObject::connect(&check, &QTimer::timeout, &loop, [&] {
+            const bool matches = root->property("currentPageHealthStatus").toString() == health.status() &&
+                root->property("currentPageHealthResources").toString() == health.resources() &&
+                root->property("currentPageHealthErrors").toString() == health.errors() &&
+                root->property("currentPageHealthComponents").toString() == health.components();
+            if (!matches) { loop.exit(1); return; }
+            if (stage == 0 && health.available()) {
+                if (!health.resources().contains(QStringLiteral("KiB"))) { loop.exit(1); return; }
+                std::cout << "M2.6 GUI connected\n" << std::flush;
+                stage = 1;
+            } else if (stage == 1 && !health.available() &&
+                       health.status() == QStringLiteral("Disconnected or unavailable")) {
+                if (health.resources() != QStringLiteral("Uptime, CPU time and memory unavailable.") ||
+                    health.errors() != QStringLiteral("Operational error counters unavailable.")) {
+                    loop.exit(1); return;
+                }
+                std::cout << "M2.6 GUI disconnected\n" << std::flush;
+                stage = 2;
+            } else if (stage == 2 && health.available()) {
+                std::cout << "M2.6 GUI reconnected: PASS\n" << std::flush;
+                loop.exit(0);
+                return;
+            }
+            health.refresh();
+        });
+        health.start();
+        check.start(500);
+        deadline.start(15000);
+        return loop.exec();
+    }
+    health.start();
     return app.exec();
 }
