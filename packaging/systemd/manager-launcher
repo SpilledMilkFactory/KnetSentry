@@ -1,0 +1,17 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 Chris Sutton
+# SPDX-License-Identifier: MIT
+# Invoked only by the installed unit; no caller-controlled options or paths.
+set -eu
+umask 077
+PATH=/usr/bin:/bin
+export PATH
+if [ "$(id -u)" = 0 ] || [ "$(id -un)" != knetsentry ] || [ "$(id -gn)" != knetsentry ]; then
+    echo 'knetsentry: dedicated service identity required' >&2
+    exit 3
+fi
+# A fresh directory is required by the M2.5 exclusive audit sink.
+# Do not remove old sessions or restart automatically on audit failure.
+session=$(mktemp -d /var/lib/knetsentry/session.XXXXXXXXXX)
+exec /usr/local/libexec/knetsentry/knetsentryd \
+    --ipc-dir /run/knetsentry --audit-dir "$session"

@@ -96,3 +96,8 @@ navigation plus the sanitized Qt model and native client tests remain required.
 Expected CTest totals: desktop 27/23 (normal/sanitized); core-only 17/18
 (normal/sanitized). The full Ubuntu desktop matrix and manual visual checks
 remain required before acceptance.
+
+M2.7 introduces a separate dedicated system-service identity; its private socket
+is intentionally inaccessible to ordinary desktop users under the existing
+matching UID/GID policy. See [systemd deployment](SYSTEMD_SERVICE_M27.md).
+The same-user foreground GUI workflow remains unchanged.
