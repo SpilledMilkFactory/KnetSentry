@@ -44,7 +44,7 @@ actual = [line.strip() for line in rules.splitlines()
           if line.strip() and not line.lstrip().startswith("#")]
 require(actual == ["leak:libfontconfig.so.1", "leak:libKirigamiControlsplugin.so"],
         "unexpected LSan suppressions (only two observed external-library paths allowed)")
-require("SPDX-License-Identifier: MIT" in rules[:120], "suppression file lacks MIT SPDX")
+require("SPDX\x2dLicense-Identifier: MIT" in rules[:120], "suppression file lacks MIT SPDX")
 
 tests = read("tests/CMakeLists.txt")
 require("if(KNETSENTRY_BUILD_DESKTOP)" in tests and
@@ -74,7 +74,7 @@ require(tests.count("LSAN_OPTIONS=suppressions=") == 3,
         "LSan suppression must be restricted to two QML runtime tests and the negative control")
 
 probe = read("tests/sanitizers/lsan_probe.cpp")
-require("SPDX-License-Identifier: MIT" in probe[:120], "probe lacks MIT SPDX")
+require("SPDX\x2dLicense-Identifier: MIT" in probe[:120], "probe lacks MIT SPDX")
 require("std::malloc(1337)" in probe and "knetsentry_intentionally_leak_for_lsan_control" in probe,
         "intentional leak fixture must allocate an identifiable 1337-byte block")
 require("__lsan_disable" not in probe and "__lsan_ignore_object" not in probe,

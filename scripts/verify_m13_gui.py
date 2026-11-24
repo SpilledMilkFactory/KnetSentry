@@ -49,10 +49,10 @@ foundation = source("docs/development/GUI_FOUNDATION.md")
 desktop = source("packaging/desktop/io.github.spilledmilkfactory.KnetSentry.desktop")
 
 for name in ("apps/desktop/main.cpp", "apps/desktop/Main.qml"):
-    require("SPDX-License-Identifier: MIT" in source(name)[:120], f"{name}: MIT SPDX missing")
+    require("SPDX\x2dLicense-Identifier: MIT" in source(name)[:120], f"{name}: MIT SPDX missing")
 for name in ("CMakeLists.txt", "apps/desktop/CMakeLists.txt", "tests/CMakeLists.txt"):
-    require("SPDX-License-Identifier: BSD-2-Clause" in source(name)[:140], f"{name}: BSD SPDX missing")
-require("SPDX-License-Identifier: MIT" in desktop[:120], "desktop metadata license missing")
+    require("SPDX\x2dLicense-Identifier: BSD-2-Clause" in source(name)[:140], f"{name}: BSD SPDX missing")
+require("SPDX\x2dLicense-Identifier: MIT" in desktop[:120], "desktop metadata license missing")
 require("CC-BY-SA-4.0" in foundation[:130], "GUI guide license missing")
 
 for token in ("find_package(Qt6", "find_package(KF6", "qt_standard_project_setup(REQUIRES 6.5)"):

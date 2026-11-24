@@ -81,3 +81,7 @@ settings only after the affected workflows are functioning.
 - [GitHub secure use](https://docs.github.com/en/actions/reference/security/secure-use)
 - [GitHub token permissions](https://docs.github.com/en/actions/tutorials/authenticate-with-github_token)
 - [REUSE specification](https://reuse.software/spec/)
+
+## M1.8 implementation status
+
+A read-only Ubuntu 26.04 workflow candidate is now provided at `.github/workflows/ubuntu-26-04.yml`; see [M1.8 CI implementation](CI_IMPLEMENTATION_M18.md). This updates the earlier M0.7 planned-only state. CI success, branch protection, formatting style completeness and distribution clearance are **not yet established**.

@@ -115,6 +115,11 @@ Validate with `python3 scripts/verify_m16_diagnostics.py` and the
 `knetsentry_structured_diagnostics` CTest in each relevant preset.
 Raw Qt/Kirigami framework output is **not** sanitized by this publisher.
 
+The M1.8 CI follow-up preserves original SPDX declarations while preventing
+licensing-verifier fixture strings from being misread as additional license
+tags by the official REUSE scanner. Run `reuse lint` before merging; see
+[CI implementation details](docs/development/CI_IMPLEMENTATION_M18.md).
+
 ## M1.7 foundational CTest and Qt Test suites
 
 The test foundation now includes real Qt Test (`QAbstractItemModelTester`,
@@ -206,3 +211,7 @@ See the [licensing policy](docs/development/LICENSING_POLICY.md),
 [KDE compatibility policy](docs/development/KDE_COMPATIBILITY_POLICY.md).
 M0.6 records policies; it does **not** approve Qt modules, bundled libraries,
 third-party detection corpora, AI weights, or any release distribution.
+
+## M1.8 — Ubuntu 26.04 CI candidate
+
+The new [CI implementation guide](docs/development/CI_IMPLEMENTATION_M18.md) describes the read-only Ubuntu 26.04 GitHub Actions matrix and security-policy checks. **Hosted checks and branch protection remain unverified until executed/configured on GitHub.**

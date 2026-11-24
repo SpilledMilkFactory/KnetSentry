@@ -1,0 +1,117 @@
+# SPDX-FileCopyrightText: 2026 Chris Sutton
+# SPDX-License-Identifier: MIT
+name: Ubuntu 26.04 CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: knetsentry-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  policy:
+    name: policy / licenses and sources
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout read-only
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install policy tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends reuse python3-yaml
+      - name: Verify workflow security and source formatting hygiene
+        run: python3 scripts/verify_m18_ci.py --workflow .github/workflows/ubuntu-26-04.yml --format
+      - name: Verify documented development contracts
+        run: |
+          set -euo pipefail
+          for verifier in scripts/verify_m*.py; do
+            python3 "$verifier"
+          done
+      - name: Official REUSE license check
+        run: reuse lint
+
+  build:
+    name: ${{ matrix.preset }} / compile and test
+    runs-on: ubuntu-26.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [linux-release, linux-debug, linux-sanitize, linux-clazy, linux-analysis, linux-core-only, linux-sanitize-core-only]
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QT_QUICK_BACKEND: software
+      QT_QUICK_CONTROLS_STYLE: Basic
+    steps:
+      - name: Checkout read-only
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check runner and install Ubuntu 26.04 dependencies
+        run: |
+          set -euo pipefail
+          test "$(. /etc/os-release; echo "$VERSION_ID")" = '26.04'
+          test "$(uname -m)" = x86_64
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build python3 \
+            qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools \
+            extra-cmake-modules libkirigami-dev \
+            qml6-module-org-kde-kirigami qml6-module-qtquick \
+            qml6-module-qtquick-controls qml6-module-qtquick-layouts \
+            clang-tidy clazy libomp-dev
+          cmake --version
+          g++ --version | head -1
+          if [[ '${{ matrix.preset }}' == linux-clazy ]]; then
+            command -v clazy
+            clang --version | head -1
+          fi
+          if [[ '${{ matrix.preset }}' == linux-analysis ]]; then
+            command -v clang-tidy
+          fi
+      - name: Configure
+        run: cmake --preset '${{ matrix.preset }}' --fresh
+      - name: Build all required targets
+        run: cmake --build --preset '${{ matrix.preset }}' --parallel 2
+      - name: Validate compiled CTest inventory
+        run: python3 scripts/verify_m17_suites.py --build-dir 'build/presets/${{ matrix.preset }}'
+      - name: Run all required CTest cases
+        run: ctest --preset '${{ matrix.preset }}' --output-on-failure
+      - name: Re-validate actual build hardening
+        run: python3 scripts/verify_m12_hardening.py --build-dir 'build/presets/${{ matrix.preset }}'
+
+  qml:
+    name: qml / static analysis
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout read-only
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install QML dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake ninja-build g++ qt6-base-dev qt6-declarative-dev \
+            qt6-declarative-dev-tools extra-cmake-modules libkirigami-dev \
+            qml6-module-org-kde-kirigami qml6-module-qtquick \
+            qml6-module-qtquick-controls qml6-module-qtquick-layouts
+      - name: Configure Qt QML module
+        run: cmake --preset linux-release --fresh
+      - name: Run Qt generated QML lint target
+        run: cmake --build --preset linux-release --target knetsentry_qmllint --parallel 2
