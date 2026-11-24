@@ -210,3 +210,12 @@ See [M2.9 toolbar contract](DESKTOP_DAEMON_TOOLBAR_M29.md). The existing explici
 IPC endpoint remains read-only; desktop-owned foreground lifecycle is separate.
 The new desktop CTests are `knetsentry_qt_daemon_control` (including sanitizer)
 and `knetsentry_gui_daemon_toolbar` (non-sanitized). Core-only counts are unchanged.
+
+### M3.1 network scope policy
+
+The mandatory `knetsentry_network_scope_policy` test runs in all seven presets.
+Expected inventories: desktop 32/27 (normal/sanitized), core-only 20/21
+(normal/sanitized). Run `python3 scripts/verify_m31_network_scope.py --build-dir
+build/presets/linux-release` for focused evidence. See the
+[M3.1 policy contract](NETWORK_SCOPE_POLICY_M31.md). No real IP network I/O is
+performed by this test; live topology and enforcement remain unqualified.

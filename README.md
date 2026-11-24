@@ -15,7 +15,7 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M2.9 (global daemon toolbar and desktop lifecycle controls):**
+> **Development status — M3.1 (network scope policy preflight):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
@@ -23,6 +23,8 @@ offline AI assistance.
 > **not an operational SIEM**. A lifecycle-only manager with fail-closed v1 configuration and opt-in
 > authenticated local status/health IPC, opt-in protected service audit logging and desktop daemon health with owned foreground lifecycle controls exist, but no agentless network sensor, host agent,
 > event database, threat detection or privileged security controls exist yet.
+> M3.1 adds an in-memory, default-deny network scope decision engine; no live IP
+> transport or network enforcement has been activated.
 > A green CI run validates only its documented tests, not release readiness.
 
 The M1.4 follow-up includes a page-lifecycle warning regression test and an
@@ -313,3 +315,8 @@ an explicit administrator-operated check.
 The desktop can start and stop its own unprivileged development manager; external
 endpoints remain read-only. The status dot and heartbeat reflect validated health
 exchanges, not security monitoring. See [M2.9 toolbar contract](docs/development/DESKTOP_DAEMON_TOOLBAR_M29.md).
+
+### M3.1 — Network scope policy engine
+
+Initial typed, default-deny preflight for exact approved on-link agent transport.
+No IP networking is activated. See the [M3.1 policy contract](docs/development/NETWORK_SCOPE_POLICY_M31.md).

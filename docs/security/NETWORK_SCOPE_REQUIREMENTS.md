@@ -5,7 +5,9 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Network Monitoring and Communications Security Contract
 
-**Status:** M0.2 *requirements only* (not implemented or experimentally enforced).
+**Status:** M0.2 normative requirements; M3.1 initial application-layer preflight
+implemented (live IP enforcement not qualified). See the
+[M3.1 policy contract](../development/NETWORK_SCOPE_POLICY_M31.md).
 **Target:** Ubuntu 26.04 LTS AMD64; proposed v1.0.0 product architecture.
 **Traceability:** GitHub issue #2 / M0.2.
 **See also:** [network communication matrix](../architecture/NETWORK_COMMUNICATION_MATRIX.md),
