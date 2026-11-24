@@ -12,5 +12,8 @@ int main() {
     if (authorize_local_peer(user, 1001, user, group, IpcAction::Status)) { return 3; }
     if (authorize_local_peer(0, 0, user, group, IpcAction::Status)) { return 4; }
     if (authorize_local_peer(user, group, user, group, IpcAction::Administrative)) { return 5; }
+    if (!authorize_local_peer(user, group, user, group, IpcAction::Health)) { return 6; }
+    if (authorize_local_peer(1001, group, user, group, IpcAction::Health)) { return 7; }
+    if (authorize_local_peer(user, 1001, user, group, IpcAction::Health)) { return 8; }
     return 0;
 }

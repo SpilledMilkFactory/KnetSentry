@@ -20,6 +20,7 @@ namespace {
 constexpr std::uint32_t max_frame_size = 64;
 constexpr int client_deadline_ms = 250;
 constexpr std::string_view prefix = "KSIPC/1 STATUS ";
+constexpr std::string_view health_prefix = "KSIPC/1 HEALTH ";
 
 [[nodiscard]] bool valid_directory(std::string_view path) noexcept {
     if (path.size() < 2 || path.size() > 1024 ||
@@ -84,8 +85,8 @@ constexpr std::string_view prefix = "KSIPC/1 STATUS ";
     return true;
 }
 
-[[nodiscard]] bool send_frame(int fd, std::string_view payload) noexcept {
-    if (payload.empty() || payload.size() > max_frame_size) { return false; }
+[[nodiscard]] bool send_frame(int fd, std::string_view payload, std::size_t limit) noexcept {
+    if (payload.empty() || payload.size() > limit || limit > max_health_response_size) { return false; }
     const auto len = static_cast<std::uint32_t>(payload.size());
     const std::array<char, 4> header{
         static_cast<char>((len >> 24U) & 0xffU),
@@ -108,7 +109,7 @@ constexpr std::string_view prefix = "KSIPC/1 STATUS ";
 bool authorize_local_peer(uid_t peer_uid, gid_t peer_gid,
     uid_t service_uid, gid_t service_gid, IpcAction action) noexcept {
     return peer_uid == service_uid && peer_gid == service_gid &&
-        action == IpcAction::Status;
+        (action == IpcAction::Status || action == IpcAction::Health);
 }
 
 LocalIpcServer::~LocalIpcServer() noexcept { close_all(); }
@@ -183,44 +184,76 @@ bool LocalIpcServer::open(std::string_view directory, const sigset_t& blocked_si
     return true;
 }
 
-void LocalIpcServer::handle_client(int client) noexcept {
-    // The kernel authenticates the connecting process, not payload fields.
-    // Only the exact service UID/GID is currently granted Viewer status.
-    // No administrative role or privileged operation is implemented in M2.3.
+void LocalIpcServer::handle_client(int client, const Lifecycle& lifecycle,
+    HealthTracker& health) noexcept {
+    // Authenticate before reading untrusted bytes; operation authorization
+    // follows strict framing. No administrative action is permitted.
     struct ucred peer{};
     socklen_t length = sizeof(peer);
     if (::getsockopt(client, SOL_SOCKET, SO_PEERCRED, &peer, &length) != 0 ||
         length != sizeof(peer) || peer.pid <= 0 ||
         !authorize_local_peer(peer.uid, peer.gid, ::geteuid(), ::getegid(),
-                              IpcAction::Status)) { return; }
+                              IpcAction::Status)) {
+        health.record(HealthError::Rejected);
+        return;
+    }
 
     std::array<char, 4> header{};
-    if (!read_exact(client, header.data(), header.size())) { return; }
+    if (!read_exact(client, header.data(), header.size())) {
+        health.record(HealthError::Transport);
+        return;
+    }
     const auto size = (static_cast<std::uint32_t>(static_cast<unsigned char>(header[0])) << 24U) |
         (static_cast<std::uint32_t>(static_cast<unsigned char>(header[1])) << 16U) |
         (static_cast<std::uint32_t>(static_cast<unsigned char>(header[2])) << 8U) |
         static_cast<std::uint32_t>(static_cast<unsigned char>(header[3]));
-    if (size == 0 || size > max_frame_size) { return; }
+    if (size == 0 || size > max_frame_size) {
+        health.record(HealthError::Rejected);
+        return;
+    }
     std::array<char, max_frame_size> request{};
-    if (!read_exact(client, request.data(), size)) { return; }
+    if (!read_exact(client, request.data(), size)) {
+        health.record(HealthError::Transport);
+        return;
+    }
     const std::string_view payload(request.data(), size);
-    if (payload.size() != prefix.size() + 17 || !payload.starts_with(prefix) ||
-        payload.back() != '\n') { return; }
-    const auto request_id = payload.substr(prefix.size(), 16);
-    if (!hex_id(request_id)) { return; }
-    // Operation authorization happens after SO_PEERCRED and strict framing.
-    // Only a fixed non-sensitive, read-only lifecycle status is exposed.
+    const bool is_health = payload.starts_with(health_prefix);
+    const auto operation_prefix = is_health ? health_prefix : prefix;
+    const auto action = is_health ? IpcAction::Health : IpcAction::Status;
+    if (payload.size() != operation_prefix.size() + 17 ||
+        !payload.starts_with(operation_prefix) || payload.back() != '\n') {
+        health.record(HealthError::Rejected);
+        return;
+    }
+    const auto request_id = payload.substr(operation_prefix.size(), 16);
+    if (!hex_id(request_id) ||
+        !authorize_local_peer(peer.uid, peer.gid, ::geteuid(), ::getegid(), action)) {
+        health.record(HealthError::Rejected);
+        return;
+    }
+    if (is_health) {
+        std::array<char, max_health_response_size> response{};
+        const auto count = encode_health(health.sample(lifecycle.state()), request_id, response);
+        if (count == 0) { health.record(HealthError::Sampling); return; }
+        if (!send_frame(client, std::string_view(response.data(), count), max_health_response_size)) {
+            health.record(HealthError::Transport);
+        }
+        return;
+    }
+    // Preserve the M2.3 response and its original 64-byte bound.
     std::array<char, max_frame_size> response{};
     constexpr std::string_view start = "KSIPC/1 OK ";
     constexpr std::string_view end = " LIFECYCLE_ONLY\n";
     std::memcpy(response.data(), start.data(), start.size());
     std::memcpy(response.data() + start.size(), request_id.data(), request_id.size());
     std::memcpy(response.data() + start.size() + request_id.size(), end.data(), end.size());
-    static_cast<void>(send_frame(client, std::string_view(response.data(),
-        start.size() + request_id.size() + end.size())));
+    if (!send_frame(client, std::string_view(response.data(),
+        start.size() + request_id.size() + end.size()), max_frame_size)) {
+        health.record(HealthError::Transport);
+    }
 }
 
-bool LocalIpcServer::serve() noexcept {
+bool LocalIpcServer::serve(const Lifecycle& lifecycle, HealthTracker& health) noexcept {
     if (listen_fd_ < 0 || signal_fd_ < 0) { return false; }
     bool stopped = false;
     for (;;) {
@@ -244,7 +277,7 @@ bool LocalIpcServer::serve() noexcept {
         if ((ready[1].revents & POLLIN) != 0) {
             const int client = ::accept4(listen_fd_, nullptr, nullptr, SOCK_NONBLOCK | SOCK_CLOEXEC);
             if (client >= 0) {
-                handle_client(client);
+                handle_client(client, lifecycle, health);
                 static_cast<void>(::close(client));
             } else if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR) {
                 break;

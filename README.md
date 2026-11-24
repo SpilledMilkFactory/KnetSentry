@@ -15,13 +15,13 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M2.2 (versioned management configuration):**
+> **Development status — M2.4 (service health and diagnostics):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
 > 26.04 GitHub Actions checks reported for M1.8**. The graphical interface is
-> **not an operational SIEM**. A non-operational manager process with fail-closed v1 configuration exists, but no
-> management IPC, agentless network sensor, host agent,
+> **not an operational SIEM**. A lifecycle-only manager with fail-closed v1 configuration and opt-in
+> authenticated local status/health IPC exists, but no agentless network sensor, host agent,
 > event database, threat detection or privileged security controls exist yet.
 > A green CI run validates only its documented tests, not release readiness.
 
@@ -232,8 +232,8 @@ completed in approximately 19 seconds, down from about ten minutes in M1.8.
 The new **unprivileged, Qt-independent** `knetsentryd` executable implements
 explicit service states and graceful SIGINT/SIGTERM shutdown. It runs in the
 foreground, refuses root execution, and emits only allowlisted M1.6 lifecycle
-diagnostics. There are **no sockets, IPC APIs, packet capture, databases, or
-security monitoring functions** yet. The GUI remains a separate process.
+diagnostics. At M2.1 there were **no sockets, IPC APIs, packet capture, databases, or
+security monitoring functions**. The GUI remains a separate process.
 See [M2.1 daemon contract](docs/development/MANAGER_DAEMON_M21.md).
 
 ```bash
@@ -260,7 +260,17 @@ are rejected with no fallback or operational monitoring.
 
 `knetsentryd` optionally supports a **Unix-domain socket** via `--ipc-dir ABS_DIR`
 (an existing 0700 directory owned by the daemon user). The socket is 0600;
-Linux `SO_PEERCRED` plus an explicit allowlist authorizes **only** a bounded,
+Linux `SO_PEERCRED` plus an explicit allowlist originally authorized a bounded,
 read-only lifecycle-status request from the same UID/GID. No administrative
 methods, remote listeners, telemetry or monitoring are enabled. See the
 [M2.3 local IPC contract](docs/development/LOCAL_AUTHENTICATED_IPC_M23.md).
+
+### M2.4 — Service health and diagnostics
+
+The opt-in local IPC endpoint also supports the read-only `HEALTH` operation.
+It reports actual monotonic uptime, cumulative process CPU time, peak resident
+memory, configuration and IPC status, explicit monitoring unavailability, and
+bounded operational error counts. It preserves the original `STATUS` wire
+response and peer authorization. See the [M2.4 health contract](docs/development/SERVICE_HEALTH_M24.md)
+for units, framing, verification and limitations. No monitoring or GUI health
+polling is enabled by this change.

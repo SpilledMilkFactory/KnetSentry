@@ -124,3 +124,11 @@ M2.3 registers `knetsentry_local_ipc_authorization_contract` and
 are not proof of actual peer-credential enforcement; use compiled tests and
 Linux runtime negative tests. The read-only `TB-05` subset must not be
 represented as a completed management authorization implementation.
+
+### M2.4 service health qualification
+
+`knetsentry_service_health_contract` and `knetsentry_service_health_runtime`
+are mandatory across all seven presets. Expected counts: 21 desktop
+Release/Debug/Clazy/analysis; 18 full ASan/UBSan; 13 core-only Release;
+14 core-only sanitizer. See [health contract](SERVICE_HEALTH_M24.md).
+The nine hosted checks are unchanged; actual execution remains required.

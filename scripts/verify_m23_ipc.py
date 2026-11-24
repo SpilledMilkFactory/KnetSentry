@@ -44,7 +44,7 @@ def source_contract() -> None:
         require(piece in header, f'public IPC boundary missing: {piece}')
     require('local_ipc.cpp' in cmake and 'knetsentry_apply_project_options' in cmake,
             'IPC must link to hardened Qt-independent service library')
-    for piece in ('--ipc-dir', 'ipc.open(ipc_dir, stop_signals)', 'ipc.serve()',
+    for piece in ('--ipc-dir', 'ipc.open(ipc_dir, stop_signals)', 'ipc.serve(lifecycle, health)',
                   'ManagerReady', 'local IPC unavailable (no fallback)'):
         require(piece in manager, f'daemon does not enforce IPC startup: {piece}')
     require(manager.index('ipc.open(ipc_dir, stop_signals)') < manager.index('lifecycle.mark_ready()'),

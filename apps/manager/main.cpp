@@ -39,6 +39,7 @@ using knetsentry::service::Lifecycle;
     }
     DiagnosticLogger logger(std::cerr);
     Lifecycle lifecycle;
+    knetsentry::service::HealthTracker health(!configuration_path.empty());
 
     // The blocking signal mask is installed before reporting readiness.
     // sigwait synchronously consumes SIGTERM/SIGINT; no signal handler calls
@@ -99,7 +100,7 @@ using knetsentry::service::Lifecycle;
     const bool completed = ipc_dir.empty()
         ? (sigwait(&stop_signals, &received) == 0 &&
            (received == SIGINT || received == SIGTERM))
-        : ipc.serve();
+        : ipc.serve(lifecycle, health);
     if (!completed) {
         static_cast<void>(lifecycle.mark_failed());
         static_cast<void>(publish(logger, DiagnosticLevel::Error,
