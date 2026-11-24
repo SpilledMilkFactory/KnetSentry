@@ -15,7 +15,7 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M3.1 (network scope policy preflight):**
+> **Development status — M3.2 (dual-stack network scope preflight):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
@@ -23,8 +23,9 @@ offline AI assistance.
 > **not an operational SIEM**. A lifecycle-only manager with fail-closed v1 configuration and opt-in
 > authenticated local status/health IPC, opt-in protected service audit logging and desktop daemon health with owned foreground lifecycle controls exist, but no agentless network sensor, host agent,
 > event database, threat detection or privileged security controls exist yet.
-> M3.1 adds an in-memory, default-deny network scope decision engine; no live IP
-> transport or network enforcement has been activated.
+> M3.2 extends the in-memory, default-deny network scope decision engine with
+> explicit IPv4/IPv6 prefix approvals; no live IP transport or network enforcement
+> has been activated.
 > A green CI run validates only its documented tests, not release readiness.
 
 The M1.4 follow-up includes a page-lifecycle warning regression test and an
@@ -320,3 +321,8 @@ exchanges, not security monitoring. See [M2.9 toolbar contract](docs/development
 
 Initial typed, default-deny preflight for exact approved on-link agent transport.
 No IP networking is activated. See the [M3.1 policy contract](docs/development/NETWORK_SCOPE_POLICY_M31.md).
+
+### M3.2 — IPv4 and IPv6 network-scope validation
+
+See the [M3.2 validation contract](docs/development/NETWORK_SCOPE_VALIDATION_M32.md)
+for strict CIDR parsing, address-family isolation and interface-bound approvals.
