@@ -77,6 +77,23 @@ add_test(NAME knetsentry_manager_configuration_runtime
 set_tests_properties(knetsentry_manager_configuration_runtime PROPERTIES
     LABELS "integration;security;service;configuration;regression" TIMEOUT 50)
 
+# M2.3 I-01/TB-05: kernel peer credentials, deny-by-default role mapping,
+# versioned framed protocol and real hostile AF_UNIX clients.
+add_executable(knetsentry_service_ipc_test service_ipc_m23.cpp)
+target_link_libraries(knetsentry_service_ipc_test PRIVATE KnetSentry::Service)
+knetsentry_apply_project_options(knetsentry_service_ipc_test)
+add_test(NAME knetsentry_local_ipc_authorization_contract
+    COMMAND $<TARGET_FILE:knetsentry_service_ipc_test>)
+set_tests_properties(knetsentry_local_ipc_authorization_contract PROPERTIES
+    LABELS "unit;security;ipc;service;regression" TIMEOUT 20)
+
+add_test(NAME knetsentry_local_ipc_runtime
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/scripts/check_m23_ipc_runtime.py"
+        --binary "$<TARGET_FILE:knetsentryd>")
+set_tests_properties(knetsentry_local_ipc_runtime PROPERTIES
+    LABELS "integration;security;ipc;service;regression" TIMEOUT 60)
+
 if(KNETSENTRY_BUILD_DESKTOP)
     # Qt Test is required for full desktop test qualification, not silently
     # skipped if unavailable. The core-only preset remains Qt-independent.

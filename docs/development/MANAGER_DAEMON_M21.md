@@ -114,3 +114,8 @@ planned inventories until executed on the exact revision and in GitHub Actions.
 explicit `--config` file before readiness; see
 [manager configuration](MANAGER_CONFIGURATION_M22.md). The M2.1 tests and
 four-event lifecycle behavior remain mandatory.
+
+**M2.3 addition:** The optional `--ipc-dir` mode now provides restricted local
+read-only Unix-domain IPC with kernel peer credentials. The default invocation
+continues to use `sigwait()` and exposes no socket. See
+[authenticated IPC](LOCAL_AUTHENTICATED_IPC_M23.md).

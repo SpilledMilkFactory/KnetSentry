@@ -126,3 +126,11 @@ file before readiness; all monitoring, network, capture, public egress, and
 privileged actions must remain disabled. This is **not** an implementation of
 the `C-02` authorization/scoping engine or `TB-05` IPC. See the
 [versioned configuration guide](../development/MANAGER_CONFIGURATION_M22.md).
+
+### M2.3 — limited local control-plane boundary
+
+`I-01`/`TB-05` now has a narrowly scoped opt-in Unix-domain socket and
+Linux peer-credential verification. Only same UID/GID **read-only lifecycle
+status** is available; administrative roles, protected operations, multiuser
+authorization, and runtime service-identity confinement remain unimplemented.
+See [M2.3 security contract](../development/LOCAL_AUTHENTICATED_IPC_M23.md).
