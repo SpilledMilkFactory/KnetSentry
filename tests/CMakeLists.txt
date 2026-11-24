@@ -109,6 +109,21 @@ add_test(NAME knetsentry_service_health_runtime
 set_tests_properties(knetsentry_service_health_runtime PROPERTIES
     LABELS "integration;security;ipc;service;regression" TIMEOUT 60)
 
+# M2.5: protected bounded audit sink and live fail-closed integration.
+add_executable(knetsentry_service_audit_test service_audit_m25.cpp)
+target_link_libraries(knetsentry_service_audit_test PRIVATE KnetSentry::Service)
+knetsentry_apply_project_options(knetsentry_service_audit_test)
+add_test(NAME knetsentry_service_audit_contract
+    COMMAND $<TARGET_FILE:knetsentry_service_audit_test>)
+set_tests_properties(knetsentry_service_audit_contract PROPERTIES
+    LABELS "unit;security;privacy;service;regression" TIMEOUT 60)
+add_test(NAME knetsentry_service_audit_runtime
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/scripts/check_m25_audit_runtime.py"
+        --binary $<TARGET_FILE:knetsentryd>)
+set_tests_properties(knetsentry_service_audit_runtime PROPERTIES
+    LABELS "integration;security;privacy;ipc;service;regression" TIMEOUT 60)
+
 if(KNETSENTRY_BUILD_DESKTOP)
     # Qt Test is required for full desktop test qualification, not silently
     # skipped if unavailable. The core-only preset remains Qt-independent.

@@ -132,3 +132,10 @@ are mandatory across all seven presets. Expected counts: 21 desktop
 Release/Debug/Clazy/analysis; 18 full ASan/UBSan; 13 core-only Release;
 14 core-only sanitizer. See [health contract](SERVICE_HEALTH_M24.md).
 The nine hosted checks are unchanged; actual execution remains required.
+
+### M2.5 service audit verification
+
+Mandatory `knetsentry_service_audit_contract` and `knetsentry_service_audit_runtime`
+run across all seven presets. Expected 23/20 desktop (normal/sanitized),
+15/16 core-only (normal/sanitized).
+See [audit contract](SERVICE_AUDIT_M25.md).

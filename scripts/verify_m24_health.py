@@ -39,7 +39,7 @@ def source_contract() -> None:
         require(token in ipc, f'IPC integration missing: {token}')
     require(ipc.index('::getsockopt(client, SOL_SOCKET, SO_PEERCRED') <
             ipc.index('health.sample(lifecycle.state())'), 'sampling must follow authentication')
-    require('ipc.serve(lifecycle, health)' in manager and 'health.cpp' in
+    require('ipc.serve(lifecycle, health, audit)' in manager and 'health.cpp' in
             read('src/service/CMakeLists.txt'), 'manager integration missing')
     for name in ('knetsentry_service_health_contract', 'knetsentry_service_health_runtime'):
         require(f'NAME {name}' in read('tests/CMakeLists.txt') and

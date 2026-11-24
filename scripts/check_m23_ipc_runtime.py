@@ -164,10 +164,10 @@ def run(binary: Path) -> None:
                 with socket.socket(socket.AF_UNIX) as intruder:
                     intruder.settimeout(2)
                     intruder.connect(str(path))
-                    intruder.sendall(frame(b'KSIPC/1 STATUS ' + identifier + b'\n'))
                     try:
+                        intruder.sendall(frame(b'KSIPC/1 STATUS ' + identifier + b'\n'))
                         denied = intruder.recv(512)
-                    except ConnectionResetError:
+                    except (ConnectionResetError, BrokenPipeError):
                         denied = b''
                     require(denied == b'', 'different-UID local peer obtained a response')
             else:

@@ -5,6 +5,7 @@
 #include "knetsentry/service/lifecycle.hpp"
 #include "knetsentry/service/configuration.hpp"
 #include "knetsentry/service/local_ipc.hpp"
+#include "knetsentry/service/audit.hpp"
 
 #include <csignal>
 #include <iostream>
@@ -20,6 +21,8 @@ using knetsentry::core::DiagnosticLogger;
 using knetsentry::core::DiagnosticOutcome;
 using knetsentry::core::DiagnosticRecord;
 using knetsentry::service::Lifecycle;
+using knetsentry::service::AuditEvent;
+using knetsentry::service::AuditLog;
 
 [[nodiscard]] bool publish(DiagnosticLogger& logger, DiagnosticLevel level,
                            DiagnosticEvent event, DiagnosticOutcome outcome) noexcept {
@@ -31,7 +34,8 @@ using knetsentry::service::Lifecycle;
     });
 }
 
-[[nodiscard]] int run(std::string_view configuration_path, std::string_view ipc_dir = {}) {
+[[nodiscard]] int run(std::string_view configuration_path, std::string_view ipc_dir = {},
+                      std::string_view audit_dir = {}) {
     // A management service must never accidentally inherit root authority.
     if (geteuid() == 0) {
         std::cerr << "knetsentryd: root execution prohibited\n";
@@ -39,6 +43,24 @@ using knetsentry::service::Lifecycle;
     }
     DiagnosticLogger logger(std::cerr);
     Lifecycle lifecycle;
+    AuditLog audit;
+    const auto audit_failure = [&]() {
+        static_cast<void>(lifecycle.mark_failed());
+        std::cerr << "knetsentryd: audit unavailable or incomplete (no fallback)\n";
+        return 6;
+    };
+    if (!audit_dir.empty()) {
+        // A file-size limit must become a reported write error, not an
+        // unhandled SIGXFSZ that silently terminates the audit owner.
+        struct sigaction file_limit{};
+        file_limit.sa_handler = SIG_IGN;
+        if (sigemptyset(&file_limit.sa_mask) != 0 ||
+            sigaction(SIGXFSZ, &file_limit, nullptr) != 0 ||
+            !audit.open(audit_dir)) { return audit_failure(); }
+    }
+    const auto fail = [&](int status) {
+        return audit.record(AuditEvent::Failed) ? status : audit_failure();
+    };
     knetsentry::service::HealthTracker health(!configuration_path.empty());
 
     // The blocking signal mask is installed before reporting readiness.
@@ -52,14 +74,15 @@ using knetsentry::service::Lifecycle;
         static_cast<void>(lifecycle.mark_failed());
         static_cast<void>(publish(logger, DiagnosticLevel::Error,
             DiagnosticEvent::ManagerFailed, DiagnosticOutcome::Failure));
-        return 1;
+        return fail(1);
     }
 
+    if (!audit.record(AuditEvent::Starting)) { return audit_failure(); }
     if (!lifecycle.begin_start() ||
         !publish(logger, DiagnosticLevel::Info, DiagnosticEvent::ManagerStarting,
                  DiagnosticOutcome::Started)) {
         static_cast<void>(lifecycle.mark_failed());
-        return 1;
+        return fail(1);
     }
 
     // M2.2: if the operator supplied a file it is mandatory and must pass
@@ -71,8 +94,11 @@ using knetsentry::service::Lifecycle;
         static_cast<void>(publish(logger, DiagnosticLevel::Error,
             DiagnosticEvent::ManagerFailed, DiagnosticOutcome::Rejected));
         std::cerr << "knetsentryd: configuration rejected (no fallback)\n";
-        return 4;
+        if (!audit.record(AuditEvent::ConfigRejected)) { return audit_failure(); }
+        return fail(4);
     }
+    if (!audit.record(configuration_path.empty() ? AuditEvent::ConfigDefault :
+                      AuditEvent::ConfigValidated)) { return audit_failure(); }
 
     // M2.3: local socket is strictly opt-in; bind and validate BEFORE ready.
     // Invalid directories, existing socket entries, and bind errors deny startup.
@@ -82,42 +108,49 @@ using knetsentry::service::Lifecycle;
         static_cast<void>(publish(logger, DiagnosticLevel::Error,
             DiagnosticEvent::ManagerFailed, DiagnosticOutcome::Rejected));
         std::cerr << "knetsentryd: local IPC unavailable (no fallback)\n";
-        return 5;
+        if (!audit.record(AuditEvent::IpcRejected)) { return audit_failure(); }
+        return fail(5);
     }
+
+    if (!ipc_dir.empty() && !audit.record(AuditEvent::IpcReady)) { return audit_failure(); }
 
     // Readiness means lifecycle operation and optional local IPC only; there
     // is no monitoring, database, remote listener or privileged authority.
-    if (!lifecycle.mark_ready() ||
-        !publish(logger, DiagnosticLevel::Info, DiagnosticEvent::ManagerReady,
+    if (!lifecycle.mark_ready()) { return fail(1); }
+    if (!audit.record(AuditEvent::Ready)) { return audit_failure(); }
+    if (!publish(logger, DiagnosticLevel::Info, DiagnosticEvent::ManagerReady,
                  DiagnosticOutcome::Success)) {
         static_cast<void>(lifecycle.mark_failed());
         static_cast<void>(publish(logger, DiagnosticLevel::Error,
             DiagnosticEvent::ManagerFailed, DiagnosticOutcome::Failure));
-        return 1;
+        return fail(1);
     }
 
     int received = 0;
     const bool completed = ipc_dir.empty()
         ? (sigwait(&stop_signals, &received) == 0 &&
            (received == SIGINT || received == SIGTERM))
-        : ipc.serve(lifecycle, health);
+        : ipc.serve(lifecycle, health, audit);
+    if (!audit.ok()) { return audit_failure(); }
     if (!completed) {
         static_cast<void>(lifecycle.mark_failed());
         static_cast<void>(publish(logger, DiagnosticLevel::Error,
             DiagnosticEvent::ManagerFailed, DiagnosticOutcome::Failure));
-        return 1;
+        return fail(1);
     }
-    if (!lifecycle.request_stop() ||
-        !publish(logger, DiagnosticLevel::Info, DiagnosticEvent::ManagerStopping,
+    if (!lifecycle.request_stop()) { return fail(1); }
+    if (!audit.record(AuditEvent::Stopping)) { return audit_failure(); }
+    if (!publish(logger, DiagnosticLevel::Info, DiagnosticEvent::ManagerStopping,
                  DiagnosticOutcome::Started)) {
         static_cast<void>(lifecycle.mark_failed());
-        return 1;
+        return fail(1);
     }
-    if (!lifecycle.complete_stop() ||
-        !publish(logger, DiagnosticLevel::Info, DiagnosticEvent::ManagerStopped,
+    if (!lifecycle.complete_stop()) { return fail(1); }
+    if (!audit.record(AuditEvent::Stopped)) { return audit_failure(); }
+    if (!publish(logger, DiagnosticLevel::Info, DiagnosticEvent::ManagerStopped,
                  DiagnosticOutcome::Success)) {
         static_cast<void>(lifecycle.mark_failed());
-        return 1;
+        return fail(1);
     }
     return 0;
 }
@@ -129,7 +162,8 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
-        std::cout << "Usage: knetsentryd [--help|--version|--config ABS_PATH|--check-config ABS_PATH|--ipc-dir ABS_DIR]\n"
+        std::cout << "Usage: knetsentryd [--help|--version|--config ABS_PATH|--check-config ABS_PATH|--ipc-dir ABS_DIR|--audit-dir ABS_DIR]\n"
+                     "Run options may be combined once each; audit requires a fresh private directory.\n"
                      "Foreground-only, unprivileged lifecycle foundation.\n"
                      "Stop with SIGTERM or SIGINT; no monitoring or remote listeners.\n";
         return 0;
@@ -142,19 +176,22 @@ int main(int argc, char* argv[]) {
         std::cout << "KnetSentry configuration schema v1: valid (lifecycle only)\n";
         return 0;
     }
-    if (argc == 3 && std::string_view(argv[1]) == "--config") {
-        return run(argv[2]);
+    std::string_view config_path;
+    std::string_view ipc_dir;
+    std::string_view audit_dir;
+    if (argc <= 7 && argc % 2 == 1) {
+        bool valid = true;
+        for (int i = 1; i < argc; i += 2) {
+            const std::string_view option(argv[i]);
+            const std::string_view value(argv[i + 1]);
+            if (value.empty()) { valid = false; break; }
+            if (option == "--config" && config_path.empty()) { config_path = value; }
+            else if (option == "--ipc-dir" && ipc_dir.empty()) { ipc_dir = value; }
+            else if (option == "--audit-dir" && audit_dir.empty()) { audit_dir = value; }
+            else { valid = false; break; }
+        }
+        if (valid) { return run(config_path, ipc_dir, audit_dir); }
     }
-    if (argc == 3 && std::string_view(argv[1]) == "--ipc-dir") {
-        return run({}, argv[2]);
-    }
-    if (argc == 5 && std::string_view(argv[1]) == "--config" &&
-        std::string_view(argv[3]) == "--ipc-dir") {
-        return run(argv[2], argv[4]);
-    }
-    if (argc != 1) {
-        std::cerr << "knetsentryd: unsupported argument (see --help)\n";
-        return 2;
-    }
-    return run({});
+    std::cerr << "knetsentryd: unsupported argument (see --help)\n";
+    return 2;
 }

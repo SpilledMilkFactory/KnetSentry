@@ -150,7 +150,8 @@ Tests never create TCP sockets or privileged monitoring operations.
 - **Socket-file races:** cleanup uses original device/inode checks; same-UID
   manipulation during bind, chmod or cleanup is not fully prevented.
 - **Availability:** a malicious authorized local process can exhaust the
-  bounded serial listener. No per-user quotas or durable audit trail exists.
+  bounded serial listener. No per-user quotas exist. M2.5 adds opt-in persistent
+  service audit logging; see [audit contract](SERVICE_AUDIT_M25.md).
 - **Service identity:** systemd unit, sandbox, dedicated user and deployment
   controls are not yet provided or qualified.
 - **Version negotiation:** unsupported protocol versions fail closed. No v2

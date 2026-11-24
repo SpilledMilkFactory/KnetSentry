@@ -15,13 +15,13 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M2.4 (service health and diagnostics):**
+> **Development status — M2.5 (structured service audit logging):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
 > 26.04 GitHub Actions checks reported for M1.8**. The graphical interface is
 > **not an operational SIEM**. A lifecycle-only manager with fail-closed v1 configuration and opt-in
-> authenticated local status/health IPC exists, but no agentless network sensor, host agent,
+> authenticated local status/health IPC and opt-in protected service audit logging exist, but no agentless network sensor, host agent,
 > event database, threat detection or privileged security controls exist yet.
 > A green CI run validates only its documented tests, not release readiness.
 
@@ -274,3 +274,9 @@ bounded operational error counts. It preserves the original `STATUS` wire
 response and peer authorization. See the [M2.4 health contract](docs/development/SERVICE_HEALTH_M24.md)
 for units, framing, verification and limitations. No monitoring or GUI health
 polling is enabled by this change.
+
+### M2.5 — Structured service audit logging
+
+Use `--audit-dir ABS_DIR` with a fresh owner-only directory to enable the
+bounded persistent audit sink. See the [M2.5 audit contract](docs/development/SERVICE_AUDIT_M25.md)
+for scope, activation, privacy, failure behavior and limitations.

@@ -25,6 +25,7 @@ CORE_TESTS = {
     "knetsentry_manager_configuration_contract", "knetsentry_manager_configuration_runtime",
     "knetsentry_local_ipc_authorization_contract", "knetsentry_local_ipc_runtime",
     "knetsentry_service_health_contract", "knetsentry_service_health_runtime",
+    "knetsentry_service_audit_contract", "knetsentry_service_audit_runtime",
 }
 DESKTOP_TESTS = {
     "knetsentry_desktop_version", "knetsentry_kirigami_qml_startup",

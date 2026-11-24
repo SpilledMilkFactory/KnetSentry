@@ -8,7 +8,8 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 **Status:** Initial C++23, Qt-independent diagnostic publisher only. This is
 **not** an evidentiary audit log, a security-event feed, a persistent raw log,
 or an authorization control. Follow-up ownership: M2.5 for durable, ordered
-security audit transport and failure policy; M6 for evidence/index storage.
+security audit transport and failure policy (see [M2.5 audit contract](SERVICE_AUDIT_M25.md));
+M6 for evidence/index storage.
 
 ## Contract and traceability
 
