@@ -137,6 +137,10 @@ cross-UID rejection (root intruder). On ordinary nonroot CI runners that
 cannot switch identities, cross-UID kernel behavior remains **not independently
 exercised**; compiled authorization unit tests cover mismatched UIDs/GIDs.
 Tests never create TCP sockets or privileged monitoring operations.
+The unsafe-directory fixture is created under umask 0077, then explicitly set
+to mode 0755 and verified before daemon startup. This ensures the negative
+case cannot accidentally become a valid private 0700 directory under a
+restrictive acceptance-runner umask.
 
 ## Residual risks and exclusions
 

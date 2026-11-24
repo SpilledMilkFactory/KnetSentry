@@ -15,7 +15,7 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M2.6 (desktop management health):**
+> **Development status — M2.7 (systemd service hardening):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
@@ -288,3 +288,13 @@ the manager with an existing mode-0700 private IPC directory, then use the same
 absolute directory with `knetsentry --ipc-dir ABS_DIR`. Without that option
 the GUI makes no service requests. See the [M2.6 desktop health contract](docs/development/DESKTOP_HEALTH_M26.md)
 for connection, disconnection, bounded polling and audit-budget implications.
+
+### M2.7 — Hardened systemd manager deployment
+
+The [systemd service contract](docs/development/SYSTEMD_SERVICE_M27.md)
+provides an explicit administrator-installed development service using a
+non-login dedicated identity, no capabilities, private runtime/audit paths,
+network and filesystem isolation, and finite resource limits. The current
+same-UID desktop development IPC remains separate; ordinary desktop users
+cannot access the installed system service. No service is installed or enabled
+by a normal build. Live systemd qualification is required on Ubuntu 26.04.

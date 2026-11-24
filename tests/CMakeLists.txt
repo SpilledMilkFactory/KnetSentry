@@ -137,6 +137,12 @@ add_test(NAME knetsentry_health_client_runtime
 set_tests_properties(knetsentry_health_client_runtime PROPERTIES
     LABELS "integration;security;ipc;regression" TIMEOUT 40)
 
+# M2.7: portable policy regression; actual systemd sandbox requires a booted host.
+add_test(NAME knetsentry_systemd_policy_contract
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/verify_m27_systemd.py")
+set_tests_properties(knetsentry_systemd_policy_contract PROPERTIES
+    LABELS "security;service;configuration;regression" TIMEOUT 15)
+
 if(KNETSENTRY_BUILD_DESKTOP)
     # Qt Test is required for full desktop test qualification, not silently
     # skipped if unavailable. The core-only preset remains Qt-independent.

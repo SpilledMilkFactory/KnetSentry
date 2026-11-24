@@ -115,3 +115,8 @@ sanitized, 15 core-only normal and 16 core-only sanitized.
 M2.6's configured desktop health polling consumes one audit authorization
 record per successful query when auditing is enabled. See
 [desktop health](DESKTOP_HEALTH_M26.md) for cadence and capacity limitations.
+
+M2.7's explicit systemd profile requires auditing and creates a fresh private
+session directory on each start; no previous evidence is overwritten or deleted.
+See [systemd service integration](SYSTEMD_SERVICE_M27.md). Aggregate quota and
+retention remain deferred, and automatic restart is disabled.

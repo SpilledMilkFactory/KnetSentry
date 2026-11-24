@@ -183,3 +183,10 @@ Run `python3 scripts/verify_m26_desktop_health.py` for source policy and
 after building. The native client is tested in core-only builds too; only the
 real desktop configuration qualifies Qt model and QML behavior. See
 [desktop health](DESKTOP_HEALTH_M26.md) for manual start/stop/reconnect checks.
+
+### M2.7 systemd service verification
+
+See [systemd service integration](SYSTEMD_SERVICE_M27.md) for explicit
+administrator installation and runtime acceptance on a systemd-booted host.
+Normal builds and CI never install or activate the service. The source policy
+CTest runs in all presets; live confinement must be separately verified.

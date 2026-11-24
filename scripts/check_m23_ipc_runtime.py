@@ -11,6 +11,7 @@ from pathlib import Path
 import select
 import signal
 import socket
+import stat
 import struct
 import subprocess
 import sys
@@ -105,11 +106,23 @@ def run(binary: Path) -> None:
                 check=False, timeout=6, preexec_fn=unprivileged if drop else None)
 
         bad = Path(root) / 'unsafe'
-        bad.mkdir(mode=0o755)
-        if drop: os.chown(bad, 65534, 65534)
+        # Reproduce the private acceptance runner's umask even when CTest is
+        # launched from a less restrictive shell. mkdir's mode alone is not
+        # sufficient: 0755 & ~0077 is 0700, which the daemon must accept.
+        old_umask = os.umask(0o077)
+        try:
+            bad.mkdir(mode=0o755)
+        finally:
+            os.umask(old_umask)
+        if drop:
+            os.chown(bad, 65534, 65534)
+        bad.chmod(0o755)
+        require(stat.S_IMODE(bad.stat().st_mode) == 0o755,
+                'unsafe IPC fixture must have actual mode 0755')
         require(command('--ipc-dir', str(bad)).returncode == 5,
                 'world-readable directory accepted')
         require(not (bad / 'manager.sock').exists(), 'unsafe directory created socket')
+        print('M2.3 unsafe directory mode 0755 under private umask: PASS')
         require(command('--ipc-dir', str(directory / 'absent')).returncode == 5,
                 'missing IPC directory accepted')
         other = directory / 'another.sock'

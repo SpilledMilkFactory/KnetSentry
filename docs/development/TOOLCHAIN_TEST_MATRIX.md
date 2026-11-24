@@ -147,3 +147,11 @@ contract runs in every desktop preset; live embedded QML with daemon stop and
 restart runs in non-sanitized desktop configurations. Existing scoped QML LSan
 suppressions remain unchanged. Expected desktop 27/23 (normal/sanitized),
 core-only 17/18 (normal/sanitized). See [desktop health](DESKTOP_HEALTH_M26.md).
+
+### M2.7 systemd service hardening
+
+One mandatory source-policy regression CTest is added in every preset. Expected
+counts: desktop 28/24 (normal/sanitized), core-only 18/19 (normal/sanitized).
+Systemd parser and separate privileged installed-unit qualification are described
+in [the service contract](SYSTEMD_SERVICE_M27.md); hosted source-only CI is not
+proof of live isolation.
