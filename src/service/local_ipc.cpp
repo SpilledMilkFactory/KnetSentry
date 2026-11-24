@@ -185,22 +185,28 @@ bool LocalIpcServer::open(std::string_view directory, const sigset_t& blocked_si
 }
 
 void LocalIpcServer::handle_client(int client, const Lifecycle& lifecycle,
-    HealthTracker& health) noexcept {
+    HealthTracker& health, AuditLog& audit) noexcept {
     // Authenticate before reading untrusted bytes; operation authorization
     // follows strict framing. No administrative action is permitted.
     struct ucred peer{};
     socklen_t length = sizeof(peer);
-    if (::getsockopt(client, SOL_SOCKET, SO_PEERCRED, &peer, &length) != 0 ||
-        length != sizeof(peer) || peer.pid <= 0 ||
-        !authorize_local_peer(peer.uid, peer.gid, ::geteuid(), ::getegid(),
+    const bool identified = ::getsockopt(client, SOL_SOCKET, SO_PEERCRED, &peer, &length) == 0 &&
+        length == sizeof(peer) && peer.pid > 0;
+    const auto actor = identified ? std::optional<AuditActor>{{peer.pid, peer.uid, peer.gid}} : std::nullopt;
+    if (!identified || !authorize_local_peer(peer.uid, peer.gid, ::geteuid(), ::getegid(),
                               IpcAction::Status)) {
         health.record(HealthError::Rejected);
+        static_cast<void>(audit.record(AuditEvent::AuthenticationFailed, actor));
         return;
     }
+    const auto report = [&](HealthError error, AuditEvent event) {
+        health.record(error);
+        static_cast<void>(audit.record(event, actor));
+    };
 
     std::array<char, 4> header{};
     if (!read_exact(client, header.data(), header.size())) {
-        health.record(HealthError::Transport);
+        report(HealthError::Transport, AuditEvent::TransportFailed);
         return;
     }
     const auto size = (static_cast<std::uint32_t>(static_cast<unsigned char>(header[0])) << 24U) |
@@ -208,35 +214,48 @@ void LocalIpcServer::handle_client(int client, const Lifecycle& lifecycle,
         (static_cast<std::uint32_t>(static_cast<unsigned char>(header[2])) << 8U) |
         static_cast<std::uint32_t>(static_cast<unsigned char>(header[3]));
     if (size == 0 || size > max_frame_size) {
-        health.record(HealthError::Rejected);
+        report(HealthError::Rejected, AuditEvent::RequestRejected);
         return;
     }
     std::array<char, max_frame_size> request{};
     if (!read_exact(client, request.data(), size)) {
-        health.record(HealthError::Transport);
+        report(HealthError::Transport, AuditEvent::TransportFailed);
         return;
     }
     const std::string_view payload(request.data(), size);
     const bool is_health = payload.starts_with(health_prefix);
     const auto operation_prefix = is_health ? health_prefix : prefix;
     const auto action = is_health ? IpcAction::Health : IpcAction::Status;
+    constexpr std::string_view admin_prefix = "KSIPC/1 ADMIN ";
+    if (payload.size() == admin_prefix.size() + 17 && payload.starts_with(admin_prefix) &&
+        payload.back() == '\n' && hex_id(payload.substr(admin_prefix.size(), 16))) {
+        report(HealthError::Rejected, AuditEvent::AdministrativeDenied);
+        return;
+    }
     if (payload.size() != operation_prefix.size() + 17 ||
         !payload.starts_with(operation_prefix) || payload.back() != '\n') {
-        health.record(HealthError::Rejected);
+        report(HealthError::Rejected, AuditEvent::RequestRejected);
         return;
     }
     const auto request_id = payload.substr(operation_prefix.size(), 16);
     if (!hex_id(request_id) ||
         !authorize_local_peer(peer.uid, peer.gid, ::geteuid(), ::getegid(), action)) {
-        health.record(HealthError::Rejected);
+        report(HealthError::Rejected, AuditEvent::RequestRejected);
+        return;
+    }
+    // Commit the authorization decision before exposing any response.
+    if (!audit.record(is_health ? AuditEvent::HealthAuthorized : AuditEvent::StatusAuthorized, actor)) {
         return;
     }
     if (is_health) {
         std::array<char, max_health_response_size> response{};
-        const auto count = encode_health(health.sample(lifecycle.state()), request_id, response);
-        if (count == 0) { health.record(HealthError::Sampling); return; }
+        const auto snapshot = health.sample(lifecycle.state());
+        if ((!snapshot.usage.cpu_ms || !snapshot.usage.peak_rss_kib) &&
+            !audit.record(AuditEvent::SamplingFailed, actor)) { return; }
+        const auto count = encode_health(snapshot, request_id, response);
+        if (count == 0) { report(HealthError::Sampling, AuditEvent::SamplingFailed); return; }
         if (!send_frame(client, std::string_view(response.data(), count), max_health_response_size)) {
-            health.record(HealthError::Transport);
+            report(HealthError::Transport, AuditEvent::TransportFailed);
         }
         return;
     }
@@ -249,11 +268,11 @@ void LocalIpcServer::handle_client(int client, const Lifecycle& lifecycle,
     std::memcpy(response.data() + start.size() + request_id.size(), end.data(), end.size());
     if (!send_frame(client, std::string_view(response.data(),
         start.size() + request_id.size() + end.size()), max_frame_size)) {
-        health.record(HealthError::Transport);
+        report(HealthError::Transport, AuditEvent::TransportFailed);
     }
 }
 
-bool LocalIpcServer::serve(const Lifecycle& lifecycle, HealthTracker& health) noexcept {
+bool LocalIpcServer::serve(const Lifecycle& lifecycle, HealthTracker& health, AuditLog& audit) noexcept {
     if (listen_fd_ < 0 || signal_fd_ < 0) { return false; }
     bool stopped = false;
     for (;;) {
@@ -277,8 +296,9 @@ bool LocalIpcServer::serve(const Lifecycle& lifecycle, HealthTracker& health) no
         if ((ready[1].revents & POLLIN) != 0) {
             const int client = ::accept4(listen_fd_, nullptr, nullptr, SOCK_NONBLOCK | SOCK_CLOEXEC);
             if (client >= 0) {
-                handle_client(client, lifecycle, health);
+                handle_client(client, lifecycle, health, audit);
                 static_cast<void>(::close(client));
+                if (!audit.ok()) { break; }
             } else if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR) {
                 break;
             }

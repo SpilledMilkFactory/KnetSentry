@@ -34,7 +34,7 @@ def source_contract() -> None:
                   'MSG_NOSIGNAL', 'MSG_DONTWAIT', 'max_frame_size = 64',
                   'client_deadline_ms = 250', 'SOCK_STREAM',
                   'authorize_local_peer', 'IpcAction::Status',
-                  'peer.pid <= 0', 'signalfd', 'POLLIN', 'SFD_NONBLOCK',
+                  'peer.pid > 0', 'signalfd', 'POLLIN', 'SFD_NONBLOCK',
                   'KSIPC/1 STATUS', 'LIFECYCLE_ONLY'):
         require(piece in impl, f'IPC security feature missing: {piece}')
     for piece in ('peer_uid == service_uid', 'peer_gid == service_gid',
@@ -44,7 +44,7 @@ def source_contract() -> None:
         require(piece in header, f'public IPC boundary missing: {piece}')
     require('local_ipc.cpp' in cmake and 'knetsentry_apply_project_options' in cmake,
             'IPC must link to hardened Qt-independent service library')
-    for piece in ('--ipc-dir', 'ipc.open(ipc_dir, stop_signals)', 'ipc.serve(lifecycle, health)',
+    for piece in ('--ipc-dir', 'ipc.open(ipc_dir, stop_signals)', 'ipc.serve(lifecycle, health, audit)',
                   'ManagerReady', 'local IPC unavailable (no fallback)'):
         require(piece in manager, f'daemon does not enforce IPC startup: {piece}')
     require(manager.index('ipc.open(ipc_dir, stop_signals)') < manager.index('lifecycle.mark_ready()'),

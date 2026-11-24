@@ -3,6 +3,7 @@
 #pragma once
 
 #include "knetsentry/service/health.hpp"
+#include "knetsentry/service/audit.hpp"
 
 #include <csignal>
 #include <string>
@@ -32,11 +33,11 @@ public:
     [[nodiscard]] bool open(std::string_view directory, const sigset_t& blocked_signals) noexcept;
     // SIGINT/SIGTERM must be blocked by the calling thread before this call.
     // Returns true only after a supported shutdown signal is consumed.
-    [[nodiscard]] bool serve(const Lifecycle& lifecycle, HealthTracker& health) noexcept;
+    [[nodiscard]] bool serve(const Lifecycle& lifecycle, HealthTracker& health, AuditLog& audit) noexcept;
 
 private:
     void close_all() noexcept;
-    void handle_client(int client, const Lifecycle& lifecycle, HealthTracker& health) noexcept;
+    void handle_client(int client, const Lifecycle& lifecycle, HealthTracker& health, AuditLog& audit) noexcept;
 
     int listen_fd_{-1};
     int signal_fd_{-1};

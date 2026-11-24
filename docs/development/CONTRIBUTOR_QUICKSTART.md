@@ -169,3 +169,9 @@ Run `python3 scripts/verify_m24_health.py --build-dir build/presets/linux-releas
 after the applicable build and CTest. See [health contract](SERVICE_HEALTH_M24.md)
 for the authenticated HEALTH exchange and units. The expected CTest inventory
 is 21/18 desktop (normal/sanitized), 13/14 core-only (normal/sanitized).
+
+### M2.5 service audit verification
+
+Run `python3 scripts/verify_m25_audit.py --build-dir build/presets/linux-release`
+after CTest. Keep local audit records out of public artifacts.
+See [audit contract](SERVICE_AUDIT_M25.md).

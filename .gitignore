@@ -6,3 +6,6 @@
 # Local Python verifier artifacts
 __pycache__/
 *.py[cod]
+
+# Private service audit evidence must never be committed.
+service-audit.jsonl

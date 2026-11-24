@@ -90,10 +90,10 @@ def exercise(binary: Path, explicit: bool) -> None:
                 with socket.socket(socket.AF_UNIX) as peer:
                     peer.settimeout(2)
                     peer.connect(str(path))
-                    peer.sendall(frame(HEALTH))
                     try:
+                        peer.sendall(frame(HEALTH))
                         denied = peer.recv(512)
-                    except ConnectionResetError:
+                    except (ConnectionResetError, BrokenPipeError):
                         denied = b''
                     require(denied == b'', 'different-UID peer obtained health')
             second = get_health(path, drop, mode)
