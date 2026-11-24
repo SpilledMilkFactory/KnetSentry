@@ -15,7 +15,7 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M2.7 (systemd service hardening):**
+> **Development status — M2.8 (service lifecycle and IPC integration tests):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
@@ -298,3 +298,12 @@ network and filesystem isolation, and finite resource limits. The current
 same-UID desktop development IPC remains separate; ordinary desktop users
 cannot access the installed system service. No service is installed or enabled
 by a normal build. Live systemd qualification is required on Ubuntu 26.04.
+
+### M2.8 — Service lifecycle and IPC integration
+
+The [lifecycle integration contract](docs/development/SERVICE_LIFECYCLE_IPC_M28.md)
+adds mandatory real-process restart, duplicate/stale socket rejection, malformed
+and interrupted IPC, counter and audit-session regression coverage. The native
+client and existing GUI lifecycle tests remain separate. Ordinary CI does not
+install or activate the system service; the M2.7 installed runtime gate remains
+an explicit administrator-operated check.

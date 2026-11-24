@@ -190,3 +190,16 @@ See [systemd service integration](SYSTEMD_SERVICE_M27.md) for explicit
 administrator installation and runtime acceptance on a systemd-booted host.
 Normal builds and CI never install or activate the service. The source policy
 CTest runs in all presets; live confinement must be separately verified.
+
+### M2.8 service lifecycle and IPC integration
+
+Run the full configured CTest suite or execute the focused regression:
+
+```sh
+ctest --preset linux-release -R '^knetsentry_service_lifecycle_ipc_integration$' --verbose --no-tests=error
+```
+
+See [service lifecycle and IPC integration](SERVICE_LIFECYCLE_IPC_M28.md) for
+scenario coverage, conditional distinct-identity evidence, and limits.
+The foreground test uses private temporary directories and never installs,
+starts, stops or modifies an installed systemd service.
