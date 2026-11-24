@@ -57,7 +57,7 @@ names = ("Main.qml", "SectionPage.qml", "DesignTokens.qml", "SurfaceCard.qml",
 qml = {name: read("apps/desktop/" + name) for name in names}
 for name, content in qml.items():
     need(content.startswith("// SPDX-FileCopyrightText: 2026 Chris Sutton\n"
-                            "// SPDX-License-Identifier: MIT\n"),
+                            "// SPDX\x2dLicense-Identifier: MIT\n"),
          f"{name}: missing first-party MIT SPDX")
 cmake = read("apps/desktop/CMakeLists.txt")
 for name in names:
@@ -135,7 +135,7 @@ need("tests.count(\"LSAN_OPTIONS=suppressions=\") == 3" in
      "M1.3 scoped sanitizer negative-control contract changed")
 
 guide = read("docs/development/VISUAL_DESIGN_SYSTEM.md")
-need("SPDX-License-Identifier: CC-BY-SA-4.0" in guide[:180],
+need("SPDX\x2dLicense-Identifier: CC-BY-SA-4.0" in guide[:180],
      "visual guide must use approved documentation license")
 for phrase in ("light", "dark", "spacing", "accessibility", "contrast",
                "reduced motion", "severity", "monitoring availability", "GNOME", "Plasma"):

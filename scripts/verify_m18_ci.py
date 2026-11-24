@@ -78,6 +78,35 @@ def check_format() -> None:
     print(f'M1.8 formatting hygiene: PASS ({checked} first-party source files)')
 
 
+
+def check_reuse_source_literals() -> None:
+    """Prevent verifier fixtures from being read as extra SPDX license tags.
+
+    REUSE scans more than the file header, including Python assertion literals.
+    Actual top-of-file SPDX declarations stay plain-text and are still required.
+    The verifier fixtures use Python escape sequences for the hyphen so that
+    their *evaluated* strings match the original SPDX tags exactly.
+    """
+    marker = 'SPDX-' + 'License-Identifier:'
+    checked = 0
+    for script in sorted((ROOT / 'scripts').glob('*.py')):
+        lines = script.read_text(encoding='utf-8').splitlines()
+        require(len(lines) >= 3, f'{script.name}: short script')
+        require(lines[0] == '#!/usr/bin/env python3',
+                f'{script.name}: missing Python shebang')
+        require(lines[1] == '# SPDX-FileCopyrightText: 2026 Chris Sutton',
+                f'{script.name}: missing original copyright declaration')
+        require(lines[2] == '# ' + marker + ' MIT',
+                f'{script.name}: missing original MIT license declaration')
+        stray = [str(i) for i, line in enumerate(lines[3:], start=4) if marker in line]
+        require(not stray,
+                f'{script.name}: embedded SPDX license literal on lines '
+                + ', '.join(stray) + ' (escape only the in-string hyphen)')
+        checked += 1
+    require(checked >= 18, 'incomplete Python verifier inventory')
+    print(f'M1.8 REUSE source-literal safeguard: PASS ({checked} Python files)')
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--workflow', type=Path,
@@ -86,6 +115,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         check_workflow(args.workflow)
+        check_reuse_source_literals()
         if args.format:
             check_format()
     except (OSError, ValueError) as exc:

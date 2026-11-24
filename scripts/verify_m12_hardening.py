@@ -54,7 +54,7 @@ cmake_files = (
 )
 for rel in cmake_files:
     require(source(rel).startswith("# SPDX-FileCopyrightText: 2026 Chris Sutton\n"
-                                   "# SPDX-License-Identifier: BSD-2-Clause\n"),
+                                   "# SPDX\x2dLicense-Identifier: BSD-2-Clause\n"),
             f"{rel} must use BSD-2-Clause SPDX header")
 for rel, target in (("src/core/CMakeLists.txt", "knetsentry_core"),
                     ("apps/desktop/CMakeLists.txt", "knetsentry"),

@@ -25,7 +25,7 @@ YAML = [
     '.github/ISSUE_TEMPLATE/feature_request.yml',
     '.github/ISSUE_TEMPLATE/documentation.yml',
 ]
-HEADER='<!--\nSPDX-FileCopyrightText: 2026 Chris Sutton\nSPDX-License-Identifier: CC-BY-SA-4.0\n-->\n'
+HEADER='<!--\nSPDX-FileCopyrightText: 2026 Chris Sutton\nSPDX\x2dLicense-Identifier: CC-BY-SA-4.0\n-->\n'
 def check(ok: bool, msg: str) -> None:
     if not ok: ERRORS.append(msg)
 def read(path: str) -> str:
@@ -48,7 +48,7 @@ for p,s in texts.items():
               p+': broken link '+link)
 for p in YAML:
     s=read(p)
-    check(s.startswith('# SPDX-FileCopyrightText: 2026 Chris Sutton\n# SPDX-License-Identifier: MIT'),
+    check(s.startswith('# SPDX-FileCopyrightText: 2026 Chris Sutton\n# SPDX\x2dLicense-Identifier: MIT'),
           p+': missing YAML SPDX declaration')
     check(len(s)>200,p+': incomplete YAML')
     check('SECURITY.md' in s or 'security/advisories' in s, p+': missing vulnerability routing warning')
@@ -65,7 +65,7 @@ expected={'bug_report.yml':'type:bug','feature_request.yml':'type:feature','docu
 for name, label in expected.items():
     check(label in read('.github/ISSUE_TEMPLATE/'+name),name+': wrong issue label')
 codeowners=read('.github/CODEOWNERS')
-check('# SPDX-License-Identifier: MIT' in codeowners[:200], 'CODEOWNERS: missing license')
+check('# SPDX\x2dLicense-Identifier: MIT' in codeowners[:200], 'CODEOWNERS: missing license')
 check('* @SpilledMilkFactory' in codeowners, 'CODEOWNERS: missing main owner')
 check('self-review' in codeowners.lower(), 'CODEOWNERS: no independence warning')
 register=texts['GOVERNANCE.md']

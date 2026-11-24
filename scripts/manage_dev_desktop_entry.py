@@ -61,7 +61,7 @@ if any(ch in str(binary) for ch in ('\n', '\r', '"', '\\')):
 if existing and not managed:
     parser.error("refusing to overwrite existing non-development desktop entry")
 content = ("# SPDX-FileCopyrightText: 2026 Chris Sutton\n"
-           "# SPDX-License-Identifier: MIT\n"
+           "# SPDX\x2dLicense-Identifier: MIT\n"
            "[Desktop Entry]\n"
            "Type=Application\n"
            "Name=KnetSentry (Development)\n"

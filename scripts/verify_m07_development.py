@@ -41,7 +41,7 @@ def read(path: str) -> str:
 
 texts = {file: read(file) for file in REQUIRED}
 header = ('<!--\nSPDX-FileCopyrightText: 2026 Chris Sutton\n'
-          'SPDX-License-Identifier: CC-BY-SA-4.0\n-->')
+          'SPDX\x2dLicense-Identifier: CC-BY-SA-4.0\n-->')
 for file, content in texts.items():
     check(content.startswith(header), f'{file}: SPDX documentation header missing')
     check(len(content) > 300, f'{file}: suspiciously short')
@@ -119,7 +119,7 @@ check('not yet implemented' in contract.lower() or 'not implemented' in contract
       'contract must not imply active build gates')
 for script in sorted((ROOT / 'scripts').glob('verify_m*.py')):
     s = script.read_text(encoding='utf-8')
-    check('# SPDX-License-Identifier: MIT' in s[:180],
+    check('# SPDX\x2dLicense-Identifier: MIT' in s[:180],
           f'{script.name}: MIT tooling SPDX header missing')
 
 if ERRORS:

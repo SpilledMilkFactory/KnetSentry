@@ -50,7 +50,7 @@ readme = read("README.md")
 
 for name, content in (("Main.qml", main), ("SectionPage.qml", page)):
     require(content.startswith("// SPDX-FileCopyrightText: 2026 Chris Sutton\n"
-                               "// SPDX-License-Identifier: MIT"),
+                               "// SPDX\x2dLicense-Identifier: MIT"),
             f"{name}: expected MIT SPDX header")
 require("QML_FILES Main.qml SectionPage.qml" in cmake, "both QML pages must be embedded")
 require("Kirigami.ApplicationWindow" in main and "Kirigami.GlobalDrawer" in main,

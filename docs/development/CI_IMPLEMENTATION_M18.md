@@ -73,3 +73,44 @@ modify CI instructions. Maintainer self-review is not independent review.
   IMPLEMENTED**; whitespace/newline formatting hygiene is implemented.
 - Artifact signing, SBOM, package rights, and full security qualification:
   deferred to later approved milestones.
+
+## M1.8 follow-up — official REUSE parsing of verifier fixtures
+
+The first M1.8 local `reuse lint` execution reported 12 Python tools as
+missing licensing information. Those files already carried valid, unchanged
+MIT copyright/license headers. REUSE also searched their assertion source
+and interpreted extra literal license-tag examples as malformed SPDX license
+expressions. For example, a Python expression testing a document header
+was mistaken for another declaration **inside the Python tool itself**.
+
+This corrective change replaces only the hyphen in **embedded Python string
+literals** with the equivalent Python escape `\x2d`. When Python evaluates
+the literals, the resulting string is byte-for-byte the same as before.
+The actual leading SPDX headers remain in their normal, human-readable form;
+no licensing assignment, redistribution declaration, test assertion, or
+production source was changed. An additional M0.4 verifier literal beyond
+the set reported by the installed tool was updated proactively to prevent
+future full-file scanners from encountering the same false positive.
+
+`python3 scripts/verify_m18_ci.py --format` now rejects additional literal
+SPDX-license markers outside the real script headers. This is a defensive
+source check **not a replacement for the official tool**. M0.6 and all later
+policy verifiers must continue passing to demonstrate that their effective
+license checks have not changed. The CI `policy` job still runs unmodified
+`reuse lint` and must fail if REUSE reports any remaining issue.
+
+### Acceptance for the follow-up
+
+1. Run `reuse lint` on a clean checkout of this exact PR revision; require
+   successful exit status and the positive compliance summary.
+2. Run every `scripts/verify_m*.py` script and the M1.8 formatting hygiene
+   command; verify all pass.
+3. Run the Release and sanitizer CTest presets; ensure original test counts
+   (13 and 10) and their security negative controls are unchanged.
+4. Confirm the GitHub-hosted `policy`, seven matrix lanes, and `qml` job pass
+   on the corrective commit before merge.
+
+This local source-level correction was prepared without a working `reuse`
+installation in the build environment. Therefore **official REUSE compliance
+is not claimed until the user's Ubuntu host or GitHub Actions policy job
+executes the tool successfully**.

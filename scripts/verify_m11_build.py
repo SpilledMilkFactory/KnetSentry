@@ -27,7 +27,7 @@ cmake_paths = ("CMakeLists.txt", "src/core/CMakeLists.txt",
                "apps/desktop/CMakeLists.txt", "tests/CMakeLists.txt")
 for rel in cmake_paths:
     check(read(rel).startswith("# SPDX-FileCopyrightText: 2026 Chris Sutton\n"
-                                    "# SPDX-License-Identifier: BSD-2-Clause"),
+                                    "# SPDX\x2dLicense-Identifier: BSD-2-Clause"),
           f"{rel}: missing BSD-2-Clause header")
 check("BSD 2-Clause License" in read("LICENSES/BSD-2-Clause.txt"),
       "BSD-2-Clause license text missing")
@@ -36,7 +36,7 @@ cpp_paths = ("include/knetsentry/core/build_info.hpp",
              "tests/core_smoke.cpp")
 for rel in cpp_paths:
     check(read(rel).startswith("// SPDX-FileCopyrightText: 2026 Chris Sutton\n"
-                                    "// SPDX-License-Identifier: MIT"),
+                                    "// SPDX\x2dLicense-Identifier: MIT"),
           f"{rel}: missing MIT header")
 root = read("CMakeLists.txt")
 for token in ("LANGUAGES CXX", "CMAKE_CXX_STANDARD 23",

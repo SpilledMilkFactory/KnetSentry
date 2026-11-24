@@ -68,7 +68,7 @@ for f in mds:
     rel = f.relative_to(ROOT)
     s = f.read_text(encoding='utf-8')
     check(s.startswith('<!--\nSPDX-FileCopyrightText: 2026 Chris Sutton\n'
-                       'SPDX-License-Identifier: CC-BY-SA-4.0\n-->'),
+                       'SPDX\x2dLicense-Identifier: CC-BY-SA-4.0\n-->'),
           f'{rel}: missing documentation SPDX header')
     for raw in re.findall(r'(?<!!)\[[^]]+\]\(([^)]+)\)', s):
         target = raw.split(' ', 1)[0]
@@ -83,11 +83,11 @@ scripts = sorted((ROOT / 'scripts').glob('*.py'))
 for f in scripts:
     s = f.read_text(encoding='utf-8')
     check('# SPDX-FileCopyrightText: 2026 Chris Sutton' in s[:220]
-          and '# SPDX-License-Identifier: MIT' in s[:220],
+          and '# SPDX\x2dLicense-Identifier: MIT' in s[:220],
           f'{f.relative_to(ROOT)}: missing tooling SPDX header')
 for rel in ('.gitignore', 'REUSE.toml'):
     s = read(rel)
-    check('# SPDX-License-Identifier: MIT' in s[:250], f'{rel}: missing SPDX header')
+    check('# SPDX\x2dLicense-Identifier: MIT' in s[:250], f'{rel}: missing SPDX header')
 
 policy = read('docs/development/LICENSING_POLICY.md')
 for need in ('BSD-2-Clause', 'CC-BY-SA-4.0', 'MIT',

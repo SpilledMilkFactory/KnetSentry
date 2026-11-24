@@ -115,6 +115,11 @@ Validate with `python3 scripts/verify_m16_diagnostics.py` and the
 `knetsentry_structured_diagnostics` CTest in each relevant preset.
 Raw Qt/Kirigami framework output is **not** sanitized by this publisher.
 
+The M1.8 CI follow-up preserves original SPDX declarations while preventing
+licensing-verifier fixture strings from being misread as additional license
+tags by the official REUSE scanner. Run `reuse lint` before merging; see
+[CI implementation details](docs/development/CI_IMPLEMENTATION_M18.md).
+
 ## M1.7 foundational CTest and Qt Test suites
 
 The test foundation now includes real Qt Test (`QAbstractItemModelTester`,

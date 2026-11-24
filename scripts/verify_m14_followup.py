@@ -31,7 +31,7 @@ helper = read("scripts/manage_dev_desktop_entry.py")
 guide = read("docs/development/GUI_NAVIGATION.md")
 for path, content in (("scripts/check_m14_runtime_diagnostics.py", runtime),
                       ("scripts/manage_dev_desktop_entry.py", helper)):
-    require("SPDX-License-Identifier: MIT" in content[:180], f"{path}: missing SPDX")
+    require("SPDX\x2dLicense-Identifier: MIT" in content[:180], f"{path}: missing SPDX")
 require('sectionPageComponent.createObject(null, { "sectionId": sectionId })' in main,
         "SectionPage must be explicitly instantiated with a required section identifier")
 require('pageStack.replace(nextPage)' in main and 'nextPage.destroy()' in main,

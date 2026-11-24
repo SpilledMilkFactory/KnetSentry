@@ -109,7 +109,7 @@ def verify() -> list[str]:
                           ROOT / "docs/development/RELEASE_OBJECTIVES.md"]
     for path in arch_files:
         body = path.read_text(encoding="utf-8")
-        if "SPDX-License-Identifier: CC-BY-SA-4.0" not in body and path in files:
+        if "SPDX\x2dLicense-Identifier: CC-BY-SA-4.0" not in body and path in files:
             errors.append(f"Missing document SPDX metadata: {path.relative_to(ROOT)}")
         for raw in re.findall(r"\]\(([^)]+)\)", body):
             target = raw.split(" ", 1)[0]
