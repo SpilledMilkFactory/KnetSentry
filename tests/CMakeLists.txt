@@ -124,10 +124,42 @@ add_test(NAME knetsentry_service_audit_runtime
 set_tests_properties(knetsentry_service_audit_runtime PROPERTIES
     LABELS "integration;security;privacy;ipc;service;regression" TIMEOUT 60)
 
+# M2.6: native client remains independently testable without Qt.
+add_executable(knetsentry_health_client_test service_health_client_m26.cpp)
+target_link_libraries(knetsentry_health_client_test PRIVATE KnetSentry::Service)
+knetsentry_apply_project_options(knetsentry_health_client_test)
+add_test(NAME knetsentry_health_client_contract COMMAND $<TARGET_FILE:knetsentry_health_client_test>)
+set_tests_properties(knetsentry_health_client_contract PROPERTIES
+    LABELS "unit;security;ipc;regression" TIMEOUT 15)
+add_test(NAME knetsentry_health_client_runtime
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/check_m26_health_client.py"
+        --probe $<TARGET_FILE:knetsentry_health_client_test> --manager $<TARGET_FILE:knetsentryd>)
+set_tests_properties(knetsentry_health_client_runtime PROPERTIES
+    LABELS "integration;security;ipc;regression" TIMEOUT 40)
+
 if(KNETSENTRY_BUILD_DESKTOP)
     # Qt Test is required for full desktop test qualification, not silently
     # skipped if unavailable. The core-only preset remains Qt-independent.
     find_package(Qt6 REQUIRED COMPONENTS Test)
+
+    add_executable(knetsentry_qt_health_test qt/service_health_qtest.cpp
+        ../apps/desktop/service_health_model.cpp ../apps/desktop/service_health_model.hpp)
+    set_target_properties(knetsentry_qt_health_test PROPERTIES AUTOMOC ON)
+    target_include_directories(knetsentry_qt_health_test PRIVATE "${PROJECT_SOURCE_DIR}/apps/desktop")
+    target_link_libraries(knetsentry_qt_health_test PRIVATE KnetSentry::Service Qt6::Core Qt6::Qml Qt6::Test)
+    knetsentry_apply_project_options(knetsentry_qt_health_test)
+    add_test(NAME knetsentry_qt_health_model COMMAND $<TARGET_FILE:knetsentry_qt_health_test>)
+    set_tests_properties(knetsentry_qt_health_model PROPERTIES
+        LABELS "qt;model;security;regression" TIMEOUT 15)
+    # No new QML leak suppression: the model is always instrumented, and the
+    # existing sanitized QML startup/navigation tests instantiate its bindings.
+    if(NOT KNETSENTRY_ENABLE_SANITIZERS)
+        add_test(NAME knetsentry_gui_health_runtime
+            COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/check_m26_gui_runtime.py"
+                --desktop $<TARGET_FILE:knetsentry> --manager $<TARGET_FILE:knetsentryd>)
+        set_tests_properties(knetsentry_gui_health_runtime PROPERTIES
+            LABELS "qt;desktop;qml;integration;ipc;regression" TIMEOUT 45)
+    endif()
 
     add_executable(knetsentry_qt_model_test qt/section_catalog_qtest.cpp)
     set_target_properties(knetsentry_qt_model_test PROPERTIES AUTOMOC ON)

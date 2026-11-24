@@ -3,6 +3,7 @@
 #include "knetsentry/service/audit.hpp"
 
 #include <array>
+#include <bit>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -30,7 +31,7 @@ int main() {
         require(log.record(AuditEvent::Starting), "initial write");
         require(log.record(AuditEvent::StatusAuthorized,
             AuditActor{::getpid(), ::geteuid(), ::getegid()}), "peer record");
-        require(!log.record(static_cast<AuditEvent>(255)), "invalid event rejected");
+        require(!log.record(std::bit_cast<AuditEvent>(std::uint8_t{255})), "invalid event rejected");
         require(!log.ok() && !log.record(AuditEvent::Stopped), "sticky failure");
     }
     {

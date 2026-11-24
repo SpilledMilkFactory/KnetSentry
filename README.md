@@ -15,13 +15,13 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M2.5 (structured service audit logging):**
+> **Development status — M2.6 (desktop management health):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
 > 26.04 GitHub Actions checks reported for M1.8**. The graphical interface is
 > **not an operational SIEM**. A lifecycle-only manager with fail-closed v1 configuration and opt-in
-> authenticated local status/health IPC and opt-in protected service audit logging exist, but no agentless network sensor, host agent,
+> authenticated local status/health IPC, opt-in protected service audit logging and read-only desktop daemon health exist, but no agentless network sensor, host agent,
 > event database, threat detection or privileged security controls exist yet.
 > A green CI run validates only its documented tests, not release readiness.
 
@@ -280,3 +280,11 @@ polling is enabled by this change.
 Use `--audit-dir ABS_DIR` with a fresh owner-only directory to enable the
 bounded persistent audit sink. See the [M2.5 audit contract](docs/development/SERVICE_AUDIT_M25.md)
 for scope, activation, privacy, failure behavior and limitations.
+
+### M2.6 — Desktop management health
+
+The desktop optionally queries the manager's authorized HEALTH interface. Start
+the manager with an existing mode-0700 private IPC directory, then use the same
+absolute directory with `knetsentry --ipc-dir ABS_DIR`. Without that option
+the GUI makes no service requests. See the [M2.6 desktop health contract](docs/development/DESKTOP_HEALTH_M26.md)
+for connection, disconnection, bounded polling and audit-budget implications.

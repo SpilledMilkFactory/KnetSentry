@@ -139,3 +139,11 @@ Mandatory `knetsentry_service_audit_contract` and `knetsentry_service_audit_runt
 run across all seven presets. Expected 23/20 desktop (normal/sanitized),
 15/16 core-only (normal/sanitized).
 See [audit contract](SERVICE_AUDIT_M25.md).
+
+### M2.6 desktop health verification
+
+Two new native client tests run across all seven presets. The Qt health model
+contract runs in every desktop preset; live embedded QML with daemon stop and
+restart runs in non-sanitized desktop configurations. Existing scoped QML LSan
+suppressions remain unchanged. Expected desktop 27/23 (normal/sanitized),
+core-only 17/18 (normal/sanitized). See [desktop health](DESKTOP_HEALTH_M26.md).

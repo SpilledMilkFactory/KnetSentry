@@ -55,7 +55,8 @@ for name, content in (("Main.qml", main), ("SectionPage.qml", page)):
 require("QML_FILES Main.qml SectionPage.qml" in cmake, "both QML pages must be embedded")
 require("Kirigami.ApplicationWindow" in main and "Kirigami.GlobalDrawer" in main,
         "expected Kirigami window/drawer")
-require('pageStack.initialPage: SectionPage { sectionId: "dashboard" }' in main,
+require('pageStack.initialPage: SectionPage {' in main and
+        'sectionId: "dashboard"' in main and 'healthModel: window.healthModel' in main,
         "initial dashboard must be an actual SectionPage")
 require('sectionPageComponent.createObject(null, { "sectionId": sectionId })' in main,
         "navigation must instantiate the section page before PageRow adoption")
