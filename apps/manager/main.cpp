@@ -3,6 +3,7 @@
 #include "knetsentry/core/build_info.hpp"
 #include "knetsentry/core/diagnostics.hpp"
 #include "knetsentry/service/lifecycle.hpp"
+#include "knetsentry/service/configuration.hpp"
 
 #include <csignal>
 #include <iostream>
@@ -29,7 +30,7 @@ using knetsentry::service::Lifecycle;
     });
 }
 
-[[nodiscard]] int run() {
+[[nodiscard]] int run(std::string_view configuration_path) {
     // A management service must never accidentally inherit root authority.
     if (geteuid() == 0) {
         std::cerr << "knetsentryd: root execution prohibited\n";
@@ -59,8 +60,20 @@ using knetsentry::service::Lifecycle;
         return 1;
     }
 
-    // M2.1 has no listeners, sockets, filesystem state, privileges, or worker
-    // dependencies to initialize. "ready" means only lifecycle availability.
+    // M2.2: if the operator supplied a file it is mandatory and must pass
+    // complete validation. Never replace a rejected file with safe defaults.
+    // The built-in defaults apply ONLY when no configuration was supplied.
+    if (!configuration_path.empty() &&
+        !knetsentry::service::load_configuration(configuration_path).ok()) {
+        static_cast<void>(lifecycle.mark_failed());
+        static_cast<void>(publish(logger, DiagnosticLevel::Error,
+            DiagnosticEvent::ManagerFailed, DiagnosticOutcome::Rejected));
+        std::cerr << "knetsentryd: configuration rejected (no fallback)\n";
+        return 4;
+    }
+
+    // M2.2 has no listeners, sockets, external egress, privileged operations
+    // or security telemetry to enable. "ready" means lifecycle-only readiness.
     if (!lifecycle.mark_ready() ||
         !publish(logger, DiagnosticLevel::Info, DiagnosticEvent::ManagerReady,
                  DiagnosticOutcome::Success)) {
@@ -100,14 +113,25 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
-        std::cout << "Usage: knetsentryd [--help|--version]\n"
+        std::cout << "Usage: knetsentryd [--help|--version|--config ABS_PATH|--check-config ABS_PATH]\n"
                      "Foreground-only, unprivileged lifecycle foundation.\n"
                      "Stop with SIGTERM or SIGINT; no monitoring or listeners.\n";
         return 0;
+    }
+    if (argc == 3 && std::string_view(argv[1]) == "--check-config") {
+        if (!knetsentry::service::load_configuration(argv[2]).ok()) {
+            std::cerr << "knetsentryd: configuration rejected (no fallback)\n";
+            return 4;
+        }
+        std::cout << "KnetSentry configuration schema v1: valid (lifecycle only)\n";
+        return 0;
+    }
+    if (argc == 3 && std::string_view(argv[1]) == "--config") {
+        return run(argv[2]);
     }
     if (argc != 1) {
         std::cerr << "knetsentryd: unsupported argument (see --help)\n";
         return 2;
     }
-    return run();
+    return run({});
 }

@@ -15,12 +15,12 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M2.1 (management daemon lifecycle foundation):**
+> **Development status — M2.2 (versioned management configuration):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
 > 26.04 GitHub Actions checks reported for M1.8**. The graphical interface is
-> **not an operational SIEM**. A non-operational manager process exists, but no
+> **not an operational SIEM**. A non-operational manager process with fail-closed v1 configuration exists, but no
 > management IPC, agentless network sensor, host agent,
 > event database, threat detection or privileged security controls exist yet.
 > A green CI run validates only its documented tests, not release readiness.
@@ -248,3 +248,10 @@ ctest --preset linux-release --output-on-failure
 Expected M2.1 CTest totals: desktop **15**, full sanitizer **12**, core-only
 **7**, core-only sanitizer **8**. These counts require actual local and hosted
 execution before acceptance.
+
+## M2.2: secure manager configuration
+
+The standalone manager now supports strict schema v1 configuration validation
+without Qt/Kirigami. See the [configuration guide](docs/development/MANAGER_CONFIGURATION_M22.md)
+and [safe example](examples/manager-v1.conf). Explicit configuration errors
+are rejected with no fallback or operational monitoring.

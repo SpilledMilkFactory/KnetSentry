@@ -60,6 +60,23 @@ add_test(NAME knetsentry_manager_signal_lifecycle
 set_tests_properties(knetsentry_manager_signal_lifecycle PROPERTIES
     LABELS "integration;security;service;regression" TIMEOUT 45)
 
+# M2.2 strict versioned manager config: compiled schema tests and real process
+# rejection of missing, unsafe, future-version and forbidden settings.
+add_executable(knetsentry_service_configuration_test service_configuration_m22.cpp)
+target_link_libraries(knetsentry_service_configuration_test PRIVATE KnetSentry::Service)
+knetsentry_apply_project_options(knetsentry_service_configuration_test)
+add_test(NAME knetsentry_manager_configuration_contract
+    COMMAND $<TARGET_FILE:knetsentry_service_configuration_test>)
+set_tests_properties(knetsentry_manager_configuration_contract PROPERTIES
+    LABELS "unit;security;service;configuration;regression" TIMEOUT 20)
+
+add_test(NAME knetsentry_manager_configuration_runtime
+    COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/scripts/check_m22_config_runtime.py"
+        --binary "$<TARGET_FILE:knetsentryd>")
+set_tests_properties(knetsentry_manager_configuration_runtime PROPERTIES
+    LABELS "integration;security;service;configuration;regression" TIMEOUT 50)
+
 if(KNETSENTRY_BUILD_DESKTOP)
     # Qt Test is required for full desktop test qualification, not silently
     # skipped if unavailable. The core-only preset remains Qt-independent.
