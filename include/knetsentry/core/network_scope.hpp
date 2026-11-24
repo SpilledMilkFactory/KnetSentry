@@ -28,6 +28,15 @@ struct EndpointApproval final {
     std::uint16_t port{};
 };
 
+// Schema 2 only: canonical numeric CIDR network, never a proposed endpoint.
+struct PrefixApproval final {
+    std::string_view agent;
+    std::string_view manager;
+    std::string_view network;
+    std::uint32_t interface_index{};
+    std::uint16_t port{};
+};
+
 // Future trusted topology adapter input, never telemetry or remote fields.
 // This component does not acquire or verify live route evidence itself.
 struct RouteEvidence final {
@@ -56,6 +65,13 @@ public:
     [[nodiscard]] static NetworkScopePolicy compile(
         std::uint32_t schema, std::uint64_t generation,
         std::span<const EndpointApproval> approvals) noexcept;
+    // Schema 2 explicitly enables prefix approvals. The combined limit is
+    // max_approvals; overlapping rules for the same identity/interface/port
+    // are rejected, including exact entries covered by a prefix.
+    [[nodiscard]] static NetworkScopePolicy compile(
+        std::uint32_t schema, std::uint64_t generation,
+        std::span<const EndpointApproval> approvals,
+        std::span<const PrefixApproval> prefixes) noexcept;
     [[nodiscard]] bool valid() const noexcept { return valid_; }
     [[nodiscard]] ScopeDecision evaluate(const NetworkProposal& proposal) const noexcept;
 
@@ -71,10 +87,17 @@ private:
         Address destination{};
         std::uint32_t interface_index{};
         std::uint16_t port{};
+        std::uint8_t prefix_length{};
         bool operator==(const Rule&) const = default;
     };
     [[nodiscard]] static bool parse_address(std::string_view text, Address& result) noexcept;
     [[nodiscard]] static bool parse_endpoint(const EndpointApproval& input, Rule& result) noexcept;
+    [[nodiscard]] static bool parse_prefix(const PrefixApproval& input, Rule& result) noexcept;
+    [[nodiscard]] static bool same_binding(const Rule& first, const Rule& second) noexcept;
+    [[nodiscard]] static bool contains(const Address& network, std::uint8_t length,
+                                       const Address& address) noexcept;
+    [[nodiscard]] static bool matches(const Rule& rule, const Rule& candidate) noexcept;
+    [[nodiscard]] bool append(const Rule& rule) noexcept;
     std::array<Rule, max_approvals> rules_{};
     std::size_t count_{};
     std::uint64_t generation_{};

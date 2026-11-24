@@ -5,6 +5,9 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M3.1 — Network scope policy engine
 
+M3.1 historical contract; M3.2 adds an explicit schema-2 prefix interface in
+[the M3.2 validation contract](NETWORK_SCOPE_VALIDATION_M32.md).
+
 Issue #26, component `C-02`, trust boundary `TB-11`. This is the initial
 application-layer decision contract, **not active network enforcement**.
 The existing lifecycle-only manager configuration and AF_UNIX interfaces are

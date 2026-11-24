@@ -52,6 +52,15 @@ add_test(NAME knetsentry_network_scope_policy
 set_tests_properties(knetsentry_network_scope_policy PROPERTIES
     LABELS "unit;security;network;regression" TIMEOUT 15)
 
+# M3.2: dual-stack prefix validation on the same policy boundary.
+add_executable(knetsentry_network_prefix_test network_scope_m32.cpp)
+target_link_libraries(knetsentry_network_prefix_test PRIVATE KnetSentry::Core)
+knetsentry_apply_project_options(knetsentry_network_prefix_test)
+add_test(NAME knetsentry_network_prefix_validation
+    COMMAND $<TARGET_FILE:knetsentry_network_prefix_test>)
+set_tests_properties(knetsentry_network_prefix_validation PROPERTIES
+    LABELS "unit;security;network;regression" TIMEOUT 15)
+
 # M2.1 management process: test explicit state transitions and real POSIX
 # shutdown from a separate process, including both supported stop signals.
 add_executable(knetsentry_service_lifecycle_test service_lifecycle_m21.cpp)

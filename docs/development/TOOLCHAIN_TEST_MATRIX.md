@@ -180,3 +180,13 @@ Expected inventories: desktop 32/27 (normal/sanitized), core-only 20/21
 build/presets/linux-release` for focused evidence. See the
 [M3.1 policy contract](NETWORK_SCOPE_POLICY_M31.md). No real IP network I/O is
 performed by this test; live topology and enforcement remain unqualified.
+
+### M3.2 dual-stack scope validation
+
+The mandatory `knetsentry_network_prefix_validation` test runs in all seven
+presets alongside the original M3.1 policy test. Current expected inventories:
+desktop 33/28 (normal/sanitized), core-only 21/22 (normal/sanitized).
+Run `python3 scripts/verify_m32_network_prefix.py --build-dir
+build/presets/linux-release` for configured verification. See the
+[M3.2 validation contract](NETWORK_SCOPE_VALIDATION_M32.md). No real IP network
+I/O or new permissions are introduced.
