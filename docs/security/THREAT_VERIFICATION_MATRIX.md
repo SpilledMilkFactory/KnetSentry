@@ -35,6 +35,11 @@ monitoring, or deployed end-to-end enforcement. TV-27 has partial confinement
 evidence from [systemd](../development/SYSTEMD_SERVICE_M27.md). No TV item is
 closed by this refresh; see [accepted baseline](../PROJECT_STATUS.md).
 
+**M4.1 implementation:** [KSAP 1.0](../development/AGENT_PROTOCOL_M41.md) adds
+offline framing and connection-local sequence regression coverage for TV-07.
+Target acceptance is pending; cross-connection replay and authenticated ingestion
+remain unqualified. No threat is closed.
+
 | Test ID | Expected observable security outcome | Planned owner | Proposed evidence |
 | --- | --- | --- | --- |
 | `TV-01` | Approved segment supports agentless observation; unapproved interface/payload retention denied; passive discovery never grants management | M3.1 / M5.10 | Approved/denied scope fixture, consent and permission logs |

@@ -6,7 +6,8 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # Project status
 
 **Accepted baseline: M3.8 — LAN scope inspection.** Milestone 3 is complete
-through issue #33; the next planned development step is M4.1. This is an
+through issue #33. M4.1 introduces an offline agent wire contract; target-host
+qualification of this revision is pending. This is an
 unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
@@ -17,6 +18,7 @@ unreleased development baseline, not a v1.0.0 security qualification.
 | Manager | Non-root lifecycle, strict lifecycle-only v1 configuration, opt-in same-UID/GID authenticated Unix IPC (`STATUS`, `HEALTH`), bounded health and protected audit logging |
 | Deployment | Explicit development systemd deployment under a dedicated non-login identity with confinement; ordinary desktop IPC remains separate |
 | Network security | Default-deny preflight, strict IPv4/IPv6 prefixes and interface binding, Linux effective/FIB route checks, sticky authorization invalidation, optional dedicated-UID deny-all nftables profile |
+| Agent protocol | KSAP 1.0 bounded HELLO/HEARTBEAT codec and connection-local ordering; no transport or enrollment |
 | Verification | Mandatory compiled regressions, static analysis, sanitizer configurations, strict QML diagnostics, isolated dual-stack kernel firewall and topology fixtures |
 
 The policy engine does not grant operational transport authority. The manager
@@ -40,6 +42,9 @@ nine green hosted checks for the M3.8 implementation (`120840f`).
 | Core-only Release | 26/26 |
 | Core-only ASan/UBSan | 27/27 |
 
+The subsequent documentation refresh reported 78 PASS, 0 FAIL, 0 SKIPPED,
+0 BLOCKED and nine green hosted checks (`35574f2`); no application changes.
+
 34 structural verifiers, official REUSE, strict QML checks, installed systemd,
 and the isolated M3.5–M3.7 live regressions passed. This snapshot is historical
 evidence, not an assertion about any subsequent revision or environment.
@@ -55,7 +60,8 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M1 — C++/Qt foundation, testing and CI | Complete |
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
-| M4–M7 — functional SIEM foundations | Planned |
+| M4 — identity, PKI and secure agent enrollment | M4.1 implementation; qualification pending |
+| M5–M7 — functional SIEM foundations | Planned |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |

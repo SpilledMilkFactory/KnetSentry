@@ -19,6 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CORE_TESTS = {
     "knetsentry_core_build_identity", "knetsentry_structured_diagnostics",
+    "knetsentry_agent_protocol_contract",
     "knetsentry_core_boundary_contract", "knetsentry_configuration_contract",
     "knetsentry_build_hardening", "knetsentry_network_scope_policy",
     "knetsentry_network_prefix_validation", "knetsentry_network_topology_awareness",

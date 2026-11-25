@@ -379,3 +379,12 @@ if(KNETSENTRY_ENABLE_SANITIZERS)
         ENVIRONMENT "LSAN_OPTIONS=suppressions=${PROJECT_SOURCE_DIR}/tests/sanitizers/lsan_qml_third_party.supp:print_suppressions=1"
         TIMEOUT 30)
 endif()
+
+# M4.1: bounded agent wire codec and connection-local ordering (offline only).
+add_executable(knetsentry_agent_protocol_test agent_protocol_m41.cpp)
+target_link_libraries(knetsentry_agent_protocol_test PRIVATE KnetSentry::Core)
+knetsentry_apply_project_options(knetsentry_agent_protocol_test)
+add_test(NAME knetsentry_agent_protocol_contract
+    COMMAND $<TARGET_FILE:knetsentry_agent_protocol_test>)
+set_tests_properties(knetsentry_agent_protocol_contract PROPERTIES
+    LABELS "unit;security;regression" TIMEOUT 15)
