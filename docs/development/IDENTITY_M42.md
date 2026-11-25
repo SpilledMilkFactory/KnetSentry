@@ -99,9 +99,12 @@ It checks an independent SHA-256 fingerprint golden vector, distinct keys,
 reload, no overwrite, private directory/file modes,
 symlink and hardlink rejection, FIFO and directory rejection, staging collision,
 malformed/oversize/trailing key files, unsupported key algorithms, wrong roles
-and pins, root-key reuse, wrong/missing
+and pins, explicit invalid-role rejection for create/load/validate (without
+storage creation), root-key reuse, wrong/missing
 anchor, validity periods, missing/mixed EKU, signature corruption, certificate
-truncation and trailing data. Test fixtures are destroyed on normal/handled
+truncation and trailing data. Signature corruption is performed with checked
+byte access and independently verified to remain parseable but fail signature
+verification. Test fixtures are destroyed on normal/handled
 failure; a hard kill may leave a private temporary directory. No private key
 bytes or certificate contents are printed. No live TLS or revocation coverage
 is claimed. See [current status](../PROJECT_STATUS.md).

@@ -11,7 +11,8 @@
 
 namespace knetsentry::identity {
 
-enum class Role { Agent, Manager };
+// Invalid is a rejected sentinel, never an identity or certificate purpose.
+enum class Role { Agent, Manager, Invalid = 99 };
 enum class Error { None, InvalidInput, UnsafeStorage, Io, AlreadyExists, Crypto, CertificateRejected };
 inline constexpr std::size_t max_key_bytes = 1024;
 inline constexpr std::size_t max_certificate_bytes = 8192;

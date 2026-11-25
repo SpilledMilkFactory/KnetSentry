@@ -153,7 +153,6 @@ void storage_negatives(Fixture& fixture) {
     sink.reset();
     rejected(load_key(fixture.directory, Role::Agent), "wrong key algorithm accepted");
     rejected(load_key(-1, Role::Agent), "invalid descriptor accepted");
-    rejected(create_key(fixture.directory, static_cast<Role>(99)), "invalid role accepted");
 }
 void certificate_tests(EVP_PKEY* agent, EVP_PKEY* manager, const Fingerprint& agent_pin,
     const Fingerprint& manager_pin) {
@@ -177,7 +176,8 @@ void certificate_tests(EVP_PKEY* agent, EVP_PKEY* manager, const Fingerprint& ag
     deny(client, Role::Agent, manager_pin, "wrong identity pin accepted");
     require(validate_certificate(client, der(wrong_root.get()), Role::Agent, agent_pin) != Error::None, "rogue root accepted");
     require(validate_certificate(client, {}, Role::Agent, agent_pin) != Error::None, "missing anchor accepted");
-    require(validate_certificate(client, anchor, static_cast<Role>(99), agent_pin) != Error::None, "bad role accepted");
+    require(validate_certificate(client, anchor, Role::Invalid, agent_pin) == Error::InvalidInput,
+        "invalid certificate role accepted");
     deny(anchor, Role::Agent, *fingerprint(ca.get()), "CA accepted as leaf");
     auto expired = certificate(agent, root.get(), ca.get(), "expired", "clientAuth", -3600, -60);
     auto future = certificate(agent, root.get(), ca.get(), "future", "clientAuth", 3600, 7200);
@@ -190,7 +190,14 @@ void certificate_tests(EVP_PKEY* agent, EVP_PKEY* manager, const Fingerprint& ag
     deny(der(missing.get()), Role::Agent, agent_pin, "missing EKU accepted");
     deny(der(mixed.get()), Role::Agent, agent_pin, "mixed role accepted");
     auto tampered = client;
-    tampered.back() ^= 1U;
+    if (tampered.empty()) { throw std::runtime_error("empty certificate mutation fixture"); }
+    tampered.at(tampered.size() - 1) ^= 1U;
+    // A corrupted signature must remain parseable; a DER parse failure alone
+    // would not demonstrate rejection of an otherwise well-formed certificate.
+    const auto* cursor = tampered.data();
+    Cert corrupted(d2i_X509(nullptr, &cursor, static_cast<long>(tampered.size())), X509_free);
+    require(corrupted && cursor == tampered.data() + tampered.size(), "corrupted fixture DER");
+    require(X509_verify(corrupted.get(), ca.get()) == 0, "fixture signature not invalidated");
     deny(tampered, Role::Agent, agent_pin, "bad signature accepted");
     tampered = client;
     tampered.push_back(0);
@@ -208,6 +215,13 @@ int main() {
         require(OPENSSL_version_major() == 3 && OPENSSL_version_minor() == 5, "unexpected runtime OpenSSL series");
         fingerprint_vector();
         Fixture fixture;
+        const auto invalid_create = create_key(fixture.directory, Role::Invalid);
+        const auto invalid_load = load_key(fixture.directory, Role::Invalid);
+        require(invalid_create.error == Error::InvalidInput && !invalid_create.key,
+            "invalid creation role accepted");
+        require(invalid_load.error == Error::InvalidInput && !invalid_load.key,
+            "invalid loading role accepted");
+        require(std::filesystem::is_empty(fixture.path), "invalid role created storage");
         auto agent = create_key(fixture.directory, Role::Agent);
         auto manager = create_key(fixture.directory, Role::Manager);
         require(agent.error == Error::None && agent.key && manager.error == Error::None && manager.key, "create identities");

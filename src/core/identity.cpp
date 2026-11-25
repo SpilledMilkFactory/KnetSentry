@@ -39,6 +39,7 @@ constexpr Names names(Role role) noexcept {
     switch (role) {
     case Role::Agent: return {"agent.key", "agent.key.pending"};
     case Role::Manager: return {"manager.key", "manager.key.pending"};
+    case Role::Invalid: break;
     }
     return {nullptr, nullptr};
 }
