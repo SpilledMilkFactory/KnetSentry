@@ -50,7 +50,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **40 CTest tests**, including
+The Release desktop suite currently contains **41 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -89,7 +89,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **35 CTests**, including the
+The full sanitizer suite currently contains **36 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -97,7 +97,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **28 CTests**) and `linux-sanitize-core-only` for **29**.
+C++ test (currently **29 CTests**) and `linux-sanitize-core-only` for **30**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -313,7 +313,13 @@ all seven presets; M4.1 desktop inventories were 39/34 and core-only 27/28
 ## M4.2 identity foundation
 
 Install the system OpenSSL 3.5.x development package (`libssl-dev`). All
-seven presets execute `knetsentry_identity_contract`; current desktop counts
-are 40/35 and core-only 28/29 (normal/sanitized). No real keys, deployment,
+seven presets execute `knetsentry_identity_contract`; M4.2 desktop counts
+were 40/35 and core-only 28/29 (normal/sanitized). No real keys, deployment,
 privileges or network access are needed for this regression. See the
 [M4.2 identity contract](IDENTITY_M42.md).
+
+## M4.3 mutual TLS
+
+The existing OpenSSL development package supplies both shared libraries. All
+seven presets run `knetsentry_tls_contract`; desktop counts are 41/36 and
+core-only 29/30 (normal/sanitized). See [transport contract](TLS_TRANSPORT_M43.md).

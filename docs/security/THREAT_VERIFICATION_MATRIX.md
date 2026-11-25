@@ -42,9 +42,12 @@ remain unqualified. No threat is closed.
 
 **M4.2 implementation:** [identity contract](../development/IDENTITY_M42.md)
 adds partial TV-06 evidence for protected key storage, explicit trust roots,
-certificate purpose, validity and pinned public-key identity. Target acceptance,
-proof of possession, issuance, enrollment, rotation and revocation remain
-required. No threat is closed.
+certificate purpose, validity and pinned public-key identity. Target M4.2 acceptance passed. Issuance, enrollment, rotation and revocation
+remain required. No threat is closed.
+
+**M4.3 implementation:** [mutual TLS](../development/TLS_TRANSPORT_M43.md) adds
+partial TV-06 proof-of-possession and invalid-peer handshake evidence;
+operational network binding and enrollment/revocation remain unqualified.
 
 | Test ID | Expected observable security outcome | Planned owner | Proposed evidence |
 | --- | --- | --- | --- |

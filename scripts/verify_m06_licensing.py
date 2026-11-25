@@ -100,8 +100,8 @@ check(len(ids) == len(set(ids)) == 13, 'expected 13 unique dependency candidates
 check(set(ids) == {f'DEP-{i:03}' for i in range(1, 14)}, 'dependency IDs missing')
 check(all(status == 'APPROVED_FOR_BUILD' if dep == 'DEP-005' else
           status in ('CANDIDATE', 'REVIEW_REQUIRED') for dep, status in rows),
-      'unexpected dependency approval outside the M4.2 scoped decision')
-check('IDENTITY_M42.md' in reg and 'Apache-2.0' in reg, 'missing DEP-005 build evidence')
+      'unexpected dependency approval outside the M4.2/M4.3 scoped decision')
+check('IDENTITY_M42.md' in reg and 'TLS_TRANSPORT_M43.md' in reg and 'Apache-2.0' in reg, 'missing DEP-005 build evidence')
 check('Qt Graphs' in reg and 'GPL-only' in reg,
       'missing Qt GPL-only module warning')
 for rel in ('docs/development/DEPENDENCY_APPROVAL_POLICY.md',
