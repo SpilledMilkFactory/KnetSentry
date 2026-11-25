@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M5.1 — Endpoint-agent service architecture
 
-Issue #42 introduces `knetsentry-agent`, a foreground Linux process independent
+At the M5.1 baseline, issue #42 introduces `knetsentry-agent`, a foreground Linux process independent
 of the manager and desktop. It links only the Qt-independent
 `KnetSentry::AgentLifecycle` library. It does not enroll, connect, collect,
 read protected host records, emit telemetry, or persist a spool.
@@ -84,4 +84,6 @@ target host. The corrected process must still expose zero CapEff, CapPrm,
 CapInh and CapAmb, without changing the caller capability sets.
 The two tests are mandatory in all seven presets. No production service sandbox,
 helper privileges, operational networking or telemetry qualification is claimed.
-Target-host and hosted acceptance are pending.
+Target-host and hosted M5.1 acceptance completed on 2026-11-25; see
+[project status](../PROJECT_STATUS.md). M5.2 adds an explicit journal-only mode
+and native library linkage; see the [M5.2 contract](JOURNAL_COLLECTION_M52.md).

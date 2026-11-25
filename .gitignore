@@ -14,3 +14,7 @@ service-audit.jsonl
 endpoints.v1
 endpoints.v1.pending
 endpoints.v1.new
+
+# Private M5.2 journal metadata/checkpoints (never public evidence).
+journal-m52.v1
+journal-m52.pending

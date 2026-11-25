@@ -13,7 +13,7 @@ usage() {
 profile="$1"
 [[ $# -eq 1 || "$2" == '--list' ]] || usage
 
-base=(build-essential cmake ninja-build python3 libssl-dev)
+base=(build-essential cmake ninja-build python3 libssl-dev pkg-config libsystemd-dev)
 desktop=(
     qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools
     extra-cmake-modules libkirigami-dev
@@ -77,8 +77,8 @@ else
 fi
 
 if [[ "$profile" != policy ]]; then
-    dpkg-query -W -f='${Package} ${Version}\n' libssl-dev libssl3t64
-    for executable in cmake ninja g++ python3; do
+    dpkg-query -W -f='${Package} ${Version}\n' libssl-dev libssl3t64 libsystemd-dev libsystemd0
+    for executable in cmake ninja g++ python3 pkg-config; do
         command -v "$executable" >/dev/null || {
             echo "missing required executable: $executable" >&2
             exit 1

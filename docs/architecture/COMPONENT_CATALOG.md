@@ -145,3 +145,9 @@ See [M2.3 security contract](../development/LOCAL_AUTHENTICATED_IPC_M23.md).
 implemented as an independent foreground process with no active collectors.
 C-09/P-09 and I-07/I-09 operational communication remain unimplemented.
 Production service confinement is not yet qualified.
+
+## M5.2 local journal metadata
+
+C-08/P-08 gains an opt-in, unit-filtered local journal metadata collector with
+a protected bounded development checkpoint. C-09/P-09 and I-07/I-09 remain
+undeployed. See [M5.2 journal collection](../development/JOURNAL_COLLECTION_M52.md).

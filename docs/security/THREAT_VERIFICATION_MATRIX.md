@@ -144,3 +144,14 @@ adds mandatory controlled TLS, enrollment and KSAP failure tests for TV-06
 and TV-07, with health invalidation supporting partial TV-13 evidence.
 Target-host qualification is pending; operational adapters and full threat
 closure remain outside this scope.
+
+## M5.2 local journal metadata and checkpoint evidence
+
+The [M5.2 journal contract](../development/JOURNAL_COLLECTION_M52.md) introduces
+partial bounded-input, provenance, privacy and recovery evidence for the
+future TB-06/TB-07 ingestion/storage boundaries. It exercises native selected
+journal records, message exclusion, checkpoint recovery and a fixed capacity;
+this supports TV-13, TV-25 and TV-26 (including TH-033 and TH-034), not full
+coverage, disk-fault or production-storage qualification. DEP-008 introduces
+an additional TB-10/TV-24 dependency review responsibility. No operational
+TB-04 transport or authorization is introduced. Target-host acceptance is pending.

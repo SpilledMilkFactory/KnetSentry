@@ -66,12 +66,26 @@ def main():
         require(result.returncode == 2 and not result.stdout and
                 result.stderr == b'knetsentry-agent: configuration rejected\n',
                 'unsafe configuration accepted or reflected')
+    for invalid in (['--run', '--schema-version', '1', '--collectors', 'journal'],
+                    ['--run', '--schema-version', '1', '--collectors', 'journal', '--unit', '*.service', '--state-dir', '/tmp/private'],
+                    ['--run', '--schema-version', '1', '--collectors', 'journal', '--unit', 'fixture.service', '--state-dir', '/tmp/../private']):
+        result = subprocess.run([binary, *invalid], capture_output=True, timeout=5)
+        require(result.returncode == 2 and not result.stdout and
+                result.stderr == b'knetsentry-agent: configuration rejected\n',
+                'unsafe journal configuration accepted or reflected')
     require(os.getuid() != 0 and os.getgid() != 0, 'positive qualification requires ordinary user')
     caller = process_status(os.getpid())
     # Only capability masks are logged, never the host inventory or credentials.
     print('M5.1 caller capability masks: ' + ' '.join(
         f'{field}={int(caller[field], 16):016x}' for field in ('CapInh', 'CapPrm', 'CapEff', 'CapAmb')), flush=True)
     with tempfile.TemporaryDirectory(prefix='ks-agent-') as directory:
+        # Reject a missing directory before opening any journal.
+        result = subprocess.run([binary, '--run', '--schema-version', '1', '--collectors', 'journal',
+                                 '--unit', 'fixture.service', '--state-dir', directory + '/missing'],
+                                capture_output=True, timeout=5)
+        require(result.returncode == 1 and not result.stdout and
+                result.stderr == b'knetsentry-agent: journal rejected: unsafe or busy state directory\n',
+                'journal mode did not fail closed before source access')
         for sig in (signal.SIGTERM, signal.SIGINT):
             with subprocess.Popen([binary, *args], cwd=directory, stdin=subprocess.DEVNULL,
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0) as proc:

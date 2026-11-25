@@ -9,7 +9,8 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 KDE Frameworks 6/Kirigami, CMake and Ninja. A GNOME session is supported;
 KDE Plasma is **not** required. This is a developer build of a **non-operational
 SIEM shell** with a lifecycle-only manager and read-only scope inspection; no
-operational capture, agent transport or event processing exists.
+operational capture, agent transport or manager-side event processing exists.
+M5.2 adds explicitly selected local journal metadata in a bounded development store.
 
 ## 1. Prepare a clean developer workstation
 
@@ -19,7 +20,7 @@ Qt Test, and analysis dependencies (no vendored runtime or containers):
 ```bash
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
-  build-essential cmake ninja-build python3 libssl-dev \
+  build-essential cmake ninja-build python3 libssl-dev pkg-config libsystemd-dev \
   qt6-base-dev qt6-declarative-dev qt6-declarative-dev-tools \
   extra-cmake-modules libkirigami-dev \
   qml6-module-org-kde-kirigami qml6-module-qtquick \
@@ -50,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **50 CTest tests**, including
+The Release desktop suite currently contains **51 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -89,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **45 CTests**, including the
+The full sanitizer suite currently contains **46 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -97,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **38 CTests**) and `linux-sanitize-core-only` for **39**.
+C++ test (currently **39 CTests**) and `linux-sanitize-core-only` for **40**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -360,3 +361,10 @@ See the [M4.8 regression contract](AUTHENTICATION_TRANSPORT_REGRESSIONS_M48.md).
 The independent agent and its two mandatory lifecycle/process tests are built
 in all seven presets (50/45 desktop and 38/39 core-only, normal/sanitized).
 See [M5.1 agent startup and privilege policy](ENDPOINT_AGENT_SERVICE_M51.md).
+
+## M5.2 systemd journal collection
+
+Install `libsystemd-dev` and `pkg-config` from the distro. Keep journal collection
+explicitly opt-in and run as an ordinary user; never elevate to read additional
+logs. See [M5.2 journal collection](JOURNAL_COLLECTION_M52.md) for the private
+state directory, bounded cursor and separate live-source qualification.
