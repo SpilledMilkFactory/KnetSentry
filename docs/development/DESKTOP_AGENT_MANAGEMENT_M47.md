@@ -106,3 +106,7 @@ certificate status and live agent health publication, and an independently
 authorized GUI administrative workflow are not implemented. Do not mark the
 entire issue accepted until its intended scope is explicitly resolved and those
 remaining capabilities are implemented or scheduled as separate approved work.
+
+The maintainer qualified and merged the read-only foundation and descriptor
+follow-up (94 PASS, no failures, skips or blocks; nine hosted checks and manual
+GUI verification). The remaining issue #40 scope above is still outstanding.

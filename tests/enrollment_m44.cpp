@@ -566,6 +566,160 @@ void heartbeat(Fixture& fixture) {
         retry.phase(now) == P::Blocked && !retry.begin(now + 100000), "stable reset or clock regression");
     std::cout << "M4.6 bounded reconnect, stale attempt rejection and clock regression: PASS\n";
 }
+// Exercise the composed trust boundary using real TLS records and disposable PKI.
+void authentication_transport(Fixture& fixture) {
+    namespace health = knetsentry::agent_health;
+    namespace wire = knetsentry::core::agent_protocol;
+    using H = health::Health;
+    Store store;
+    enroll::EndpointId id{}; id.at(0) = 1;
+    auto unknown = id; unknown.at(0) = 2;
+    require(enroll::initialize(store.fd) == E::Ok &&
+        enroll::approve(store.fd, id, fixture.agent_pin) == E::Ok, "M4.8 registry setup");
+    health::Tracker tracker(store.fd, id);
+    std::unique_ptr<Session> a;
+    health::Millis now = 1;
+    const auto hello = wire::encode({wire::Kind::Hello, 1, 0, 0});
+    const auto beat = wire::encode({wire::Kind::Heartbeat, 2, 100, 0});
+    const auto next = wire::encode({wire::Kind::Heartbeat, 3, 200, 0});
+    require(hello.error == wire::Error::None && beat.error == wire::Error::None &&
+        next.error == wire::Error::None, "M4.8 fixture encoding");
+    auto start = [&] {
+        tracker.disconnected();
+        ++now;
+        a = Session::create(fixture.a());
+        auto m = Session::create(fixture.m());
+        require(a && m && connect(*a, *m) && tracker.attach(std::move(m), now), "M4.8 fresh admission");
+        const auto snap = tracker.poll(now);
+        require(snap.health == H::Awaiting && !snap.counters, "M4.8 new session inherited counters");
+    };
+    auto capture = [&](std::span<const std::byte> bytes) {
+        const auto sent = a->write({reinterpret_cast<const unsigned char*>(bytes.data()), bytes.size()});
+        require(sent.status == Status::Ok && sent.bytes == bytes.size(), "M4.8 fixture write");
+        std::array<unsigned char, max_ciphertext_chunk> record{};
+        const auto out = a->drain(record);
+        require(out.status == Status::Ok && out.bytes > bytes.size() && out.bytes <= record.size(), "M4.8 record capture");
+        std::array<unsigned char, max_ciphertext_chunk> extra{};
+        require(a->drain(extra).status == Status::WouldBlock, "M4.8 unexpected additional record");
+        const auto captured = std::span(record).first(out.bytes);
+        return std::vector<unsigned char>(captured.begin(), captured.end());
+    };
+    auto deliver = [&](std::span<const unsigned char> record) {
+        const auto in = tracker.ingest(record, now);
+        require(in.status == Status::Ok && in.bytes == record.size(), "M4.8 ciphertext delivery");
+    };
+    auto send = [&](const wire::Encoded& frame) { deliver(capture(std::span(frame.bytes).first(frame.size))); };
+    auto healthy = [&] {
+        send(hello);
+        require(tracker.poll(now).health == H::Awaiting, "M4.8 hello is not health");
+        auto record = capture(std::span(beat.bytes).first(beat.size));
+        deliver(record);
+        const auto snap = tracker.poll(now);
+        require(snap.health == H::Healthy && snap.counters && snap.counters->uptime_ms == 100 &&
+            snap.counters->dropped_records == 0, "M4.8 positive health control");
+        return record;
+    };
+    auto rejected = [&](H expected) {
+        const auto snap = tracker.poll(now);
+        require(snap.health == expected && !snap.counters, "M4.8 rejection or stale counters");
+        const auto late = capture(std::span(next.bytes).first(next.size));
+        const auto in = tracker.ingest(late, now);
+        require(in.status == Status::Failed && in.bytes == 0, "M4.8 terminal session accepted late data");
+        const auto after = tracker.poll(now);
+        require(after.health == expected && !after.counters, "M4.8 late data resurrected health");
+    };
+    {
+        auto agent = Session::create(fixture.a()); auto manager = Session::create(fixture.m());
+        health::Tracker denied(store.fd, unknown);
+        require(agent && manager && connect(*agent, *manager), "M4.8 unknown identity TLS control");
+        require(!denied.attach(std::move(manager), now) && denied.poll(now).health == H::Untrusted &&
+            !denied.poll(now).counters && enroll::lookup(store.fd, unknown).status == E::Unknown,
+            "M4.8 unknown endpoint admitted or enrolled");
+        auto wrong = fixture.m(); wrong.peer_pin = fixture.other_pin;
+        agent = Session::create(fixture.a()); manager = Session::create(wrong);
+        require(agent && manager && !connect(*agent, *manager) && manager->state() == State::Failed &&
+            !manager->authenticated_agent(), "M4.8 incorrect pin accepted");
+    }
+    std::cout << "M4.8 unauthorized identity and enrollment separation: PASS\n";
+    start();
+    const auto old = healthy();
+    deliver(old);
+    rejected(H::Untrusted);
+    start();
+    (void)healthy();
+    deliver(old);
+    rejected(H::Untrusted);
+    start();
+    (void)healthy();
+    send(beat);
+    rejected(H::ProtocolError);
+    start();
+    (void)healthy();
+    const auto gap = wire::encode({wire::Kind::Heartbeat, 4, 200, 0});
+    send(gap);
+    rejected(H::ProtocolError);
+    std::cout << "M4.8 same-session and cross-session ciphertext replay, duplicate and skipped sequence: PASS\n";
+    for (const std::size_t offset : {0U, 4U, 6U, 7U, 8U, 19U}) {
+        start();
+        (void)healthy();
+        auto malformed = next;
+        malformed.bytes.at(offset) = offset == 19 ? std::byte{0} : std::byte{0xff};
+        send(malformed);
+        rejected(H::ProtocolError);
+    }
+    std::cout << "M4.8 authenticated malformed KSAP corpus and terminal rejection: PASS\n";
+    start();
+    (void)healthy();
+    const auto partial = capture(std::span(next.bytes).first(next.size));
+    deliver(std::span(partial).first(partial.size() - 1));
+    const auto pending = tracker.poll(now);
+    require(pending.health == H::Healthy && pending.counters && pending.counters->uptime_ms == 100,
+        "M4.8 incomplete TLS record changed health");
+    tracker.disconnected();
+    rejected(H::Missing);
+    start();
+    (void)healthy();
+    send(wire::Encoded{wire::Error::None, next.bytes, wire::header_size + 1});
+    const auto partial_frame = tracker.poll(now);
+    require(partial_frame.health == H::Healthy && partial_frame.counters && partial_frame.counters->uptime_ms == 100,
+        "M4.8 incomplete KSAP frame changed health");
+    tracker.disconnected();
+    rejected(H::Missing);
+    start();
+    (void)healthy();
+    const auto queued = capture(std::span(next.bytes).first(next.size));
+    deliver(queued);
+    require(enroll::revoke(store.fd, id, fixture.agent_pin) == E::Ok, "M4.8 revoke");
+    rejected(H::Untrusted);
+    auto m = Session::create(fixture.m()); a = Session::create(fixture.a());
+    require(a && m && connect(*a, *m) && !tracker.attach(std::move(m), ++now) &&
+        tracker.poll(now).health == H::Untrusted && !tracker.poll(now).counters,
+        "M4.8 revoked identity reattached despite valid TLS");
+    std::cout << "M4.8 interrupted TLS and KSAP, fresh recovery, buffered revocation and denied reconnect: PASS\n";
+    for (const auto& times : {std::array<long, 2>{-3600, -60}, std::array<long, 2>{3600, 7200}}) {
+        const auto invalid = certificate(fixture.agent.get(), fixture.root.get(), fixture.ca.get(),
+            "invalid time", "clientAuth", times[0], times[1]);
+        const auto bytes = der(invalid.get());
+        auto creds = fixture.a(); creds.certificate = bytes;
+        require(!Session::create(creds), "M4.8 invalid validity interval accepted");
+    }
+    auto truncated = fixture.client_der; truncated.pop_back();
+    auto creds = fixture.a(); creds.certificate = truncated;
+    require(!Session::create(creds), "M4.8 truncated DER accepted");
+    a = Session::create(fixture.a()); m = Session::create(fixture.m());
+    require(a && m && a->handshake() == Status::WouldBlock, "M4.8 interrupted handshake control");
+    pump(*a, *m);
+    m->abort();
+    std::array<unsigned char, max_plaintext> output{}; output.fill(0x55);
+    const auto read = m->read(output);
+    require(m->state() == State::Failed && !m->authenticated_agent() && m->handshake() == Status::Failed &&
+        read.status == Status::Failed && read.bytes == 0 &&
+        std::all_of(output.begin(), output.end(), [](unsigned char value) { return value == 0x55; }) &&
+        m->write(std::span(output).first(1)).status == Status::Failed &&
+        m->ingest(std::span(output).first(1)).status == Status::Failed &&
+        m->drain(output).status == Status::Failed, "M4.8 interrupted handshake not terminal");
+    std::cout << "M4.8 invalid certificate validity/DER and interrupted handshake: PASS\n";
+}
 } // namespace
 int main(int argc, char** argv) {
     try {
@@ -574,6 +728,8 @@ int main(int argc, char** argv) {
             lifecycle(fixture); manager_lifecycle(fixture); expiry(fixture);
         } else if (argc == 2 && std::string_view(argv[1]) == "--heartbeat") {
             heartbeat(fixture);
+        } else if (argc == 2 && std::string_view(argv[1]) == "--authentication-transport") {
+            authentication_transport(fixture);
         } else if (argc == 1) {
             storage(fixture); malformed_registry(fixture); capacity(); admission(fixture);
         } else { return 2; }

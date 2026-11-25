@@ -432,3 +432,7 @@ add_test(NAME knetsentry_agent_roster_runtime COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/agent_roster_m47.py" $<TARGET_FILE:knetsentryd>
     $<TARGET_FILE:knetsentry-enrollment> $<TARGET_FILE:knetsentry_agent_roster_test>)
 set_tests_properties(knetsentry_agent_roster_runtime PROPERTIES LABELS "integration;security;regression;privacy;ipc" TIMEOUT 45)
+
+# M4.8 composed authentication and transport regression.
+add_test(NAME knetsentry_authentication_transport_regression COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --authentication-transport)
+set_tests_properties(knetsentry_authentication_transport_regression PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)

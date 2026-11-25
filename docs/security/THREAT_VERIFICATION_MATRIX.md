@@ -136,3 +136,11 @@ provides individual `MON-*`, `CTL-*`, `INT-*` and `OPS-*` cases. Threat tests
 adds read-only authorization, bounded roster validation, and explicit
 unavailable-state evidence at TB-05 / I-01 / I-23, supporting TV-01, TV-06
 and TV-13 without claiming operational agent or administrative GUI qualification.
+
+## M4.8 composed authentication and transport evidence
+
+The [M4.8 regression contract](../development/AUTHENTICATION_TRANSPORT_REGRESSIONS_M48.md)
+adds mandatory controlled TLS, enrollment and KSAP failure tests for TV-06
+and TV-07, with health invalidation supporting partial TV-13 evidence.
+Target-host qualification is pending; operational adapters and full threat
+closure remain outside this scope.
