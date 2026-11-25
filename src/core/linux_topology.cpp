@@ -188,7 +188,8 @@ private:
 
 namespace topology_detail {
 Inspection query_route(const Address& destination, std::uint32_t index,
-                 std::uint16_t port, bool fib_match) noexcept {
+                 std::uint16_t port, bool fib_match, RouteReplyShape* shape) noexcept {
+    if (shape != nullptr) { *shape = {}; }
     if (!valid_shape(destination) || index == 0 || port == 0) {
         return Inspection::Unavailable;
     }
@@ -212,6 +213,26 @@ Inspection query_route(const Address& destination, std::uint32_t index,
         return Inspection::Unavailable;
     }
     return query.exchange(RTM_NEWROUTE, [&](Bytes payload) {
+        if (shape != nullptr) {
+            rtmsg header{};
+            shape->attributes_valid = attributes(payload, header, [&](unsigned type, Bytes value) {
+                if (shape->count == shape->attributes.size()) { return false; }
+                shape->attributes[shape->count++] = {type, value.size()};
+                if (type == RTA_SRC) {
+                    shape->zero_source = value.size() == 16 && std::all_of(value.begin(), value.end(),
+                        [](std::byte byte) { return byte == std::byte{}; });
+                }
+                return true;
+            });
+            shape->received = true;
+            shape->family = header.rtm_family;
+            shape->source_bits = header.rtm_src_len;
+            shape->destination_bits = header.rtm_dst_len;
+            shape->table = header.rtm_table;
+            shape->type = header.rtm_type;
+            shape->scope = header.rtm_scope;
+            shape->flags = header.rtm_flags;
+        }
         return topology_detail::direct_route(payload, destination, index, fib_match);
     });
 }
@@ -258,6 +279,7 @@ bool direct_route(Bytes payload, const Address& destination, std::uint32_t index
     bool have_table = false;
     bool have_output = false;
     bool have_destination = false;
+    bool have_unspecified_source = false;
     Bytes prefix;
     const bool parsed = attributes(payload, route, [&](unsigned type, Bytes value) {
         switch (type) {
@@ -265,6 +287,18 @@ bool direct_route(Bytes payload, const Address& destination, std::uint32_t index
             if (have_destination) { return false; }
             have_destination = true;
             prefix = value;
+            return true;
+        case RTA_SRC:
+            // CONFIG_IPV6_SUBTREES can echo ::/128 in effective getroute
+            // replies even though our query did not specify a source. This
+            // is not a source-specific FIB approval. Never accept nonzero,
+            // duplicate, flagged, IPv4 or FIB source attributes.
+            if (fib_match || destination.family != AF_INET6 || have_unspecified_source ||
+                value.size() != 16 || !std::all_of(value.begin(), value.end(),
+                    [](std::byte byte) { return byte == std::byte{}; })) {
+                return false;
+            }
+            have_unspecified_source = true;
             return true;
         case RTA_OIF:
             if (have_output) { return false; }
@@ -292,7 +326,8 @@ bool direct_route(Bytes payload, const Address& destination, std::uint32_t index
     });
     const unsigned bits = route.rtm_dst_len;
     if (!parsed || route.rtm_family != destination.family || route.rtm_type != RTN_UNICAST ||
-        route.rtm_src_len != 0 || route.rtm_tos != 0 || !have_output || output != index ||
+        route.rtm_src_len != (have_unspecified_source ? 128 : 0) || route.rtm_tos != 0 ||
+        !have_output || output != index ||
         index == 0 || !have_destination ||
         (have_table ? table : route.rtm_table) != RT_TABLE_MAIN ||
         (have_table && route.rtm_table != RT_TABLE_UNSPEC && route.rtm_table != table) ||

@@ -19,6 +19,30 @@ int failures = 0;
 void check(bool ok, std::string_view label) {
     if (!ok) { std::cerr << "M3.6 FAIL: " << label << '\n'; ++failures; }
 }
+void check_route(const detail::Address& address, std::uint32_t index, bool fib_match,
+                 std::string_view literal) {
+    detail::RouteReplyShape shape{};
+    const auto result = detail::query_route(address, index, port, fib_match, &shape);
+    if (result != detail::Inspection::Accepted) {
+        std::cerr << "M3.6 route diagnostic: endpoint=" << literal
+                  << " lookup=" << (fib_match ? "FIB" : "effective")
+                  << " inspection=" << (result == detail::Inspection::Rejected ? "rejected" : "unavailable")
+                  << " reply=" << shape.received << " attributes_valid=" << shape.attributes_valid
+                  << " family=" << shape.family << " src_bits=" << shape.source_bits
+                  << " dst_bits=" << shape.destination_bits << " table=" << shape.table
+                  << " type=" << shape.type << " scope=" << shape.scope << " flags=" << shape.flags
+                  << " zero_source=" << shape.zero_source << " attributes(type:length)=";
+        for (std::size_t i = 0; i < shape.count; ++i) {
+            std::cerr << ' ' << shape.attributes[i].type << ':' << shape.attributes[i].size;
+        }
+        std::cerr << '\n';
+    } else {
+        std::cout << "M3.6 route PASS: endpoint=" << literal
+                  << " lookup=" << (fib_match ? "FIB" : "effective")
+                  << " src_bits=" << shape.source_bits << " zero_source=" << shape.zero_source << '\n';
+    }
+    check(result == detail::Inspection::Accepted, fib_match ? "actual FIB route" : "actual effective route");
+}
 void exercise(std::uint32_t index, bool live) {
     const std::array approvals{EndpointApproval{"agent", "manager", "192.0.2.2", index, port},
         EndpointApproval{"agent", "manager", "2001:db8:36::2", index, port}};
@@ -52,10 +76,8 @@ void exercise(std::uint32_t index, bool live) {
         if (live) {
             detail::Address address{};
             check(detail::parse_address(approved.destination, address), "fixture address");
-            check(detail::query_route(address, index, port, false) == detail::Inspection::Accepted,
-                  "actual effective route");
-            check(detail::query_route(address, index, port, true) == detail::Inspection::Accepted,
-                  "actual FIB route");
+            check_route(address, index, false, approved.destination);
+            check_route(address, index, true, approved.destination);
             detail::Address outside{};
             check(detail::parse_address(approved.destination == "192.0.2.2" ? "198.51.100.2" :
                   "2001:db8:37::2", outside), "out-of-segment fixture address");

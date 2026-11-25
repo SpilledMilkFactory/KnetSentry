@@ -48,6 +48,15 @@ an actual synthetic link-down notification. The existing C++ production gate
 must deny even where the test-only firewall permits packet delivery. The fixture
 never treats synthetic TCP echo as authenticated agent transport.
 
+The M3.6 corrective revision recognizes the effective IPv6 unspecified-source
+reply shape described in `NETWORK_TOPOLOGY_M33.md`, with positive and negative
+binary fixtures in the mandatory M3.3 CTest case. Each live effective/FIB lookup
+now identifies its fixed synthetic endpoint and source-prefix shape. A rejection
+reports the bounded reply header and attribute type/length inventory (not raw
+payloads); an unavailable reply is distinguished from parser rejection. Neither
+classification is accepted as live success. The test still requires actual
+packet delivery, distinct-UID filtering, counters, rollback and invalidation.
+
 ## Run on the target workstation
 
 Prerequisites: Ubuntu 26.04, Python 3.13+ with `os.unshare`, iproute2, nftables,

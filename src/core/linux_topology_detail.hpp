@@ -22,9 +22,20 @@ struct Address final {
     std::uint32_t index, bool fib_match) noexcept;
 [[nodiscard]] bool approved_link(Bytes payload, std::uint32_t index,
     std::string_view name) noexcept;
+// Optional bounded reply-shape diagnostics for synthetic live tests only.
+// No addresses, attribute payloads or interface names are retained.
+struct RouteAttributeShape final { unsigned type{}; std::size_t size{}; };
+struct RouteReplyShape final {
+    bool received{};
+    bool attributes_valid{};
+    bool zero_source{};
+    unsigned family{}, source_bits{}, destination_bits{}, table{}, type{}, scope{}, flags{};
+    std::array<RouteAttributeShape, 32> attributes{};
+    std::size_t count{};
+};
 // Read-only kernel exchanges; kept internal rather than returning reusable evidence.
 [[nodiscard]] Inspection query_route(const Address& destination, std::uint32_t index,
-    std::uint16_t port, bool fib_match) noexcept;
+    std::uint16_t port, bool fib_match, RouteReplyShape* shape = nullptr) noexcept;
 [[nodiscard]] Inspection query_link(std::uint32_t index, std::string_view name) noexcept;
 [[nodiscard]] bool watcher_quiet(int descriptor) noexcept;
 } // namespace knetsentry::core::topology_detail
