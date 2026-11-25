@@ -95,4 +95,32 @@ QString ServiceHealthModel::errors() const {
     return tr("Rejected requests: %1\nTransport errors: %2\nSampling errors: %3")
         .arg(decimal(snapshot.rejected), decimal(snapshot.transport_errors), decimal(snapshot.sampling_errors));
 }
+// The KSIPC/1 HEALTH contract belongs to the lifecycle-only manager. It
+// reports configuration validation and IPC readiness, not a policy inventory.
+// Never infer approvals from local interfaces, a healthy daemon, or counters.
+QString ServiceHealthModel::scopeState() const {
+    if (!available()) { return tr("Unavailable — no current verified daemon health"); }
+    return tr("Lifecycle only — network authorization not activated.\n"
+              "Configuration: %1. Policy revision and firewall state are not reported.")
+        .arg(client_.snapshot()->explicit_config ? tr("Validated v1 file") : tr("Safe defaults"));
+}
+QString ServiceHealthModel::scopeNetworks() const {
+    return available()
+        ? tr("No operational approvals loaded by the lifecycle-only manager. No network inventory is published.")
+        : tr("Unavailable — approved network inventory not reported.");
+}
+QString ServiceHealthModel::scopeInterfaces() const {
+    return available()
+        ? tr("No operational interface bindings loaded. Local adapters are not automatically approved.")
+        : tr("Unavailable — approved interface inventory not reported.");
+}
+QString ServiceHealthModel::scopeDenials() const {
+    if (!available()) {
+        return tr("Network connection denials: unavailable (not collected).\n"
+                  "Local IPC rejected requests: unavailable.");
+    }
+    return tr("Network connection denials: unavailable (not collected).\n"
+              "Local IPC rejected requests: %1 (not network denials or incidents).")
+        .arg(decimal(client_.snapshot()->rejected));
+}
 } // namespace knetsentry::desktop

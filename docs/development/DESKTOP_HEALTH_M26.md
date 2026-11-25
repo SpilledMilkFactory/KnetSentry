@@ -108,3 +108,9 @@ See [M2.9 toolbar contract](DESKTOP_DAEMON_TOOLBAR_M29.md). The existing explici
 IPC endpoint remains read-only; desktop-owned foreground lifecycle is separate.
 The new desktop CTests are `knetsentry_qt_daemon_control` (including sanitizer)
 and `knetsentry_gui_daemon_toolbar` (non-sanitized). Core-only counts are unchanged.
+
+M3.8 extends this same health model and real GUI runtime regression for
+read-only Settings scope inspection; see [desktop scope contract](DESKTOP_NETWORK_SCOPE_M38.md).
+The test now includes a fixed rejected IPC operation and a restart with a
+validated v1 configuration. The wire format and ordinary refresh cadence
+are unchanged.

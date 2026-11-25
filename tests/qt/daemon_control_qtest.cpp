@@ -121,6 +121,10 @@ private Q_SLOTS:
             control.startManager(); // No duplicate child during startup.
             QTRY_VERIFY_WITH_TIMEOUT(control.tone() == 2, 6000);
             QVERIFY(health.available());
+            QVERIFY(health.scopeState().startsWith(QStringLiteral("Lifecycle only")));
+            QVERIFY(health.scopeNetworks().startsWith(QStringLiteral("No operational approvals")));
+            QVERIFY(health.scopeInterfaces().startsWith(QStringLiteral("No operational interface bindings")));
+            QVERIFY(health.scopeDenials().contains(QStringLiteral("Local IPC rejected requests: 0")));
             QVERIFY(control.pulse());
             QVERIFY(control.canStop());
             QVERIFY(!control.canStart());
@@ -129,6 +133,10 @@ private Q_SLOTS:
             control.stopManager();
             control.stopManager();
             QVERIFY(!health.available());
+            QCOMPARE(health.scopeState(), QStringLiteral("Unavailable — no current verified daemon health"));
+            QCOMPARE(health.scopeNetworks(), QStringLiteral("Unavailable — approved network inventory not reported."));
+            QCOMPARE(health.scopeInterfaces(), QStringLiteral("Unavailable — approved interface inventory not reported."));
+            QVERIFY(health.scopeDenials().endsWith(QStringLiteral("unavailable.")));
             QTRY_VERIFY_WITH_TIMEOUT(control.canStart(), 6000);
             QCOMPARE(control.tone(), 0);
             QCOMPARE(control.status(), QStringLiteral("Desktop-owned daemon stopped"));

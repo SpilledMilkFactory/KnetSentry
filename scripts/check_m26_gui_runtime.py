@@ -12,8 +12,9 @@ import subprocess
 import tempfile
 import time
 
-from check_m25_audit_runtime import DROP, UID, GID, private, ready, start, require
-from check_m23_ipc_runtime import unprivileged
+from check_m25_audit_runtime import DROP, UID, GID, owner_file, private, ready, start, require
+from check_m22_config_runtime import VALID
+from check_m23_ipc_runtime import frame, query, unprivileged
 
 
 def wait_marker(proc: subprocess.Popen, marker: bytes, data: bytes) -> bytes:
@@ -59,6 +60,8 @@ def main() -> None:
         gui = None
         try:
             ready(manager)
+            require(query(ipc / 'manager.sock', frame(b'KSIPC/1 ADMIN 0123456789abcdef\n'), DROP) == b'',
+                    'synthetic administrative request was not denied')
             gui = subprocess.Popen([str(args.desktop.resolve()), '--ipc-dir', str(ipc),
                                     '--self-test-health'], stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, env=env,
@@ -67,9 +70,13 @@ def main() -> None:
             stop(manager)
             require(manager.returncode == 0, 'manager shutdown failure')
             output = wait_marker(gui, b'M2.6 GUI disconnected', output)
-            manager = start(args.manager.resolve(), ['--ipc-dir', str(ipc)])
+            config = base / 'manager.conf'
+            owner_file(config, VALID)
+            manager = start(args.manager.resolve(), ['--ipc-dir', str(ipc), '--config', str(config)])
             ready(manager)
-            wait_marker(gui, b'M2.6 GUI reconnected: PASS', output)
+            output = wait_marker(gui, b'M2.6 GUI reconnected: PASS', output)
+            require(b'M3.8 scope connected, denied IPC, disconnected and reconnected: PASS' in output,
+                    'missing real Settings scope transition evidence')
             _, errors = gui.communicate(timeout=5)
             require(gui.returncode == 0, 'GUI health verification failed')
             require(b'ReferenceError' not in errors and b'TypeError' not in errors,
@@ -79,6 +86,7 @@ def main() -> None:
                 stop(gui)
             stop(manager)
     print('M2.6 actual GUI health, disconnection and reconnection: PASS')
+    print('M3.8 actual Settings scope and local IPC counter separation: PASS')
 
 
 if __name__ == '__main__':

@@ -36,12 +36,44 @@ void set_application_metadata() {
 
 void configure_parser(QCommandLineParser &parser) {
     parser.setApplicationDescription(QStringLiteral(
-        "KnetSentry M2.9 local manager health and desktop-owned lifecycle; no SIEM monitoring is active."));
+        "KnetSentry M3.8 read-only network scope inspection and local manager health; no SIEM monitoring is active."));
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addOption(QCommandLineOption(QStringLiteral("ipc-dir"),
         QStringLiteral("Explicit private manager IPC directory for read-only health."),
         QStringLiteral("absolute-directory")));
+}
+
+// Exercise the actual rendered Settings cards, not a detached model alone.
+// Expected values are independent of the model getters to detect misleading
+// zero counts or stale connected state after a failed health exchange.
+bool scope_page_matches(const QObject& root, bool connected, bool rejected = false,
+                        bool validated = false) {
+    if (root.property("activeSection").toString() != QStringLiteral("settings") ||
+        !root.property("currentPageScopeVisible").toBool()) { return false; }
+    const auto state = root.property("currentPageScopeState").toString();
+    const auto networks = root.property("currentPageScopeNetworks").toString();
+    const auto interfaces = root.property("currentPageScopeInterfaces").toString();
+    const auto denials = root.property("currentPageScopeDenials").toString();
+    if (!connected) {
+        return state == QStringLiteral("Unavailable — no current verified daemon health") &&
+            networks == QStringLiteral("Unavailable — approved network inventory not reported.") &&
+            interfaces == QStringLiteral("Unavailable — approved interface inventory not reported.") &&
+            denials == QStringLiteral("Network connection denials: unavailable (not collected).\n"
+                                      "Local IPC rejected requests: unavailable.");
+    }
+    return state == (validated
+        ? QStringLiteral("Lifecycle only — network authorization not activated.\n"
+                         "Configuration: Validated v1 file. Policy revision and firewall state are not reported.")
+        : QStringLiteral("Lifecycle only — network authorization not activated.\n"
+                         "Configuration: Safe defaults. Policy revision and firewall state are not reported.")) &&
+        networks == QStringLiteral("No operational approvals loaded by the lifecycle-only manager. No network inventory is published.") &&
+        interfaces == QStringLiteral("No operational interface bindings loaded. Local adapters are not automatically approved.") &&
+        denials == (rejected
+            ? QStringLiteral("Network connection denials: unavailable (not collected).\n"
+                             "Local IPC rejected requests: 1 (not network denials or incidents).")
+            : QStringLiteral("Network connection denials: unavailable (not collected).\n"
+                             "Local IPC rejected requests: 0 (not network denials or incidents)."));
 }
 
 bool requests_text_only(int argc, char *argv[]) {
@@ -182,7 +214,9 @@ int main(int argc, char *argv[]) {
                 const QObject *root = engine.rootObjects().constFirst();
                 if (root->property("activeSection").toString() != section ||
                     root->property("currentPageSection").toString() != section ||
-                    root->property("navigationDepth").toInt() != 1) {
+                    root->property("navigationDepth").toInt() != 1 ||
+                    root->property("currentPageScopeVisible").toBool() != (section == QStringLiteral("settings")) ||
+                    (section == QStringLiteral("settings") && !scope_page_matches(*root, false))) {
                     std::cerr << "KnetSentry: failed navigation or unbounded page stack.\n";
                     return 1;
                 }
@@ -201,6 +235,7 @@ int main(int argc, char *argv[]) {
             std::cerr << "KnetSentry: invalid destination was not rejected.\n";
             return 1;
         }
+        std::cout << "M3.8 Settings scope visibility and unavailable state: PASS\n";
         std::cout << "KnetSentry M1.4 primary navigation: PASS (7 sections; no telemetry)\n";
         return 0;
     }
@@ -276,18 +311,39 @@ int main(int argc, char *argv[]) {
                 root->property("currentPageHealthComponents").toString() == health.components();
             if (!matches) { loop.exit(1); return; }
             if (stage == 0 && health.available()) {
-                if (!health.resources().contains(QStringLiteral("KiB"))) { loop.exit(1); return; }
-                std::cout << "M2.6 GUI connected\n" << std::flush;
+                if (!health.resources().contains(QStringLiteral("KiB")) ||
+                    !root->setProperty("navigationRequest", QStringLiteral("settings"))) {
+                    loop.exit(1); return;
+                }
                 stage = 1;
-            } else if (stage == 1 && !health.available() &&
+                return; // Let the page replacement settle before inspecting it.
+            } else if (stage == 1 && health.available()) {
+                if (!scope_page_matches(*root, true, true)) { loop.exit(1); return; }
+                std::cout << "M2.6 GUI connected\n" << std::flush;
+                stage = 2;
+            } else if (stage == 2 && !health.available() &&
                        health.status() == QStringLiteral("Disconnected or unavailable")) {
                 if (health.resources() != QStringLiteral("Uptime, CPU time and memory unavailable.") ||
-                    health.errors() != QStringLiteral("Operational error counters unavailable.")) {
+                    health.errors() != QStringLiteral("Operational error counters unavailable.") ||
+                    !scope_page_matches(*root, false)) {
                     loop.exit(1); return;
                 }
                 std::cout << "M2.6 GUI disconnected\n" << std::flush;
-                stage = 2;
-            } else if (stage == 2 && health.available()) {
+                stage = 3;
+            } else if (stage == 3 && health.available()) {
+                if (!scope_page_matches(*root, true, false, true) ||
+                    !root->setProperty("navigationRequest", QStringLiteral("dashboard"))) {
+                    loop.exit(1); return;
+                }
+                stage = 4;
+                return;
+            } else if (stage == 4 && health.available()) {
+                if (root->property("currentPageSection").toString() != QStringLiteral("dashboard") ||
+                    root->property("currentPageScopeVisible").toBool() ||
+                    root->property("currentPageHealthStatus").toString() != health.status()) {
+                    loop.exit(1); return;
+                }
+                std::cout << "M3.8 scope connected, denied IPC, disconnected and reconnected: PASS\n";
                 std::cout << "M2.6 GUI reconnected: PASS\n" << std::flush;
                 loop.exit(0);
                 return;

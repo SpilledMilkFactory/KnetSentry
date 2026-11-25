@@ -23,6 +23,10 @@ class ServiceHealthModel : public QObject {
     Q_PROPERTY(QString resources READ resources NOTIFY changed FINAL)
     Q_PROPERTY(QString errors READ errors NOTIFY changed FINAL)
     Q_PROPERTY(bool available READ available NOTIFY changed FINAL)
+    Q_PROPERTY(QString scopeState READ scopeState NOTIFY changed FINAL)
+    Q_PROPERTY(QString scopeNetworks READ scopeNetworks NOTIFY changed FINAL)
+    Q_PROPERTY(QString scopeInterfaces READ scopeInterfaces NOTIFY changed FINAL)
+    Q_PROPERTY(QString scopeDenials READ scopeDenials NOTIFY changed FINAL)
 public:
     explicit ServiceHealthModel(const QString& directory, QObject* parent = nullptr);
     [[nodiscard]] QString status() const;
@@ -30,6 +34,10 @@ public:
     [[nodiscard]] QString resources() const;
     [[nodiscard]] QString errors() const;
     [[nodiscard]] bool available() const noexcept;
+    [[nodiscard]] QString scopeState() const;
+    [[nodiscard]] QString scopeNetworks() const;
+    [[nodiscard]] QString scopeInterfaces() const;
+    [[nodiscard]] QString scopeDenials() const;
     void start();
     void setDirectory(const QString& directory);
     [[nodiscard]] service::HealthQueryState queryState() const noexcept;
