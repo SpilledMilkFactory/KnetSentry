@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M4.7 read-only foundation accepted; M4.8 qualification pending; Ubuntu 26.04 AMD64.
+**State:** M4.8 accepted; M5.1 qualification pending; issue #40 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
 CTest inventories are 48 Release/Debug/Clazy/analysis, 43 full ASan/UBSan,
 36 core-only and 37 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
@@ -310,3 +310,11 @@ See [desktop enrollment management](DESKTOP_AGENT_MANAGEMENT_M47.md).
 All seven presets require `knetsentry_authentication_transport_regression`
 (48/43 desktop, 36/37 core-only, normal/sanitized). See the
 [M4.8 regression contract](AUTHENTICATION_TRANSPORT_REGRESSIONS_M48.md).
+
+## M5.1 endpoint-agent service
+
+Mandatory `knetsentry_agent_lifecycle_contract` and
+`knetsentry_agent_service_runtime` in all seven configurations. Current
+inventories: 50/45 desktop, 38/39 core-only (normal/sanitized). The agent
+and its test executable receive standard hardening and instrumentation.
+See [M5.1 service contract](ENDPOINT_AGENT_SERVICE_M51.md).

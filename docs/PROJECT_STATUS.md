@@ -5,10 +5,15 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M4.7 — read-only enrollment roster foundation.** Milestone 3
-is complete through issue #33. M4.7's implemented scope is qualified and merged;
-issue #40's remaining operational GUI capabilities remain outstanding. M4.8 adds
-composed authentication and transport regressions; qualification is pending.
+**Accepted baseline: M4.8 — authentication and transport security regressions.**
+Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
+merged; issue #40's remaining operational GUI capabilities remain outstanding.
+M4.8 is qualified and merged. M5.1 introduces an independent lifecycle-only
+endpoint agent; qualification is pending. The initial M5.1 runtime test failed
+in all seven configurations and its verbose repetition (87 PASS, 8 FAIL,
+3 SKIPPED, 0 BLOCKED). The follow-up removes inheritable-only capabilities
+before readiness and provides actionable startup diagnostics; target-host
+requalification is required.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
@@ -23,6 +28,7 @@ This is an unreleased development baseline, not a v1.0.0 security qualification.
 | Cryptographic identity | Offline Ed25519 key generation, protected role-specific storage and explicit X.509 trust/role/pin validation; no issuance or enrollment |
 | TLS transport | TLS 1.3 mutual identity, explicit root and role/pin validation, bounded encrypted byte stream; no operational socket adapter |
 | Endpoint enrollment | Offline registry, TLS-backed admission, explicit rotation/revocation and live validity rechecks; explicit local read-only roster selection; no operational admission or automatic enrollment |
+| Endpoint agent | Independent foreground process, strict v1 startup configuration, bounded static collector lifecycle and non-root capability checks; no active collectors or network |
 | Agent health | Offline TLS-backed KSAP reporting, current enrollment rechecks, bounded health snapshots and reconnect scheduling; no deployed agent |
 | Verification | Mandatory compiled regressions, static analysis, sanitizer configurations, strict QML diagnostics, isolated dual-stack kernel firewall and topology fixtures |
 
@@ -30,7 +36,7 @@ The policy engine does not grant operational transport authority. The manager
 does not publish active network approvals or network denial events. Local IPC
 rejection counters are not network incidents. The production firewall profile
 is not installed automatically; test-only positive permissions are not deployment
-rules. Monitoring is unavailable, and no agent, sensor, event database, detection,
+rules. Monitoring is unavailable, and no operational telemetry agent, sensor, event database, detection,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
@@ -92,6 +98,14 @@ based on `931bd1b` with the follow-up changes) reported 94 PASS, 0 FAIL,
 reported manual GUI verification and merge after nine green hosted checks
 (`8634c76`). This accepts only the implemented read-only foundation.
 
+The M4.8 maintainer acceptance (2026-11-25 UTC, working tree based on
+`8634c76` with M4.8 changes) reported 96 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED,
+desktop 48/43 and core-only 36/37 CTests (normal/sanitized), 43 structural
+verifiers, strict QML, installed systemd and isolated network checks. The
+maintainer reported manual GUI verification and merge after nine green hosted
+checks (`79c7a49`). This is composed library-level authentication evidence,
+not operational socket or release qualification.
+
 The earlier M3.8 run included 34 structural verifiers; official REUSE, strict QML checks, installed systemd,
 and the isolated M3.5–M3.7 live regressions passed. This snapshot is historical
 evidence, not an assertion about any subsequent revision or environment.
@@ -107,8 +121,8 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M1 — C++/Qt foundation, testing and CI | Complete |
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
-| M4 — identity, PKI and secure agent enrollment | M4.7 read-only foundation accepted; issue #40 remaining capabilities open; M4.8 qualification pending |
-| M5–M7 — functional SIEM foundations | Planned |
+| M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
+| M5–M7 — functional SIEM foundations | M5.1 implementation pending qualification |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |

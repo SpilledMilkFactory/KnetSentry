@@ -26,6 +26,10 @@ add_subdirectory(src/core)
 add_subdirectory(src/service)
 add_subdirectory(apps/manager)
 
+# M5.1: independent endpoint-agent lifecycle.
+add_subdirectory(src/agent)
+add_subdirectory(apps/agent)
+
 # Default configuration checks real, system-installed Qt/KDE packages; it
 # never downloads dependencies or silently falls back to a fake GUI.
 if(KNETSENTRY_BUILD_DESKTOP)

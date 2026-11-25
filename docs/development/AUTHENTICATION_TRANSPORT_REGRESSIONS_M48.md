@@ -49,4 +49,7 @@ closure. Ciphertext replay and connection-local sequence replay are different
 properties. A future authorized agent may send equivalent new data on a fresh
 session; cross-session semantic deduplication belongs to future ingestion.
 Explicit disconnect simulates adapter notification, not live socket qualification.
-Target-host and hosted CI acceptance of this revision remain pending.
+Maintainer acceptance on 2026-11-25 UTC: 96 PASS, 0 FAIL, 0 SKIPPED,
+0 BLOCKED; all seven configured CTest suites and nine hosted checks passed
+(`79c7a49`), with manual GUI verification and merge reported. See
+[project status](../PROJECT_STATUS.md) for the historical evidence scope.
