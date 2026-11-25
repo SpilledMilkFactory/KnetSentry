@@ -54,6 +54,7 @@ qualification targets, not measured results.
 ## Development and implementation
 
 - [M4.1 — Agent communication protocol](development/AGENT_PROTOCOL_M41.md)
+- [M4.2 — Cryptographic identity management](development/IDENTITY_M42.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)

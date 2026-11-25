@@ -12,3 +12,22 @@ target_compile_definitions(knetsentry_core
     PRIVATE KNETSENTRY_PROJECT_VERSION="${PROJECT_VERSION}")
 set_target_properties(knetsentry_core PROPERTIES
     POSITION_INDEPENDENT_CODE ON)
+
+# M4.2: separate identity library; no operational manager/desktop linkage yet.
+set(OPENSSL_USE_STATIC_LIBS FALSE)
+find_package(OpenSSL 3.5 REQUIRED COMPONENTS Crypto)
+if(DEFINED OpenSSL_VERSION)
+    set(_ks_openssl_version "${OpenSSL_VERSION}")
+else()
+    set(_ks_openssl_version "${OPENSSL_VERSION}")
+endif()
+if(_ks_openssl_version VERSION_LESS 3.5 OR NOT _ks_openssl_version VERSION_LESS 3.6 OR
+   NOT OPENSSL_CRYPTO_LIBRARY MATCHES "\\.so(\\.|$)")
+    message(FATAL_ERROR "M4.2 requires system shared OpenSSL 3.5.x libcrypto")
+endif()
+add_library(knetsentry_identity STATIC identity.cpp)
+add_library(KnetSentry::Identity ALIAS knetsentry_identity)
+target_compile_features(knetsentry_identity PUBLIC cxx_std_23)
+target_include_directories(knetsentry_identity PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_link_libraries(knetsentry_identity PUBLIC OpenSSL::Crypto)
+knetsentry_apply_project_options(knetsentry_identity)

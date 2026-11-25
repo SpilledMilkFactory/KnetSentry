@@ -47,6 +47,10 @@ bash scripts/ci/install_dependencies.sh linux-clazy --list
 bash scripts/ci/install_dependencies.sh policy --list
 ```
 
+M4.2 adds one direct package (`libssl-dev`) to each build/QML profile;
+policy remains unchanged. Exact OpenSSL package versions are logged. See
+[identity dependency review](IDENTITY_M42.md). The table above is historical.
+
 The per-run APT package list remains **unlocked** and reflects Ubuntu's
 configured repositories. Package presence is not a supply-chain attestation;
 normal dependency review and the existing licensing policy still apply.

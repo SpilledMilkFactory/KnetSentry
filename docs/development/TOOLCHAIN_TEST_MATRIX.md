@@ -5,9 +5,9 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** Accepted through M3.8; Ubuntu 26.04 AMD64. Seven mandatory build/test
+**State:** Accepted through M4.1; Ubuntu 26.04 AMD64. Seven mandatory build/test
 presets and nine hosted CI checks are active. Current CTest inventories are
-39 Release/Debug/Clazy/analysis, 34 full ASan/UBSan, 27 core-only and 28
+40 Release/Debug/Clazy/analysis, 35 full ASan/UBSan, 28 core-only and 29
 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
@@ -263,3 +263,10 @@ denials. The existing strict QML and live network acceptance checks remain requi
 `knetsentry_agent_protocol_contract` is mandatory in all seven configurations,
 including both sanitizer presets. See [KSAP 1.0](AGENT_PROTOCOL_M41.md) for
 wire limits, error handling, ordering and transport prerequisites.
+
+## M4.2 cryptographic identity contract
+
+`knetsentry_identity_contract` is mandatory in all seven presets, including
+both sanitizer builds. The offline regression generates ephemeral keys and
+certificates using the system shared OpenSSL 3.5.x libcrypto. See the
+[identity contract and dependency decision](IDENTITY_M42.md).
