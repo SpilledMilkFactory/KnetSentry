@@ -194,7 +194,7 @@ I/O or new permissions are introduced.
 ### M3.3 Linux interface and route awareness
 
 The mandatory `knetsentry_network_topology_awareness` test runs in all seven
-presets. Current expected inventories: desktop 34/29 (normal/sanitized),
+presets. M3.3 inventories: desktop 34/29 (normal/sanitized),
 core-only 22/23 (normal/sanitized). Run `python3
 scripts/verify_m33_network_topology.py --build-dir build/presets/linux-release`
 for configured verification. The optional isolated namespace regression and
@@ -203,3 +203,13 @@ A recognized pre-entry namespace permission denial is BLOCKED (exit 77),
 not a successful mutation test; an entered fixture failure remains FAIL.
 Keep host security restrictions intact and use an approved test environment.
 No real IP network transport is enabled.
+
+### M3.4 Fail-closed network authorization
+
+The mandatory `knetsentry_network_fail_closed_authorization` regression runs
+in all seven presets. Current expected inventories: desktop 35/30
+(normal/sanitized), core-only 23/24 (normal/sanitized). Run `python3
+scripts/verify_m34_network_authorization.py --build-dir build/presets/linux-release`
+for configured verification. See the [M3.4 authorization contract](NETWORK_AUTHORIZATION_M34.md).
+The optional M3.3 namespace watcher also checks the new gate's invalidation;
+standard acceptance needs no namespace creation or host security changes.

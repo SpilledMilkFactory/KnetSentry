@@ -71,6 +71,15 @@ add_test(NAME knetsentry_network_topology_awareness
 set_tests_properties(knetsentry_network_topology_awareness PROPERTIES
     LABELS "unit;security;network;regression" TIMEOUT 15)
 
+# M3.4: fail-closed activation and topology-aware preflight lifecycle.
+add_executable(knetsentry_network_authorization_test network_authorization_m34.cpp)
+target_link_libraries(knetsentry_network_authorization_test PRIVATE KnetSentry::Core)
+knetsentry_apply_project_options(knetsentry_network_authorization_test)
+add_test(NAME knetsentry_network_fail_closed_authorization
+    COMMAND $<TARGET_FILE:knetsentry_network_authorization_test>)
+set_tests_properties(knetsentry_network_fail_closed_authorization PROPERTIES
+    LABELS "unit;security;network;regression" TIMEOUT 15)
+
 # M2.1 management process: test explicit state transitions and real POSIX
 # shutdown from a separate process, including both supported stop signals.
 add_executable(knetsentry_service_lifecycle_test service_lifecycle_m21.cpp)

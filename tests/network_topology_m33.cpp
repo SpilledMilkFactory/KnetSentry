@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Chris Sutton
 // SPDX-License-Identifier: MIT
 #include "knetsentry/core/linux_topology.hpp"
+#include "knetsentry/core/network_authorization.hpp"
 #include "linux_topology_detail.hpp"
 
 #include <arpa/inet.h>
@@ -187,11 +188,24 @@ void kernel_tests() {
 int watch() {
     LinuxTopology monitor;
     if (monitor.check_changes() != TopologyState::Current) { return 1; }
+    NetworkAuthorization gate;
+    constexpr std::array approvals{EndpointApproval{"agent", "manager", "192.0.2.10", 1, 7443}};
+    constexpr std::array bindings{InterfaceBinding{1, "lo"}};
+    if (gate.activate(ConfigurationEvidence::Validated, 1, 1, approvals, {}, bindings) !=
+        AuthorizationState::Ready) { return 1; }
     std::cout << "READY" << std::endl;
     if (std::cin.get() != '\n') { return 1; }
     for (int attempt = 0; attempt < 100; ++attempt) {
-        if (monitor.check_changes() == TopologyState::Invalidated) {
-            return monitor.check_changes() == TopologyState::Invalidated ? 0 : 1;
+        const auto topology = monitor.check_changes();
+        const auto authorization = gate.check_changes();
+        if (topology == TopologyState::Invalidated && authorization == AuthorizationState::TopologyInvalidated) {
+            const NetworkProposal proposal{NetworkComponent::Agent, NetworkPurpose::AgentTransport,
+                NetworkProtocol::Tcp, approvals.front(), {RouteKind::OnLinkUnicast, "192.0.2.10", 1, 1}};
+            const auto denied = gate.evaluate(proposal, 1);
+            return monitor.check_changes() == TopologyState::Invalidated &&
+                denied.state == AuthorizationState::TopologyInvalidated && !denied.candidate_in_scope() &&
+                gate.activate(ConfigurationEvidence::Validated, 1, 1, approvals, {}, bindings) ==
+                    AuthorizationState::StaleGeneration ? 0 : 1;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
