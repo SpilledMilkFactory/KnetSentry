@@ -6,8 +6,9 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # KnetSentry — Threat Verification and Ownership Matrix
 
 **Issue:** M0.3 / GitHub #3
-**Status:** Future test specifications and accountable planned milestone owners;
-**no tests listed here have yet been implemented or executed**.
+**Status:** Original M0.3 test specifications retained; at that baseline,
+no tests listed here have yet been implemented or executed. As of M3.8,
+selected subsets are implemented and qualified (see progress below).
 **Threat source:** [THREAT_MODEL.md](THREAT_MODEL.md) and
 [THREAT_REGISTER.md](THREAT_REGISTER.md).
 **Existing network-specific cases:** [NETWORK_SCOPE_VERIFICATION_PLAN.md](NETWORK_SCOPE_VERIFICATION_PLAN.md).
@@ -23,7 +24,16 @@ host-enforcement claim; systemd/nftables effectiveness needs integration
 verification on Ubuntu 26.04. Real agentless capture acceptance requires
 actual visibility from a supported sensor/source, not an invented flow.
 
-The `TV-##` IDs are **future verification work items**, not GitHub issue numbers.
+The `TV-##` IDs are verification work items, not GitHub issue numbers.
+
+**M3.8 progress:** TV-08 has partial evidence from [local IPC lifecycle tests](../development/SERVICE_LIFECYCLE_IPC_M28.md)
+and [desktop scope inspection](../development/DESKTOP_NETWORK_SCOPE_M38.md).
+TV-09 has partial evidence from [fail-closed authorization](../development/NETWORK_AUTHORIZATION_M34.md),
+[firewall](../development/FIREWALL_ENFORCEMENT_M35.md) and [adversarial tests](../development/NETWORK_ADVERSARIAL_M37.md).
+These do not qualify a privileged administrative API, operational transport,
+monitoring, or deployed end-to-end enforcement. TV-27 has partial confinement
+evidence from [systemd](../development/SYSTEMD_SERVICE_M27.md). No TV item is
+closed by this refresh; see [accepted baseline](../PROJECT_STATUS.md).
 
 | Test ID | Expected observable security outcome | Planned owner | Proposed evidence |
 | --- | --- | --- | --- |

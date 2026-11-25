@@ -52,7 +52,7 @@ def main() -> None:
         'Error: synthetic syntax error', '\x1b[33mWarning:\x1b[0m synthetic',
     )) or lint_passed(1, ''):
         raise ValueError('strict QML lint diagnostic gate regression')
-    if 'DESKTOP_DAEMON_TOOLBAR_M29.md' not in (ROOT / 'README.md').read_text():
+    if 'DESKTOP_DAEMON_TOOLBAR_M29.md' not in (ROOT / 'docs/README.md').read_text():
         raise ValueError('missing documentation link')
     print('M2.9 toolbar source registration: PASS (runtime not verified)', flush=True)
     if args.build_dir:

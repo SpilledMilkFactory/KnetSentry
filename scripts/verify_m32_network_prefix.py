@@ -19,7 +19,7 @@ def main() -> None:
         'tests/CMakeLists.txt': (f'NAME {TEST}', 'knetsentry_apply_project_options(knetsentry_network_prefix_test)'),
         'scripts/verify_m17_suites.py': (f'"{TEST}"',),
         'include/knetsentry/core/network_scope.hpp': ('PrefixApproval', 'parse_prefix', 'contains', 'RouteEvidence'),
-        'README.md': ('NETWORK_SCOPE_VALIDATION_M32.md',),
+        'docs/README.md': ('NETWORK_SCOPE_VALIDATION_M32.md',),
     }
     for path, tokens in checks.items():
         source = (ROOT / path).read_text(encoding='utf-8')

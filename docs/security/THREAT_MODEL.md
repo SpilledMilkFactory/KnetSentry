@@ -6,7 +6,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # KnetSentry — Initial Threat Model
 
 **Issue:** M0.3 / GitHub #3
-**Status:** Design-stage assessment, not deployed protections or a penetration-test report.
+**Status:** Original design-stage threat model, not a penetration-test report.
+See [current project status](../PROJECT_STATUS.md) for implemented controls and
+[verification progress](THREAT_VERIFICATION_MATRIX.md) for partial evidence;
+residual risk remains unassessed.
 **Scope:** Proposed Ubuntu 26.04 AMD64 manager, Qt 6 desktop, agentless sensors,
 optional agents, local storage/detection/incident handling, and opt-in external
 intelligence/AI capabilities.

@@ -5,6 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M1.7 — Initial CTest and Qt Test Suites
 
+> Historical baseline and design contract. For current implemented behavior and
+> acceptance evidence, see [project status](../PROJECT_STATUS.md). Future requirements
+> and original milestone-specific test counts below are not release claims.
+
 **Scope:** Foundational tests for Ubuntu 26.04 AMD64. These are developer
 qualification checks, not a security-product release certification. SIEM
 services, privileged operations, network authorization, and live telemetry

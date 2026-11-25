@@ -26,7 +26,7 @@ def main() -> None:
                   '$<TARGET_FILE:knetsentry_health_client_test>', 'TIMEOUT 90',
                   'integration;security;ipc;service;privacy;regression'):
         require(token in block, 'missing CTest contract: ' + token)
-    require('SERVICE_LIFECYCLE_IPC_M28.md' in (ROOT / 'README.md').read_text(),
+    require('SERVICE_LIFECYCLE_IPC_M28.md' in (ROOT / 'docs/README.md').read_text(),
             'missing lifecycle documentation link')
     require('knetsentry_gui_health_runtime' in tests and 'knetsentry_systemd_policy_contract' in tests,
             'earlier GUI or systemd regression missing')

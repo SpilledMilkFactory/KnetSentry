@@ -50,7 +50,7 @@ def main() -> None:
         require(f'NAME {name}' in tests and f'"{name}"' in inventory, 'missing test: ' + name)
     require('Qt6::' not in read('src/service/CMakeLists.txt'), 'Qt leaked into service library')
     require('std::bit_cast<AuditEvent>' in read('tests/service_audit_m25.cpp'), 'audit negative fixture regression')
-    require('DESKTOP_HEALTH_M26.md' in read('README.md'), 'missing documentation link')
+    require('DESKTOP_HEALTH_M26.md' in read('docs/README.md'), 'missing documentation link')
     print('M2.6 desktop health source contract: PASS (bounded, local, read-only)')
     print('  Source-only: actual Qt/Kirigami runtime NOT verified', flush=True)
     if args.build_dir:

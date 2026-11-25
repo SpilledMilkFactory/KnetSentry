@@ -83,7 +83,7 @@ require("KNETSENTRY_BUILD_DESKTOP" in tests and "if(KNETSENTRY_BUILD_DESKTOP)" i
         "desktop-only tests not gated correctly")
 require("Terminal=false" in desktop and "Exec=knetsentry" in desktop,
         "desktop entry has incorrect launch metadata")
-require("GUI_FOUNDATION.md" in source("README.md"), "README missing M1.3 documentation link")
+require("GUI_FOUNDATION.md" in source("docs/README.md"), "Documentation index missing M1.3 documentation link")
 require("Qt6::" not in source("src/core/CMakeLists.txt"), "Qt dependency leaked into core")
 
 # M1.3 follow-up: Qt-generated cache registration can trip a GCC 15 diagnostic

@@ -61,7 +61,7 @@ def main() -> None:
     require('KSIPC/1 ADMIN 0123456789abcdef' in harness and 'owner_file(config, VALID)' in harness and
             'M3.8 actual Settings scope and local IPC counter separation: PASS' in harness,
             'real rejection/configuration/restart harness missing')
-    require('DESKTOP_NETWORK_SCOPE_M38.md' in read('README.md'), 'missing documentation link')
+    require('DESKTOP_NETWORK_SCOPE_M38.md' in read('docs/README.md'), 'missing documentation link')
     print('M3.8 read-only desktop scope source contract: PASS (actual Qt runtime not verified)', flush=True)
     if args.build_dir:
         from verify_m17_suites import configured_contract

@@ -7,7 +7,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 ## Project status and supported versions
 
-KnetSentry currently has a **pre-release C++/Qt graphical foundation and test infrastructure**, not an operational SIEM. There is no supported production SIEM package, release branch, or security support SLA. A listed milestone is not a released security control. Future release-support periods and maintained versions will be documented when packages are published.
+KnetSentry currently has a **pre-release C++/Qt desktop, lifecycle-only manager and tested network-policy foundation**, not an operational SIEM. There is no supported production SIEM package, release branch, or security support SLA. A listed milestone is not a released security control. Future release-support periods and maintained versions will be documented when packages are published.
 
 | Version | Security support status |
 | --- | --- |

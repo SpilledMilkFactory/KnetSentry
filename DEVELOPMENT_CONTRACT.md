@@ -5,6 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Secure Development and Verification Contract
 
+> Historical baseline and design contract. For current implemented behavior and
+> acceptance evidence, see [project status](docs/PROJECT_STATUS.md). Future requirements
+> and original milestone-specific test counts below are not release claims.
+
 **Issue:** M0.7 / GitHub #7. **Scope:** project requirements, not implemented
 security controls or completed build/test workflows. This contract is subordinate
 to the accepted [network requirements](docs/security/NETWORK_SCOPE_REQUIREMENTS.md),

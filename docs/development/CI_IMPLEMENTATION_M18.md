@@ -5,6 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M1.8 — Ubuntu 26.04 GitHub Actions qualification
 
+> Historical baseline and design contract. For current implemented behavior and
+> acceptance evidence, see [project status](../PROJECT_STATUS.md). Future requirements
+> and original milestone-specific test counts below are not release claims.
+
 **State as of M1.9 planning:** Maintainer reports all **nine M1.8 PR checks
 passed** (seven build matrix jobs, policy, and QML static analysis), and local
 `reuse lint` passed with 111/111 files covered. This is user-supplied M1.8

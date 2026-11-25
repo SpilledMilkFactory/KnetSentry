@@ -6,8 +6,9 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # KnetSentry — Initial Threat and Risk Register
 
 **Issue:** M0.3 / GitHub #3
-**Status:** Proposed design-stage risks; no mitigations are yet implemented,
-verified, or accepted as residual risk.
+**Status:** Original M0.3 risk screening retained. Selected controls have been
+implemented and tested through M3.8; no residual risk has been accepted.
+See [project status](../PROJECT_STATUS.md) and the [verification matrix](THREAT_VERIFICATION_MATRIX.md).
 **Model:** [THREAT_MODEL.md](THREAT_MODEL.md)
 **Evidence ownership:** [THREAT_VERIFICATION_MATRIX.md](THREAT_VERIFICATION_MATRIX.md)
 
@@ -36,7 +37,7 @@ previously proposed roadmap additions and should be confirmed on GitHub.
 
 ## Threat inventory
 
-| ID | Boundary | STRIDE | Scenario and consequence | L | I | Screen | Planned mitigation (not implemented) | Relevant contract | Future owner | Verification |
+| ID | Boundary | STRIDE | Scenario and consequence | L | I | Screen | Planned mitigation (original design) | Relevant contract | Future owner | Verification |
 | --- | --- | --- | --- | ---: | ---: | --- | --- | --- | --- | --- |
 | `TH-001` | `TB-01` | S/T | IoT MAC/IP or DHCP spoofing merges unrelated assets and contaminates detections | 3 | 3 | **High** (9) | Confidence-scored attribution, lease history, no identity elevation from passive observation | `KS-NET-036`, `KS-NET-038` | M9.2 | `TV-02` |
 | `TH-002` | `TB-01` | D | Switched/Wi-Fi topology hides suspicious IoT traffic while dashboard claims full coverage | 4 | 3 | **Critical** (12) | Coverage map, sensor-health and loss indicators; no complete-visibility claims | `KS-NET-005`, `KS-NET-034`, `KS-NET-040` | M5.10/M9.6 | `TV-02` |
@@ -83,8 +84,10 @@ previously proposed roadmap additions and should be confirmed on GitHub.
 
 ## Risk treatment and audit workflow
 
-Every register item is currently **Open / planned**. No risk is marked
-mitigated, accepted, or closed by the creation of these documents. For future
+Every register item remains open for residual-risk review. The original
+planning scores are retained; no risk is marked accepted or closed by this
+documentation refresh. TH-010 and TH-013 have partial implementation evidence
+(TV-08 and TV-09), not full threat closure. For future
 risk updates, retain the original scenario, add an evidence reference
 (commit, CI run, test report, or reviewed analysis), assign a decision owner,
 and record actual residual risk with its rationale and review date. A

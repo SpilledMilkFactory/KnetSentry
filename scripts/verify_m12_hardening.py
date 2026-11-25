@@ -126,7 +126,7 @@ for applied in ('"$<$<CONFIG:Release>:LINKER:-z,relro>"',
 
 require("knetsentry_build_hardening" in source("tests/CMakeLists.txt"),
         "actual build-evidence CTest missing")
-require("HARDENING_AND_ANALYSIS.md" in source("README.md") and
+require("HARDENING_AND_ANALYSIS.md" in source("docs/README.md") and
         "HARDENING_AND_ANALYSIS.md" in source("docs/development/TOOLCHAIN_TEST_MATRIX.md"),
         "hardening documentation not linked")
 require("CC-BY-SA-4.0" in source("docs/development/HARDENING_AND_ANALYSIS.md")[:160],

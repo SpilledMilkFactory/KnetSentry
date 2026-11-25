@@ -5,8 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Network Scope Verification Plan
 
-**Status:** M0.2 future-test specification. None of the tests described here
-has been implemented or executed by publishing this document.
+**Status:** M0.2 specification retained. M3.1–M3.8 qualify subsets of the
+policy, topology and isolated firewall requirements; operational monitoring,
+authenticated transport and external provider tests remain future work. See
+[project status](../PROJECT_STATUS.md) and [adversarial tests](../development/NETWORK_ADVERSARIAL_M37.md).
 **Primary contract:** [NETWORK_SCOPE_REQUIREMENTS.md](NETWORK_SCOPE_REQUIREMENTS.md).
 **Threat expansion:** [THREAT_MODEL.md](THREAT_MODEL.md) and
 [THREAT_VERIFICATION_MATRIX.md](THREAT_VERIFICATION_MATRIX.md).

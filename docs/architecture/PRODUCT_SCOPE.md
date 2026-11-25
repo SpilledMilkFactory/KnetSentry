@@ -29,7 +29,7 @@ applies to KnetSentry's own executable components, not to the observed devices.
 
 ## 2. Deployment roles
 
-**Manager (`knetsentryd`, planned):** Maintains approved configuration and agent
+**Manager (`knetsentryd`, lifecycle foundation implemented; full role planned):** Maintains approved configuration and agent
 identity state; receives, validates, and processes authorized telemetry; stores
 and searches security information; evaluates rules; manages alerts and
 incidents; and exposes an authenticated local control plane.

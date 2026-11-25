@@ -5,6 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Product Vision
 
+> Historical baseline and design contract. For current implemented behavior and
+> acceptance evidence, see [project status](docs/PROJECT_STATUS.md). Future requirements
+> and original milestone-specific test counts below are not release claims.
+
 **Status:** M0.1 foundation requirements; proposed behavior, not an implemented
 or certified security capability.  
 **Tagline:** Local Network Security Intelligence  
