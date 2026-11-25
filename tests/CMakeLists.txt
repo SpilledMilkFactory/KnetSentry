@@ -436,3 +436,14 @@ set_tests_properties(knetsentry_agent_roster_runtime PROPERTIES LABELS "integrat
 # M4.8 composed authentication and transport regression.
 add_test(NAME knetsentry_authentication_transport_regression COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --authentication-transport)
 set_tests_properties(knetsentry_authentication_transport_regression PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)
+
+# M5.1: independent agent foundation, no deployed collectors or network.
+add_executable(knetsentry_agent_lifecycle_test agent_lifecycle_m51.cpp)
+target_link_libraries(knetsentry_agent_lifecycle_test PRIVATE KnetSentry::AgentLifecycle)
+knetsentry_apply_project_options(knetsentry_agent_lifecycle_test)
+add_test(NAME knetsentry_agent_lifecycle_contract COMMAND knetsentry_agent_lifecycle_test)
+set_tests_properties(knetsentry_agent_lifecycle_contract PROPERTIES LABELS "unit;security;regression" TIMEOUT 15)
+add_test(NAME knetsentry_agent_service_runtime
+    COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/scripts/check_m51_agent_runtime.py"
+        "$<TARGET_FILE:knetsentry-agent>")
+set_tests_properties(knetsentry_agent_service_runtime PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 45)

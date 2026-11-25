@@ -138,3 +138,10 @@ Linux peer-credential verification. Only same UID/GID **read-only lifecycle
 status** is available; administrative roles, protected operations, multiuser
 authorization, and runtime service-identity confinement remain unimplemented.
 See [M2.3 security contract](../development/LOCAL_AUTHENTICATED_IPC_M23.md).
+
+## M5.1 endpoint-agent foundation
+
+[C-08/P-08 lifecycle](../development/ENDPOINT_AGENT_SERVICE_M51.md) is now
+implemented as an independent foreground process with no active collectors.
+C-09/P-09 and I-07/I-09 operational communication remain unimplemented.
+Production service confinement is not yet qualified.

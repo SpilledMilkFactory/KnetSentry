@@ -50,7 +50,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **48 CTest tests**, including
+The Release desktop suite currently contains **50 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -89,7 +89,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **43 CTests**, including the
+The full sanitizer suite currently contains **45 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -97,7 +97,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **36 CTests**) and `linux-sanitize-core-only` for **37**.
+C++ test (currently **38 CTests**) and `linux-sanitize-core-only` for **39**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -354,3 +354,9 @@ See [desktop enrollment management](DESKTOP_AGENT_MANAGEMENT_M47.md).
 
 Run `knetsentry_authentication_transport_regression` in all seven presets.
 See the [M4.8 regression contract](AUTHENTICATION_TRANSPORT_REGRESSIONS_M48.md).
+
+## M5.1 endpoint-agent service
+
+The independent agent and its two mandatory lifecycle/process tests are built
+in all seven presets (50/45 desktop and 38/39 core-only, normal/sanitized).
+See [M5.1 agent startup and privilege policy](ENDPOINT_AGENT_SERVICE_M51.md).

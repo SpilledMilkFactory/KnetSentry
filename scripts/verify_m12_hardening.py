@@ -52,6 +52,7 @@ cmake_files = (
     "cmake/KnetSentryBuildOptions.cmake",
     "src/core/CMakeLists.txt", "src/service/CMakeLists.txt",
     "apps/manager/CMakeLists.txt", "apps/desktop/CMakeLists.txt",
+    "src/agent/CMakeLists.txt", "apps/agent/CMakeLists.txt",
     "tests/CMakeLists.txt",
 )
 for rel in cmake_files:
@@ -61,6 +62,8 @@ for rel in cmake_files:
 for rel, target in (("src/core/CMakeLists.txt", "knetsentry_core"),
                     ("src/service/CMakeLists.txt", "knetsentry_service"),
                     ("apps/manager/CMakeLists.txt", "knetsentryd"),
+                    ("src/agent/CMakeLists.txt", "knetsentry_agent_lifecycle"),
+                    ("apps/agent/CMakeLists.txt", "knetsentry-agent"),
                     ("apps/desktop/CMakeLists.txt", "knetsentry"),
                     ("tests/CMakeLists.txt", "knetsentry_core_smoke")):
     require(f"knetsentry_apply_project_options({target})" in source(rel),
@@ -155,7 +158,7 @@ if args.build_dir:
             ERRORS.append(f"invalid compilation database: {exc}")
             commands = []
         source_names = ("build_info.cpp", "core_smoke.cpp", "lifecycle.cpp", "main.cpp",
-                        "enrollment.cpp", "enrollment_admission.cpp", "agent_roster.cpp", "agent_roster_m47.cpp", "enrollment_admin.cpp", "enrollment_m44.cpp", "agent_health.cpp")
+                        "agent_main.cpp", "agent_lifecycle_m51.cpp", "enrollment.cpp", "enrollment_admission.cpp", "agent_roster.cpp", "agent_roster_m47.cpp", "enrollment_admin.cpp", "enrollment_m44.cpp", "agent_health.cpp")
         for filename in source_names:
             entries = [item for item in commands if Path(item["file"]).name == filename]
             require(len(entries) >= 1, f"no actual compile command for {filename}")
@@ -184,6 +187,8 @@ if args.build_dir:
                 require(flag in ninja_text, f"Release linker flags missing {flag}")
         executables = [directory / "tests/knetsentry_core_smoke",
                        directory / "apps/manager/knetsentryd",
+                       directory / "apps/agent/knetsentry-agent",
+                       directory / "tests/knetsentry_agent_lifecycle_test",
                        directory / "src/core/knetsentry-enrollment",
                        directory / "tests/knetsentry_enrollment_test"]
         if desktop:
