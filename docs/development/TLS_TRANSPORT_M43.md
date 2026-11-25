@@ -105,3 +105,11 @@ and qualify the adapter's I/O, timeouts and cleanup. No threat is closed here.
 M4.4 adds the [explicit enrollment registry](ENDPOINT_ENROLLMENT_M44.md)
 and a read-only manager-side authenticated agent pin accessor. Enrollment
 admission remains separate from TLS trust and operational network permission.
+
+## M4.5 extension
+
+See [credential lifecycle](CREDENTIAL_LIFECYCLE_M45.md) for the current
+rotation/revocation policy, persistent retired identities and TLS validity
+rechecks. The original milestone contracts above describe their historical
+scope; operational networking and production administrative integration remain
+future work.

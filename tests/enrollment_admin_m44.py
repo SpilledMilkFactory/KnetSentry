@@ -23,7 +23,7 @@ def main():
                 raise RuntimeError(f'unexpected administrator CLI exit: {result.returncode}, expected {expected}')
             if any(marker in result.stderr for marker in (b'AddressSanitizer', b'LeakSanitizer', b'runtime error:')):
                 raise RuntimeError('sanitizer diagnostic in administrator CLI')
-            if endpoint.encode() in result.stdout + result.stderr or pin.encode() in result.stdout + result.stderr:
+            if endpoint.encode() in result.stdout + result.stderr or pin.encode() in result.stdout + result.stderr or ('03' * 32).encode() in result.stdout + result.stderr:
                 raise RuntimeError('identity disclosed in diagnostics')
 
         run('approve', directory, endpoint, pin)
@@ -42,6 +42,28 @@ def main():
         run('approve', directory, '03' * 16, '00' * 32)
         if registry.read_bytes() != before or len(list(root.iterdir())) != 1:
             raise RuntimeError('rejected administrative operation altered registry')
+        replacement = '03' * 32
+        run('rotate', directory, endpoint, replacement, '04' * 32)
+        run('revoke', directory, endpoint, replacement)
+        if registry.read_bytes() != before:
+            raise RuntimeError('stale lifecycle operation mutated registry')
+        run('rotate', directory, endpoint, pin, replacement, expected=0)
+        rotated = registry.read_bytes()
+        if len(rotated) != 106 or rotated[5] != 2:
+            raise RuntimeError('lifecycle format migration')
+        run('approve', directory, '03' * 16, pin)
+        run('rotate', directory, endpoint, replacement, pin)
+        run('revoke', directory, endpoint, pin)
+        if registry.read_bytes() != rotated:
+            raise RuntimeError('retired key operation mutated registry')
+        run('revoke', directory, endpoint, replacement, expected=0)
+        revoked = registry.read_bytes()
+        run('approve', directory, endpoint, '04' * 32)
+        run('approve', directory, '03' * 16, replacement)
+        run('rotate', directory, endpoint, replacement, '04' * 32)
+        if registry.read_bytes() != revoked or revoked[-1] != 1 or len(list(root.iterdir())) != 1:
+            raise RuntimeError('revoked identity operation mutated registry')
+    print('M4.5 offline rotation/revocation CLI: PASS (synthetic identities only)')
     print('M4.4 offline administrator CLI: PASS (synthetic identities only)')
 
 

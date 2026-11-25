@@ -35,9 +35,13 @@ public:
     ~Session();
     Session(const Session&) = delete;
     Session& operator=(const Session&) = delete;
+    // Observing state also checks deadlines and current certificate validity.
     [[nodiscard]] State state() const noexcept;
     // Verified peer pin only for a currently trusted manager-side session.
     [[nodiscard]] std::optional<identity::Fingerprint> authenticated_agent() const noexcept;
+    // Trusted caller supplies the CURRENT approved peer pin; no pin means
+    // revoked/unavailable. A mismatch or invalid session is terminal.
+    [[nodiscard]] Status revalidate_peer(std::optional<identity::Fingerprint> approved) noexcept;
     [[nodiscard]] Status handshake() noexcept;
     [[nodiscard]] Result ingest(std::span<const unsigned char> ciphertext) noexcept;
     [[nodiscard]] Result drain(std::span<unsigned char> ciphertext) noexcept;

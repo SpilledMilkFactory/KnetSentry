@@ -284,3 +284,10 @@ Both `knetsentry_enrollment_contract` and `knetsentry_enrollment_admin` are
 mandatory in all seven presets. Desktop inventories: 43/38, core-only 31/32
 (normal/sanitized). See [explicit enrollment](ENDPOINT_ENROLLMENT_M44.md).
 No additional package, real endpoint, or privileged operation is needed.
+
+## M4.5 credential lifecycle
+
+`knetsentry_credential_lifecycle` is mandatory in all seven presets. Desktop
+inventories: 44/39, core-only 32/33 (normal/sanitized). The enrollment CLI
+regression also exercises rotation and revocation. See the
+[credential lifecycle contract](CREDENTIAL_LIFECYCLE_M45.md).

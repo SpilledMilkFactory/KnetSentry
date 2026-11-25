@@ -25,21 +25,27 @@ template<typename T> bool decode(std::string_view text, T& output) noexcept {
 }
 } // namespace
 int main(int argc, char** argv) {
-    if (argc != 3 && argc != 5) {
-        std::cerr << "Usage: knetsentry-enrollment init PRIVATE_DIR | approve PRIVATE_DIR ENDPOINT_ID PIN\n";
+    if (argc != 3 && argc != 5 && argc != 6) {
+        std::cerr << "Usage: knetsentry-enrollment init PRIVATE_DIR | approve PRIVATE_DIR ENDPOINT_ID PIN | rotate PRIVATE_DIR ENDPOINT_ID OLD_PIN NEW_PIN | revoke PRIVATE_DIR ENDPOINT_ID PIN\n";
         return 2;
     }
     const std::string_view operation(argv[1]);
     EndpointId id{};
     knetsentry::identity::Fingerprint pin{};
-    if (!((argc == 3 && operation == "init") || (argc == 5 && operation == "approve" &&
+    knetsentry::identity::Fingerprint replacement{};
+    if (!((argc == 3 && operation == "init") || (((argc == 5 && (operation == "approve" || operation == "revoke")) ||
+        (argc == 6 && operation == "rotate" && decode(std::string_view(argv[5]), replacement))) &&
         decode(std::string_view(argv[3]), id) && decode(std::string_view(argv[4]), pin)))) {
         std::cerr << "Enrollment: invalid arguments\n";
         return 2;
     }
     const int dir = open(argv[2], O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
     if (dir < 0) { std::cerr << "Enrollment: private directory unavailable\n"; return 1; }
-    const auto status = operation == "init" ? initialize(dir) : approve(dir, id, pin);
+    Status status = Status::InvalidInput;
+    if (operation == "init") { status = initialize(dir); }
+    else if (operation == "approve") { status = approve(dir, id, pin); }
+    else if (operation == "rotate") { status = rotate(dir, id, pin, replacement); }
+    else if (operation == "revoke") { status = revoke(dir, id, pin); }
     (void)close(dir);
     if (status != Status::Ok) {
         std::cerr << "Enrollment: rejected or uncertain (status " << static_cast<int>(status) << ")\n";

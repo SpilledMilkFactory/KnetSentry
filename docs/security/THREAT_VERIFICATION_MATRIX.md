@@ -56,6 +56,12 @@ bindings and TLS-backed admission. Unknown or mismatched endpoints deny;
 passive discovery cannot create approvals. Production RBAC, revocation and
 network integration remain unqualified. No threat is closed.
 
+**M4.5 implementation:** [credential lifecycle](../development/CREDENTIAL_LIFECYCLE_M45.md)
+adds partial TV-06 evidence for persistent retired pins, explicit rotation and
+revocation, established-session expiry and terminal admission revalidation.
+Production issuer, trusted time, manager trust distribution and operational
+session invalidation remain unqualified. No threat is closed.
+
 | Test ID | Expected observable security outcome | Planned owner | Proposed evidence |
 | --- | --- | --- | --- |
 | `TV-01` | Approved segment supports agentless observation; unapproved interface/payload retention denied; passive discovery never grants management | M3.1 / M5.10 | Approved/denied scope fixture, consent and permission logs |

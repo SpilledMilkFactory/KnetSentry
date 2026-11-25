@@ -132,3 +132,11 @@ and [current status](../PROJECT_STATUS.md).
 [M4.4 explicit enrollment](ENDPOINT_ENROLLMENT_M44.md) adds an offline ID-to-pin
 registry and TLS-backed admission. KSAP payloads remain untrusted reported data;
 no wire field may grant or modify enrollment.
+
+## M4.5 extension
+
+See [credential lifecycle](CREDENTIAL_LIFECYCLE_M45.md) for the current
+rotation/revocation policy, persistent retired identities and TLS validity
+rechecks. The original milestone contracts above describe their historical
+scope; operational networking and production administrative integration remain
+future work.

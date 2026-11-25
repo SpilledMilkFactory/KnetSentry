@@ -412,3 +412,7 @@ set_tests_properties(knetsentry_enrollment_contract PROPERTIES LABELS "integrati
 add_test(NAME knetsentry_enrollment_admin COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/enrollment_admin_m44.py" $<TARGET_FILE:knetsentry-enrollment>)
 set_tests_properties(knetsentry_enrollment_admin PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)
+
+# M4.5: credential lifecycle and live TLS expiry regression.
+add_test(NAME knetsentry_credential_lifecycle COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --lifecycle)
+set_tests_properties(knetsentry_credential_lifecycle PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)
