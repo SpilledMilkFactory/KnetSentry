@@ -57,6 +57,11 @@ payloads); an unavailable reply is distinguished from parser rejection. Neither
 classification is accepted as live success. The test still requires actual
 packet delivery, distinct-UID filtering, counters, rollback and invalidation.
 
+M3.7 extends this same harness with additional reachable subnets, UDP denial
+and route/interface restoration checks; see
+[the adversarial qualification contract](NETWORK_ADVERSARIAL_M37.md).
+The original eight TCP cases and their enforcement expectations are retained.
+
 ## Run on the target workstation
 
 Prerequisites: Ubuntu 26.04, Python 3.13+ with `os.unshare`, iproute2, nftables,
@@ -86,5 +91,5 @@ Successful completion requires `M3.6 isolated network fixture: COMPLETED` and
 exit status zero. Source/CI verification cannot substitute for that result.
 The fixture does not test UDP positive permissions, physical interface approval,
 mutual TLS, operational session revocation, or deployed firewall persistence.
-It is a TCP test fixture for the initial agent preflight profile only. No packet
+It is a test fixture for the initial TCP-only agent preflight profile. No packet
 capture, device discovery, host LAN access or public intelligence access is added.

@@ -97,6 +97,12 @@ add_test(NAME knetsentry_network_isolation_fixture
 set_tests_properties(knetsentry_network_isolation_fixture PROPERTIES
     LABELS "unit;security;network;regression" TIMEOUT 15)
 
+# M3.7: offline adversarial policy matrix using the existing fixture binary.
+add_test(NAME knetsentry_network_adversarial_boundary
+    COMMAND $<TARGET_FILE:knetsentry_network_isolation_test> --adversarial)
+set_tests_properties(knetsentry_network_adversarial_boundary PROPERTIES
+    LABELS "unit;security;network;regression" TIMEOUT 15)
+
 # M2.1 management process: test explicit state transitions and real POSIX
 # shutdown from a separate process, including both supported stop signals.
 add_executable(knetsentry_service_lifecycle_test service_lifecycle_m21.cpp)

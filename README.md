@@ -15,7 +15,7 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M3.6 (isolated network policy fixtures):**
+> **Development status — M3.7 (adversarial network boundary fixtures):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
@@ -31,6 +31,8 @@ offline AI assistance.
 > firewall deployment is not automatic and live enforcement needs qualification.
 > M3.6 adds disposable dual-namespace virtual Ethernet test fixtures;
 > live qualification is explicit and virtual attachments remain denied in production.
+> M3.7 adds adversarial policy, unexpected UDP, additional-subnet and
+> route/interface restoration regressions without granting production network access.
 > A green CI run validates only its documented tests, not release readiness.
 
 The M1.4 follow-up includes a page-lifecycle warning regression test and an
@@ -355,3 +357,9 @@ live tests and rollback. No operational transport or provider access is enabled.
 See the [M3.6 fixture contract](docs/development/NETWORK_ISOLATION_FIXTURES_M36.md)
 for offline policy checks and explicit isolated dual-stack TCP delivery, filtering,
 rollback and topology invalidation. No production transport is enabled.
+
+### M3.7 — Adversarial network-boundary tests
+
+See the [M3.7 adversarial qualification contract](docs/development/NETWORK_ADVERSARIAL_M37.md).
+The extended M3.6 live fixture verifies additional reachable but unapproved
+subnets, unexpected dual-stack UDP, route changes and sticky withdrawal.
