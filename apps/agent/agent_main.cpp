@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Chris Sutton
 // SPDX-License-Identifier: MIT
 #include "knetsentry/agent/lifecycle.hpp"
+#include "knetsentry/agent/journal.hpp"
+#include <cerrno>
 #include <array>
 #include <csignal>
 #include <iostream>
@@ -59,7 +61,7 @@ namespace {
     }
     return nullptr;
 }
-int run() {
+int run(std::string_view unit = {}, std::string_view directory = {}) {
     if (const auto* reason = restrict_privileges(); reason != nullptr) {
         std::cerr << "knetsentry-agent: privilege policy rejected: " << reason << '\n';
         return 3;
@@ -71,12 +73,41 @@ int run() {
         std::cerr << "knetsentry-agent: signal setup failed\n";
         return 1;
     }
+    auto source = unit.empty() ? nullptr : knetsentry::agent::make_journal_source();
+    std::unique_ptr<knetsentry::agent::JournalCollector> journal;
+    if (source) {
+        journal = std::make_unique<knetsentry::agent::JournalCollector>(
+            *source, std::string(unit), std::string(directory));
+    }
     knetsentry::agent::Lifecycle lifecycle;
-    if (!lifecycle.start({})) { return 1; }
-    std::cout << "knetsentry-agent: ready; collectors=0; monitoring=unavailable; network=disabled\n" << std::flush;
+    const std::array<knetsentry::agent::Collector*, 1> modules{journal.get()};
+    if (!lifecycle.start(journal ? std::span<knetsentry::agent::Collector* const>(modules) :
+                                   std::span<knetsentry::agent::Collector* const>{})) {
+        if (journal) { std::cerr << "knetsentry-agent: journal rejected: " << journal->error() << '\n'; }
+        return 1;
+    }
+    if (journal) {
+        std::cout << "knetsentry-agent: ready; collectors=1; journal=local-metadata; monitoring=unavailable; network=disabled\n" << std::flush;
+    } else {
+        std::cout << "knetsentry-agent: ready; collectors=0; monitoring=unavailable; network=disabled\n" << std::flush;
+    }
     if (!std::cout) { return 1; }
-    int signal{};
-    if (::sigwait(&signals, &signal) != 0) { return 1; }
+    if (journal) {
+        for (;;) {
+            if (!journal->pump()) {
+                std::cerr << "knetsentry-agent: journal rejected: " << journal->error() << '\n';
+                return 1;
+            }
+            const timespec delay{1, 0};
+            const int signal = ::sigtimedwait(&signals, nullptr, &delay);
+            if (signal == SIGINT || signal == SIGTERM) { break; }
+            if (signal < 0 && (errno == EAGAIN || errno == EINTR)) { continue; }
+            return 1;
+        }
+    } else {
+        int signal{};
+        if (::sigwait(&signals, &signal) != 0) { return 1; }
+    }
     lifecycle.stop();
     std::cout << "knetsentry-agent: stopped\n" << std::flush;
     return std::cout ? 0 : 1;
@@ -85,8 +116,16 @@ int run() {
 
 int main(int argc, char** argv) {
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
-        std::cout << "Usage: knetsentry-agent --run --schema-version 1 --collectors none\n";
+        std::cout << "Usage: knetsentry-agent --run --schema-version 1 --collectors none\n       knetsentry-agent --run --schema-version 1 --collectors journal --unit NAME.service --state-dir /absolute/private/directory\n";
         return 0;
+    }
+    if (argc == 10 && std::string_view(argv[1]) == "--run" &&
+        std::string_view(argv[2]) == "--schema-version" && std::string_view(argv[3]) == "1" &&
+        std::string_view(argv[4]) == "--collectors" && std::string_view(argv[5]) == "journal" &&
+        std::string_view(argv[6]) == "--unit" && std::string_view(argv[8]) == "--state-dir" &&
+        knetsentry::agent::valid_journal_unit(argv[7]) && knetsentry::agent::valid_journal_directory(argv[9])) {
+        try { return run(argv[7], argv[9]); }
+        catch (...) { std::cerr << "knetsentry-agent: journal startup failed\n"; return 1; }
     }
     if (argc != 6 || std::string_view(argv[1]) != "--run") {
         std::cerr << "knetsentry-agent: configuration rejected\n";

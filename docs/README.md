@@ -62,6 +62,7 @@ qualification targets, not measured results.
 - [M4.7 — Desktop enrollment and agent management](development/DESKTOP_AGENT_MANAGEMENT_M47.md)
 - [M4.8 — Authentication and transport security regressions](development/AUTHENTICATION_TRANSPORT_REGRESSIONS_M48.md)
 - [M5.1 — Endpoint-agent service architecture](development/ENDPOINT_AGENT_SERVICE_M51.md)
+- [M5.2 — systemd journal collection](development/JOURNAL_COLLECTION_M52.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)

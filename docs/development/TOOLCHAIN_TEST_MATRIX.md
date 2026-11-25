@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M4.8 accepted; M5.1 qualification pending; issue #40 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M5.1 accepted; M5.2 qualification pending; issue #40 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 48 Release/Debug/Clazy/analysis, 43 full ASan/UBSan,
-36 core-only and 37 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 51 Release/Debug/Clazy/analysis, 46 full ASan/UBSan,
+39 core-only and 40 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -318,3 +318,11 @@ Mandatory `knetsentry_agent_lifecycle_contract` and
 inventories: 50/45 desktop, 38/39 core-only (normal/sanitized). The agent
 and its test executable receive standard hardening and instrumentation.
 See [M5.1 service contract](ENDPOINT_AGENT_SERVICE_M51.md).
+
+## M5.2 systemd journal collection
+
+All seven build presets require distro `libsystemd-dev` and `pkg-config`.
+The mandatory journal contract adds one CTest per preset, with isolated synthetic
+records and empty/populated native journal directories. Local authorized live
+journal verification remains distinct; see the
+[M5.2 contract](JOURNAL_COLLECTION_M52.md).

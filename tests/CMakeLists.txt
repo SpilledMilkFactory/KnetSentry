@@ -447,3 +447,12 @@ add_test(NAME knetsentry_agent_service_runtime
     COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/scripts/check_m51_agent_runtime.py"
         "$<TARGET_FILE:knetsentry-agent>")
 set_tests_properties(knetsentry_agent_service_runtime PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 45)
+
+# M5.2: isolated cursor/store and real empty/populated journal adapters.
+add_executable(knetsentry_journal_test journal_m52.cpp)
+target_link_libraries(knetsentry_journal_test PRIVATE KnetSentry::AgentJournal)
+knetsentry_apply_project_options(knetsentry_journal_test)
+add_test(NAME knetsentry_journal_collection_contract
+    COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/tests/journal_fixture_m52.py"
+        $<TARGET_FILE:knetsentry_journal_test>)
+set_tests_properties(knetsentry_journal_collection_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
