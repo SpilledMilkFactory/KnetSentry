@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** Accepted through M4.6; M4.7 partial implementation qualification pending; Ubuntu 26.04 AMD64.
+**State:** M4.7 read-only foundation accepted; M4.8 qualification pending; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 47 Release/Debug/Clazy/analysis, 42 full ASan/UBSan,
-35 core-only and 36 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 48 Release/Debug/Clazy/analysis, 43 full ASan/UBSan,
+36 core-only and 37 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -304,3 +304,9 @@ Mandatory codec and actual manager roster tests run in all seven presets.
 Current inventories: desktop 47/42, core-only 35/36 (normal/sanitized).
 The existing nonsanitized GUI runtime test verifies real roster bindings.
 See [desktop enrollment management](DESKTOP_AGENT_MANAGEMENT_M47.md).
+
+## M4.8 authentication and transport security regressions
+
+All seven presets require `knetsentry_authentication_transport_regression`
+(48/43 desktop, 36/37 core-only, normal/sanitized). See the
+[M4.8 regression contract](AUTHENTICATION_TRANSPORT_REGRESSIONS_M48.md).

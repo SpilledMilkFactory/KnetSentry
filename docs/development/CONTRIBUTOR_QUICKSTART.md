@@ -50,7 +50,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **47 CTest tests**, including
+The Release desktop suite currently contains **48 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -89,7 +89,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **42 CTests**, including the
+The full sanitizer suite currently contains **43 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -97,7 +97,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **35 CTests**) and `linux-sanitize-core-only` for **36**.
+C++ test (currently **36 CTests**) and `linux-sanitize-core-only` for **37**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -349,3 +349,8 @@ inventories: 45/40, core-only 33/34 (normal/sanitized). See the
 Mandatory codec and real-manager roster tests run in all seven presets.
 Current inventories: desktop 47/42, core-only 35/36 (normal/sanitized).
 See [desktop enrollment management](DESKTOP_AGENT_MANAGEMENT_M47.md).
+
+## M4.8 authentication and transport security regressions
+
+Run `knetsentry_authentication_transport_regression` in all seven presets.
+See the [M4.8 regression contract](AUTHENTICATION_TRANSPORT_REGRESSIONS_M48.md).

@@ -305,6 +305,8 @@ void raw_negatives(Fixture& fixture) {
     raw_client(fixture, fixture.client.get(), fixture.agent.get(), TLS1_3_VERSION, true, false, false);
     auto expired = certificate(fixture.agent.get(), fixture.root.get(), fixture.ca.get(), "expired", "clientAuth", -3600, -60);
     raw_client(fixture, expired.get(), fixture.agent.get(), TLS1_3_VERSION, true, false);
+    auto future = certificate(fixture.agent.get(), fixture.root.get(), fixture.ca.get(), "future", "clientAuth", 3600, 7200);
+    raw_client(fixture, future.get(), fixture.agent.get(), TLS1_3_VERSION, true, false);
     auto role = certificate(fixture.agent.get(), fixture.root.get(), fixture.ca.get(), "wrong role", "serverAuth");
     raw_client(fixture, role.get(), fixture.agent.get(), TLS1_3_VERSION, true, false);
     auto mixed = certificate(fixture.agent.get(), fixture.root.get(), fixture.ca.get(), "mixed", "clientAuth,serverAuth");

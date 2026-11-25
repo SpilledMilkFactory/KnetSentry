@@ -5,10 +5,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M4.6 — agent heartbeat and health.** Milestone 3 is complete
-through issue #33. M4.7 adds read-only manager-selected enrollment roster inspection;
-its target-host qualification and remaining operational GUI capabilities are pending. This is an
-unreleased development baseline, not a v1.0.0 security qualification.
+**Accepted baseline: M4.7 — read-only enrollment roster foundation.** Milestone 3
+is complete through issue #33. M4.7's implemented scope is qualified and merged;
+issue #40's remaining operational GUI capabilities remain outstanding. M4.8 adds
+composed authentication and transport regressions; qualification is pending.
+This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
 
@@ -84,6 +85,13 @@ The M4.6 maintainer acceptance (2026-11-25 UTC, working tree based on
 and core-only 33/34 CTests (normal/sanitized), and nine green hosted checks
 (`779e8a5`). The maintainer reported manual GUI verification and merge.
 
+The M4.7 follow-up maintainer acceptance (2026-11-25 UTC, working tree
+based on `931bd1b` with the follow-up changes) reported 94 PASS, 0 FAIL,
+0 SKIPPED, 0 BLOCKED, desktop 47/42 and core-only 35/36 CTests
+(normal/sanitized), strict QML and installed systemd success. The maintainer
+reported manual GUI verification and merge after nine green hosted checks
+(`8634c76`). This accepts only the implemented read-only foundation.
+
 The earlier M3.8 run included 34 structural verifiers; official REUSE, strict QML checks, installed systemd,
 and the isolated M3.5–M3.7 live regressions passed. This snapshot is historical
 evidence, not an assertion about any subsequent revision or environment.
@@ -99,7 +107,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M1 — C++/Qt foundation, testing and CI | Complete |
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
-| M4 — identity, PKI and secure agent enrollment | M4.6 accepted; M4.7 read-only implementation, remaining capabilities and qualification pending |
+| M4 — identity, PKI and secure agent enrollment | M4.7 read-only foundation accepted; issue #40 remaining capabilities open; M4.8 qualification pending |
 | M5–M7 — functional SIEM foundations | Planned |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
