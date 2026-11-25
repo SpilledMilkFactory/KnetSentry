@@ -15,7 +15,7 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M3.3 (read-only Linux network topology):**
+> **Development status — M3.4 (fail-closed network authorization):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
@@ -25,7 +25,8 @@ offline AI assistance.
 > event database, threat detection or privileged security controls exist yet.
 > M3.3 adds read-only Linux interface/route inspection and topology invalidation
 > to the existing dual-stack network scope preflight; no live IP transport or
-> network enforcement has been activated.
+> network enforcement has been activated. M3.4 adds an owned fail-closed
+> authorization lifecycle for configuration, policy revisions and topology loss.
 > A green CI run validates only its documented tests, not release readiness.
 
 The M1.4 follow-up includes a page-lifecycle warning regression test and an
@@ -332,3 +333,9 @@ for strict CIDR parsing, address-family isolation and interface-bound approvals.
 See the [M3.3 topology contract](docs/development/NETWORK_TOPOLOGY_M33.md)
 for the initial direct-route profile, sticky notification invalidation and
 optional isolated namespace qualification. No IP transport is enabled.
+
+### M3.4 — Fail-closed network authorization
+
+See the [M3.4 authorization contract](docs/development/NETWORK_AUTHORIZATION_M34.md)
+for explicit configuration withdrawal, monotonic revisions, owned interface
+bindings and sticky denial on uncertain topology. No IP transport is enabled.
