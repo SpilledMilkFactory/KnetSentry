@@ -99,9 +99,10 @@ closes the validator; no sequence wrap. Explicit closure is irreversible.
 A successful `decode` only establishes syntax; `accept` also establishes
 connection-local ordering. Neither authenticates, authorizes, stores or acts on
 messages. A fresh validator has no knowledge of previous connections. Persistent
-anti-replay, certificate-to-agent binding, enrollment/revocation, mTLS (including
-no early data), policy revalidation, stable event IDs and ingestion idempotence
-remain requirements for subsequent milestones. No cross-session replay defense
+anti-replay, certificate-to-agent binding, enrollment/revocation, policy
+revalidation, stable event IDs and ingestion idempotence remain requirements.
+[M4.3 mutual TLS](TLS_TRANSPORT_M43.md) provides isolated transport-layer
+authentication without early data; the codec itself still grants no authority. No cross-session replay defense
 or complete TV-07 closure is claimed.
 
 ## Errors and diagnostics

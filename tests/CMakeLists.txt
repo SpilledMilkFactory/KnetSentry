@@ -395,3 +395,10 @@ target_link_libraries(knetsentry_identity_test PRIVATE KnetSentry::Identity)
 knetsentry_apply_project_options(knetsentry_identity_test)
 add_test(NAME knetsentry_identity_contract COMMAND $<TARGET_FILE:knetsentry_identity_test>)
 set_tests_properties(knetsentry_identity_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)
+
+# M4.3: real encrypted mutual TLS through bounded, in-memory wire endpoints.
+add_executable(knetsentry_tls_test tls_m43.cpp)
+target_link_libraries(knetsentry_tls_test PRIVATE KnetSentry::Tls KnetSentry::Core)
+knetsentry_apply_project_options(knetsentry_tls_test)
+add_test(NAME knetsentry_tls_contract COMMAND $<TARGET_FILE:knetsentry_tls_test>)
+set_tests_properties(knetsentry_tls_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)

@@ -153,3 +153,8 @@ M4.2 defines the offline [identity contract](../development/IDENTITY_M42.md)
 for I-07/I-08: role-bound certificate validation against an explicit trust
 anchor and independently approved public-key fingerprint. This does not
 establish proof of possession, enrollment, revocation or network authority.
+
+M4.3 implements [mutual TLS](../development/TLS_TRANSPORT_M43.md) for I-07/I-08
+with bounded in-memory ciphertext endpoints, explicit role/pin checks and
+proof of key possession. No operational network adapter, enrollment authority,
+revocation or ingestion authorization is introduced.

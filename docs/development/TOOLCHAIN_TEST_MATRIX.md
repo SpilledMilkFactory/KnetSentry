@@ -270,3 +270,10 @@ wire limits, error handling, ordering and transport prerequisites.
 both sanitizer builds. The offline regression generates ephemeral keys and
 certificates using the system shared OpenSSL 3.5.x libcrypto. See the
 [identity contract and dependency decision](IDENTITY_M42.md).
+
+## M4.3 mutual TLS transport
+
+`knetsentry_tls_contract` is mandatory across all seven presets, including
+both sanitizers. The actual encrypted exchange and negative peer fixtures
+need no network or credentials. Inventories: desktop 41/36, core-only 29/30
+(normal/sanitized). See [transport contract](TLS_TRANSPORT_M43.md).

@@ -27,7 +27,7 @@ def main() -> None:
         require(forbidden not in source, f'unapproved identity boundary {forbidden}')
     require('max_key_bytes = 1024' in header and 'max_certificate_bytes = 8192' in header,
             'missing bounded inputs')
-    require('find_package(OpenSSL 3.5 REQUIRED COMPONENTS Crypto)' in cmake and
+    require('find_package(OpenSSL 3.5 REQUIRED COMPONENTS Crypto SSL)' in cmake and
             'target_link_libraries(knetsentry_identity PUBLIC OpenSSL::Crypto)' in cmake and
             'knetsentry_apply_project_options(knetsentry_identity)' in cmake,
             'missing scoped identity dependency')

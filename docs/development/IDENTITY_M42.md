@@ -14,11 +14,11 @@ This component is not an operational CA, TLS receiver or enrollment service.
 
 | Field | Decision / evidence |
 | --- | --- |
-| Owner and review | M4.2 implementation-side review, 2026-11-25; maintainer PR acceptance pending |
+| Owner and review | M4.2 implementation-side review, 2026-11-25; maintainer PR accepted (see [project status](../PROJECT_STATUS.md)) |
 | Component | OpenSSL 3.5.x shared libcrypto via `OpenSSL::Crypto`, system-provided `libssl-dev` / `libssl3t64` |
 | Origin | Ubuntu 26.04 AMD64 signed APT archive; [Ubuntu source package](https://packages.ubuntu.com/source/resolute/openssl), [upstream](https://github.com/openssl/openssl) |
 | Version evidence | Ubuntu archive advertised 3.5.5-1ubuntu3.7 at review; actual target package version must be recorded by CI/local acceptance. Debian 13 implementation environment reports package/header version 3.5.7 (package 3.5.7-1~deb13u2), but the loaded runtime identifies as 3.5.5 and local package verification flags modified library files. Functional results are not package-integrity or security-patch qualification. |
-| Integration | Only the separate identity library and regression link libcrypto; no vendored sources, private OpenSSL build or automatic runtime download |
+| Integration | The separate identity library and regressions link libcrypto; M4.3 adds the isolated TLS consumer; no vendored sources, private OpenSSL build or automatic runtime download |
 | License | [Apache-2.0 upstream](https://github.com/openssl/openssl/blob/openssl-3.5/LICENSE.txt); distro copyright files and transitive dependencies must be reviewed at release |
 | Security | Maintained 3.5 LTS branch; distro security updates within 3.5.x permitted for development, not a fixed release lock. Check exact package advisories and artifact graph before deployment. No FIPS claim. Default configured OpenSSL provider environment is trusted local configuration; no custom provider is loaded by this component. |
 | Privacy | No network activity, secrets in logs, remote key generation or certificate fetching |
@@ -34,8 +34,7 @@ See the [dependency register](DEPENDENCY_REGISTER.md) and
 
 ## Key identity and storage
 
-`KnetSentry::Identity` is Qt-independent and currently linked only by the
-regression. The interface is in `include/knetsentry/core/identity.hpp`.
+`KnetSentry::Identity` is Qt-independent and linked by its regression and the isolated [M4.3 TLS library](TLS_TRANSPORT_M43.md). The interface is in `include/knetsentry/core/identity.hpp`.
 Agent and manager keys are independently generated via OpenSSL EVP Ed25519.
 The public identifier is SHA-256 of the exact 32 raw Ed25519 public-key bytes
 (not DER SPKI and not a certificate digest). Role remains a separate field.
@@ -76,7 +75,7 @@ bytes. The root must be a self-issued, self-signature-valid Ed25519 CA. The
 leaf must have a distinct Ed25519 public key, explicit non-CA basic constraints,
 digitalSignature-only key usage and exactly one EKU: clientAuth for an agent,
 serverAuth for a manager. The independently approved raw-key fingerprint must
-match. No common-name or DNS identity fallback is used: future transport must
+match. No common-name or DNS identity fallback is used: operational transport must
 bind the expected peer identity from trusted enrollment/configuration, not from
 peer input. OpenSSL X509 path verification uses a fresh explicit trust store,
 strict verification, self-signature checking, auth level 2, zero intermediate
@@ -86,9 +85,10 @@ network access, intermediate-chain acceptance or clock override is used.
 
 This is a deliberately restricted initial private-PKI profile, not generic
 Web PKI. Issuance policy, trusted time, CSR verification, certificate lifecycle,
-revocation, key rotation, mTLS proof of possession, TLS early-data rejection
-and certificate-to-enrollment/endpoint authorization remain mandatory before
-operational use. A success is not authority to connect, enroll or ingest data.
+revocation, key rotation and certificate-to-enrollment/endpoint authorization
+remain mandatory before operational use. [M4.3](TLS_TRANSPORT_M43.md) adds
+isolated mTLS proof of possession and early-data rejection; real deployment
+and socket adapter qualification remain pending. A success is not authority to connect, enroll or ingest data.
 No public provider HTTPS behavior is changed.
 
 ## Verification
