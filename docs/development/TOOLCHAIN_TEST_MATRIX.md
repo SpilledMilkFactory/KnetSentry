@@ -7,7 +7,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 **State:** Accepted through M3.8; Ubuntu 26.04 AMD64. Seven mandatory build/test
 presets and nine hosted CI checks are active. Current CTest inventories are
-38 Release/Debug/Clazy/analysis, 33 full ASan/UBSan, 26 core-only and 27
+39 Release/Debug/Clazy/analysis, 34 full ASan/UBSan, 27 core-only and 28
 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
@@ -257,3 +257,9 @@ for the source contract, or add `--build-dir build/presets/linux-release` for
 configured model/navigation checks. The live GUI health regression also verifies
 Settings updates and the distinction between local IPC rejections and network
 denials. The existing strict QML and live network acceptance checks remain required.
+
+## M4.1 protocol contract
+
+`knetsentry_agent_protocol_contract` is mandatory in all seven configurations,
+including both sanitizer presets. See [KSAP 1.0](AGENT_PROTOCOL_M41.md) for
+wire limits, error handling, ordering and transport prerequisites.

@@ -141,3 +141,10 @@ never implicit fallback to an insecure or unvalidated mode.
 
 Any interface revision crossing `TB-01`–`TB-12` requires reviewing the threat
 register and its verification matrix, with an explicit regression test owner.
+
+## M4.1 wire contract (I-07)
+
+[KSAP 1.0](../development/AGENT_PROTOCOL_M41.md) specifies an offline bounded
+HELLO/HEARTBEAT encoding and connection-local sequencing. It does not implement
+the operational authenticated channel, source binding, enrollment or telemetry
+envelope. Those requirements and the I-08 provenance boundary remain in force.
