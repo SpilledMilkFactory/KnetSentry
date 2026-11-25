@@ -3,6 +3,8 @@
 #include <knetsentry/core/tls_transport.hpp>
 #include <knetsentry/core/enrollment.hpp>
 #include <filesystem>
+#include <chrono>
+#include <thread>
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -220,6 +222,12 @@ void capacity() {
     Fingerprint pin{}; pin.at(1) = 1;
     require(enroll::approve(store.fd, extra, pin) == E::Full &&
         enroll::lookup(store.fd, extra).status == E::Unknown, "capacity limit");
+    enroll::EndpointId first{}; first.at(0) = 1;
+    Fingerprint first_pin{}; first_pin.at(0) = 1;
+    require(enroll::rotate(store.fd, first, first_pin, pin) == E::Full &&
+        enroll::lookup(store.fd, first).pin == first_pin &&
+        enroll::revoke(store.fd, first, first_pin) == E::Ok &&
+        enroll::lookup(store.fd, first).status == E::Revoked, "full registry must allow revocation");
     std::cout << "M4.4 bounded registry capacity: PASS\n";
 }
 void admission(Fixture& fixture) {
@@ -258,11 +266,132 @@ void admission(Fixture& fixture) {
     require(enroll::authorize(store.fd, id, *m) == E::NotAuthenticated, "wrong pin session admitted");
     std::cout << "M4.4 real mTLS admission, unknown agent and identity impersonation rejection: PASS\n";
 }
+void lifecycle(Fixture& fixture) {
+    Store store;
+    enroll::EndpointId id{}; id.at(0) = 1;
+    auto other = id; other.at(0) = 2;
+    require(enroll::initialize(store.fd) == E::Ok &&
+        enroll::approve(store.fd, id, fixture.agent_pin) == E::Ok, "lifecycle approval");
+    auto a = Session::create(fixture.a()); auto m = Session::create(fixture.m());
+    require(a && m && connect(*a, *m) && enroll::revalidate(store.fd, id, *m) == E::Ok,
+        "initial admission");
+    require(enroll::rotate(store.fd, id, fixture.other_pin, fixture.manager_pin) == E::Conflict &&
+        enroll::rotate(store.fd, id, fixture.agent_pin, fixture.agent_pin) == E::Conflict &&
+        enroll::revoke(store.fd, id, fixture.other_pin) == E::Conflict, "stale administrative operation");
+    require(enroll::rotate(store.fd, id, fixture.agent_pin, fixture.other_pin) == E::Ok,
+        "new key rotation");
+    require(enroll::lookup(store.fd, id).pin == fixture.other_pin &&
+        enroll::revalidate(store.fd, id, *m) == E::IdentityMismatch && m->state() == State::Failed,
+        "superseded live session retained trust");
+    require(enroll::approve(store.fd, other, fixture.agent_pin) == E::Conflict &&
+        enroll::rotate(store.fd, id, fixture.other_pin, fixture.agent_pin) == E::Conflict,
+        "retired key reused");
+    auto renewed = certificate(fixture.other.get(), fixture.root.get(), fixture.ca.get(), "renewed", "clientAuth");
+    const auto renewed_der = der(renewed.get());
+    auto new_agent = fixture.a(); new_agent.key = fixture.other.get(); new_agent.certificate = renewed_der;
+    auto new_manager = fixture.m(); new_manager.peer_pin = fixture.other_pin;
+    a = Session::create(fixture.a()); m = Session::create(new_manager);
+    require(a && m && !connect(*a, *m), "superseded certificate handshake accepted");
+    a = Session::create(new_agent); m = Session::create(new_manager);
+    require(a && m && connect(*a, *m) && enroll::revalidate(store.fd, id, *m) == E::Ok,
+        "replacement certificate denied");
+    require(enroll::revoke(store.fd, id, fixture.other_pin) == E::Ok &&
+        enroll::lookup(store.fd, id).status == E::Revoked && !enroll::lookup(store.fd, id).pin &&
+        enroll::revalidate(store.fd, id, *m) == E::Revoked && m->state() == State::Failed,
+        "revoked session remained authorized");
+    const int reopened = open(store.path.data(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    require(reopened >= 0, "lifecycle reopen");
+    const auto persisted = enroll::lookup(reopened, id);
+    (void)close(reopened);
+    require(persisted.status == E::Revoked &&
+        enroll::approve(store.fd, id, fixture.manager_pin) == E::Conflict &&
+        enroll::approve(store.fd, other, fixture.other_pin) == E::Conflict &&
+        enroll::rotate(store.fd, id, fixture.other_pin, fixture.manager_pin) == E::Revoked,
+        "revocation not persistent or reusable");
+    // A fresh handshake with stale cached credentials still cannot pass admission.
+    a = Session::create(new_agent); m = Session::create(new_manager);
+    require(a && m && connect(*a, *m) && enroll::revalidate(store.fd, id, *m) == E::Revoked &&
+        m->state() == State::Failed, "revoked key with cached pin admitted");
+    const int fd = openat(store.fd, "endpoints.v1", O_RDWR | O_CLOEXEC);
+    require(fd >= 0, "lifecycle corruption fixture");
+    const unsigned char invalid = 2;
+    const auto written = pwrite(fd, &invalid, 1, 56);
+    (void)close(fd);
+    require(written == 1 && enroll::lookup(store.fd, id).status == E::Corrupt,
+        "invalid lifecycle flag accepted");
+    std::cout << "M4.5 rotation, permanent revocation, persistent retired keys and live revalidation: PASS\n";
+}
+void manager_lifecycle(Fixture& fixture) {
+    auto a = Session::create(fixture.a()); auto m = Session::create(fixture.m());
+    require(a && m && connect(*a, *m) && a->revalidate_peer(fixture.manager_pin) == Status::Ok,
+        "initial manager pin");
+    require(a->revalidate_peer(fixture.other_pin) == Status::Failed && a->state() == State::Failed,
+        "stale manager session after pin replacement");
+    const auto replacement = certificate(fixture.other.get(), fixture.root.get(), fixture.ca.get(),
+        "replacement manager", "serverAuth");
+    const auto replacement_der = der(replacement.get());
+    auto agent = fixture.a(); agent.peer_pin = fixture.other_pin;
+    auto manager = fixture.m(); manager.key = fixture.other.get(); manager.certificate = replacement_der;
+    a = Session::create(agent); m = Session::create(fixture.m());
+    require(a && m && !connect(*a, *m), "old manager handshake after pin replacement");
+    a = Session::create(agent); m = Session::create(manager);
+    require(a && m && connect(*a, *m) && a->revalidate_peer(fixture.other_pin) == Status::Ok &&
+        a->revalidate_peer(std::nullopt) == Status::Failed && a->state() == State::Failed,
+        "replacement manager or explicit removal of manager trust");
+    std::cout << "M4.5 manager pin replacement and explicit trust removal: PASS\n";
+}
+void expiry(Fixture& fixture) {
+    Store store;
+    enroll::EndpointId id{}; id.at(0) = 1;
+    require(enroll::initialize(store.fd) == E::Ok &&
+        enroll::approve(store.fd, id, fixture.agent_pin) == E::Ok, "expiry approval");
+    const auto short_cert = certificate(fixture.agent.get(), fixture.root.get(), fixture.ca.get(),
+        "short", "clientAuth", -60, 4);
+    const auto short_der = der(short_cert.get());
+    auto creds = fixture.a(); creds.certificate = short_der;
+    auto a = Session::create(creds); auto m = Session::create(fixture.m());
+    require(a && m && connect(*a, *m) && enroll::authorize(store.fd, id, *m) == E::Ok,
+        "short-lived initial admission");
+    const std::array<unsigned char, 1> message{42};
+    require(a->write(message).status == Status::Ok, "pre-expiry write");
+    pump(*a, *m);
+    const auto short_root = certificate(fixture.ca.get(), nullptr, fixture.ca.get(), "root", nullptr, -60, 4);
+    const auto root_der = der(short_root.get());
+    auto root_a = fixture.a(); root_a.root = root_der;
+    auto root_m = fixture.m(); root_m.root = root_der;
+    auto ar = Session::create(root_a); auto mr = Session::create(root_m);
+    require(ar && mr && connect(*ar, *mr), "short-lived root handshake");
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(8);
+    while ((X509_cmp_current_time(X509_get0_notAfter(short_cert.get())) == 1 ||
+            X509_cmp_current_time(X509_get0_notAfter(short_root.get())) == 1) &&
+        std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    require(X509_cmp_current_time(X509_get0_notAfter(short_cert.get())) == -1, "expiry fixture clock");
+    std::array<unsigned char, max_plaintext> received{};
+    received.fill(99);
+    require(m->read(received).status == Status::Failed && received.front() == 99 &&
+        m->state() == State::Failed && !m->authenticated_agent(), "expired peer plaintext exposed");
+    require(a->write(message).status == Status::Failed && a->state() == State::Failed &&
+        enroll::revalidate(store.fd, id, *m) == E::NotAuthenticated && !Session::create(creds),
+        "expired credential retained trust");
+    require(ar->state() == State::Failed && mr->state() == State::Failed &&
+        !Session::create(root_a), "expired root retained trust");
+    const auto future = certificate(fixture.agent.get(), fixture.root.get(), fixture.ca.get(),
+        "future", "clientAuth", 60, 3600);
+    const auto future_der = der(future.get()); creds.certificate = future_der;
+    require(!Session::create(creds), "not-yet-valid credential accepted");
+    std::cout << "M4.5 certificate expiration during TLS, buffered plaintext denial and future validity: PASS\n";
+}
 } // namespace
-int main() {
+int main(int argc, char** argv) {
     try {
         Fixture fixture;
-        storage(fixture); malformed_registry(fixture); capacity(); admission(fixture);
+        if (argc == 2 && std::string_view(argv[1]) == "--lifecycle") {
+            lifecycle(fixture); manager_lifecycle(fixture); expiry(fixture);
+        } else if (argc == 1) {
+            storage(fixture); malformed_registry(fixture); capacity(); admission(fixture);
+        } else { return 2; }
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "M4.4 enrollment regression: FAIL: " << error.what() << '\n'; return 1;

@@ -50,7 +50,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **43 CTest tests**, including
+The Release desktop suite currently contains **44 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -89,7 +89,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **38 CTests**, including the
+The full sanitizer suite currently contains **39 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -97,7 +97,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **31 CTests**) and `linux-sanitize-core-only` for **32**.
+C++ test (currently **32 CTests**) and `linux-sanitize-core-only` for **33**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -330,3 +330,10 @@ Both `knetsentry_enrollment_contract` and `knetsentry_enrollment_admin` are
 mandatory in all seven presets. Desktop inventories: 43/38, core-only 31/32
 (normal/sanitized). See [explicit enrollment](ENDPOINT_ENROLLMENT_M44.md).
 No additional package, real endpoint, or privileged operation is needed.
+
+## M4.5 credential lifecycle
+
+`knetsentry_credential_lifecycle` is mandatory in all seven presets. Desktop
+inventories: 44/39, core-only 32/33 (normal/sanitized). The enrollment CLI
+regression also exercises rotation and revocation. See the
+[credential lifecycle contract](CREDENTIAL_LIFECYCLE_M45.md).

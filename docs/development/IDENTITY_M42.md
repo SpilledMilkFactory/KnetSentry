@@ -112,3 +112,11 @@ is claimed. See [current status](../PROJECT_STATUS.md).
 [M4.4 explicit enrollment](ENDPOINT_ENROLLMENT_M44.md) binds an independently
 approved public-key fingerprint to an administrator-assigned endpoint ID.
 Certificate validation alone still does not establish enrollment.
+
+## M4.5 extension
+
+See [credential lifecycle](CREDENTIAL_LIFECYCLE_M45.md) for the current
+rotation/revocation policy, persistent retired identities and TLS validity
+rechecks. The original milestone contracts above describe their historical
+scope; operational networking and production administrative integration remain
+future work.

@@ -27,6 +27,10 @@ Cert parse(std::span<const unsigned char> bytes) noexcept {
     if (cursor != bytes.data() + bytes.size()) { cert.reset(); }
     return cert;
 }
+bool currently_valid(const X509* cert) noexcept {
+    return cert != nullptr && X509_cmp_current_time(X509_get0_notBefore(cert)) == -1 &&
+        X509_cmp_current_time(X509_get0_notAfter(cert)) == 1;
+}
 int select_alpn(SSL*, const unsigned char** out, unsigned char* out_length,
     const unsigned char* in, unsigned int length, void*) noexcept {
     if (length != alpn.size() || !std::equal(alpn.begin(), alpn.end(), in)) {
@@ -51,6 +55,7 @@ struct Session::Impl {
     std::unique_ptr<BIO, decltype(&BIO_free)> wire{nullptr, BIO_free};
     std::array<unsigned char, identity::max_certificate_bytes> root{};
     std::size_t root_size{};
+    Cert trust_anchor{nullptr, X509_free};
     identity::Fingerprint peer_pin{};
     Role peer_role{Role::Invalid};
     State state{State::Handshake};
@@ -77,6 +82,13 @@ struct Session::Impl {
         return Status::Failed;
     }
     bool expired() noexcept {
+        if ((state == State::Handshake || state == State::Trusted || state == State::Closing) &&
+            (!currently_valid(trust_anchor.get()) || !currently_valid(SSL_get_certificate(ssl.get())) ||
+             ((state == State::Trusted || state == State::Closing) &&
+              !currently_valid(SSL_get0_peer_certificate(ssl.get()))))) {
+            (void)fail();
+            return true;
+        }
         if ((state == State::Handshake || state == State::Closing) && Clock::now() >= deadline) {
             (void)fail();
             return true;
@@ -156,6 +168,7 @@ std::unique_ptr<Session> Session::create(const Credentials& credentials) noexcep
         SSL_CTX_check_private_key(ctx) != 1 || X509_STORE_add_cert(SSL_CTX_get_cert_store(ctx), root.get()) != 1) {
         return {};
     }
+    impl->trust_anchor = std::move(root);
     SSL_CTX_set_options(ctx, SSL_OP_NO_TICKET | SSL_OP_NO_RENEGOTIATION);
     SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
     SSL_CTX_set_post_handshake_auth(ctx, 0);
@@ -186,10 +199,20 @@ std::unique_ptr<Session> Session::create(const Credentials& credentials) noexcep
     return std::unique_ptr<Session>(new (std::nothrow) Session(std::move(impl)));
 }
 
-State Session::state() const noexcept { return impl_->state; }
+State Session::state() const noexcept {
+    (void)impl_->expired();
+    return impl_->state;
+}
 std::optional<identity::Fingerprint> Session::authenticated_agent() const noexcept {
-    if (impl_->state != State::Trusted || impl_->peer_role != Role::Agent || !impl_->peer_verified) { return {}; }
+    if (state() != State::Trusted || impl_->peer_role != Role::Agent || !impl_->peer_verified) { return {}; }
     return impl_->peer_pin;
+}
+Status Session::revalidate_peer(std::optional<identity::Fingerprint> approved) noexcept {
+    if (state() != State::Trusted || !impl_->peer_verified || !approved || *approved != impl_->peer_pin) {
+        abort();
+        return Status::Failed;
+    }
+    return Status::Ok;
 }
 Status Session::handshake() noexcept {
     auto& s = *impl_;
@@ -205,7 +228,7 @@ Status Session::handshake() noexcept {
         return s.fail();
     }
     s.state = State::Trusted;
-    return Status::Ok;
+    return s.expired() ? Status::Failed : Status::Ok;
 }
 Result Session::ingest(std::span<const unsigned char> bytes) noexcept {
     auto& s = *impl_;
@@ -231,7 +254,7 @@ Result Session::drain(std::span<unsigned char> bytes) noexcept {
 }
 Result Session::write(std::span<const unsigned char> bytes) noexcept {
     auto& s = *impl_;
-    if (s.state == State::Failed) { return {Status::Failed}; }
+    if (s.expired() || s.state == State::Failed) { return {Status::Failed}; }
     if (s.state != State::Trusted) { return {Status::NotReady}; }
     if (bytes.empty() || bytes.size() > max_plaintext) { return {Status::InvalidInput}; }
     if (s.pending_size == 0) {
@@ -244,13 +267,14 @@ Result Session::write(std::span<const unsigned char> bytes) noexcept {
     std::size_t count = 0;
     const int result = SSL_write_ex(s.ssl.get(), s.pending.data(), s.pending_size, &count);
     if (result != 1) { return {s.classify(result)}; }
+    if (s.expired()) { return {Status::Failed}; }
     if (count != s.pending_size) { return {s.fail()}; }
     s.clear_pending();
     return {Status::Ok, count};
 }
 Result Session::read(std::span<unsigned char, max_plaintext> bytes) noexcept {
     auto& s = *impl_;
-    if (s.state == State::Failed) { return {Status::Failed}; }
+    if (s.expired() || s.state == State::Failed) { return {Status::Failed}; }
     if (s.state == State::Closed || s.state == State::Closing) { return {Status::Closed}; }
     if (s.state != State::Trusted) { return {Status::NotReady}; }
     if (s.pending_size != 0) { return {Status::WouldBlock}; }
@@ -264,6 +288,7 @@ Result Session::read(std::span<unsigned char, max_plaintext> bytes) noexcept {
         if (error == SSL_ERROR_WANT_READ || error == SSL_ERROR_WANT_WRITE) { return {Status::WouldBlock}; }
         return {s.fail()};
     }
+    if (s.expired()) { return {Status::Failed}; }
     if (count == 0 || count > s.received.size()) { return {s.fail()}; }
     std::copy_n(s.received.begin(), count, bytes.begin());
     OPENSSL_cleanse(s.received.data(), s.received.size());

@@ -118,3 +118,11 @@ revocation, registry migration/recovery tooling, rollback protection, remote
 socket integration and authenticated telemetry are not implemented here. No
 new dependencies, operational service linkage, firewall permissions or GUI
 controls are introduced.
+
+## M4.5 extension
+
+See [credential lifecycle](CREDENTIAL_LIFECYCLE_M45.md) for the current
+rotation/revocation policy, persistent retired identities and TLS validity
+rechecks. The original milestone contracts above describe their historical
+scope; operational networking and production administrative integration remain
+future work.
