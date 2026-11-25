@@ -19,6 +19,8 @@ M3.5 supplies an opt-in dedicated-manager UID nftables IP egress deny profile;
 see [the firewall contract](../development/FIREWALL_ENFORCEMENT_M35.md).
 M3.6 adds test-only dual-namespace policy and packet fixtures; see
 [the fixture contract](../development/NETWORK_ISOLATION_FIXTURES_M36.md).
+M3.7 extends negative policy, packet and topology regression coverage; see
+[the adversarial qualification contract](../development/NETWORK_ADVERSARIAL_M37.md).
 Operational IP transport and target-host production firewall deployment remain unqualified.
 **Target:** Ubuntu 26.04 LTS AMD64; proposed v1.0.0 product architecture.
 **Traceability:** GitHub issue #2 / M0.2.

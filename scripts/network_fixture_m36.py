@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Chris Sutton
 # SPDX-License-Identifier: MIT
-"""Explicit administrator-only, disposable dual-namespace TCP policy fixture."""
+"""Explicit administrator-only, disposable dual-namespace M3.6/M3.7 fixture."""
 import argparse
 from contextlib import ExitStack
 import json
@@ -23,6 +23,10 @@ PORT = 37443
 PEERS = ('192.0.2.2', '192.0.2.3', '2001:db8:36::2', '2001:db8:36::3')
 CASES = tuple((address, port, address in (PEERS[0], PEERS[2]) and port == PORT)
               for address in PEERS for port in (PORT, PORT + 1))
+# Additional reachable, unapproved subnets (no gateway or external link).
+EXTRA_CASES = (('203.0.113.2', PORT, False), ('2001:db8:38::2', PORT, False))
+UDP_CASES = tuple((address, PORT) for address in (PEERS[0], PEERS[2],
+                  EXTRA_CASES[0][0], EXTRA_CASES[1][0]))
 TOKEN = b'ks36'
 
 
@@ -108,24 +112,36 @@ def peer(control, uid, gid):
     control.sendall(b'N')
     require(control.recv(1) == b'G', 'peer configuration not authorized')
     configure('ks36b', ('192.0.2.2/24', '192.0.2.3/24',
-                         '2001:db8:36::2/64', '2001:db8:36::3/64'))
+                         '2001:db8:36::2/64', '2001:db8:36::3/64',
+                         '203.0.113.2/24', '2001:db8:38::2/64'))
     drop_credentials(uid, gid)
     with ExitStack() as stack:
         listeners = []
-        for address, port, _ in CASES:
+        for address, port, _ in CASES + EXTRA_CASES:
             listener = stack.enter_context(socket.socket(
                 socket.AF_INET6 if ':' in address else socket.AF_INET, socket.SOCK_STREAM))
             listener.bind((address, port))
             listener.listen(4)
             listeners.append(listener)
+        datagrams = []
+        for address, port in UDP_CASES:
+            listener = stack.enter_context(socket.socket(
+                socket.AF_INET6 if ':' in address else socket.AF_INET, socket.SOCK_DGRAM))
+            listener.bind((address, port))
+            datagrams.append(listener)
         control.sendall(b'R')
         while True:
-            ready, _, _ = select.select([control, *listeners], [], [], 20)
+            ready, _, _ = select.select([control, *listeners, *datagrams], [], [], 20)
             require(bool(ready), 'peer idle deadline')
             if control in ready:
                 require(control.recv(1) == b'X', 'peer control interrupted')
                 return
             for listener in ready:
+                if listener in datagrams:
+                    message, sender = listener.recvfrom(len(TOKEN) + 1)
+                    require(message == TOKEN, 'unexpected fixture datagram')
+                    listener.sendto(TOKEN, sender)
+                    continue
                 client, _ = listener.accept()
                 with client:
                     client.settimeout(1)
@@ -151,7 +167,7 @@ with socket.socket(socket.AF_INET6 if ':' in address else socket.AF_INET, socket
 
 
 def probe(address, port, uid, gid, allowed):
-    require(any((address, port) == case[:2] for case in CASES), 'nonfixture endpoint')
+    require(any((address, port) == case[:2] for case in CASES + EXTRA_CASES), 'nonfixture endpoint')
     result = subprocess.run(['/usr/bin/python3', '-I', '-B', '-c', PROBE, address,
                              str(port), str(uid), str(gid)], user=uid, group=gid,
                             extra_groups=[], close_fds=True, env=ENV, capture_output=True,
@@ -159,20 +175,76 @@ def probe(address, port, uid, gid, allowed):
     require(result.returncode == (0 if allowed else 3), 'unexpected TCP probe result')
 
 
-def check_invalidation(binary, uid, gid):
-    with subprocess.Popen([str(binary), '--watch'], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE, user=uid, group=gid, extra_groups=[],
-                          close_fds=True, env=ENV) as watcher:
+UDP_PROBE = '''import os, socket, sys
+address, port, uid, gid = sys.argv[1:]
+assert os.getuid() == os.geteuid() == int(uid)
+assert os.getgid() == os.getegid() == int(gid) and not os.getgroups()
+with socket.socket(socket.AF_INET6 if ':' in address else socket.AF_INET, socket.SOCK_DGRAM) as s:
+    s.settimeout(1)
+    s.connect((address, int(port)))
+    try:
+        s.sendall(b'ks36')
+    except PermissionError:
+        sys.exit(3)  # Linux local-output drop may return EPERM.
+    try:
+        message = s.recv(5)
+    except TimeoutError:
+        sys.exit(3)
+    assert message == b'ks36'
+'''
+
+
+def udp_probe(address, port, uid, gid, allowed):
+    require((address, port) in UDP_CASES, 'nonfixture UDP endpoint')
+    result = subprocess.run(['/usr/bin/python3', '-I', '-B', '-c', UDP_PROBE, address,
+                             str(port), str(uid), str(gid)], user=uid, group=gid,
+                            extra_groups=[], close_fds=True, env=ENV, capture_output=True,
+                            timeout=4, check=False)
+    require(result.returncode == (0 if allowed else 3), f'unexpected UDP probe result for {address}:{port} (exit {result.returncode})')
+
+
+def run_binary(binary, uid, gid, mode):
+    subprocess.run([str(binary), mode], user=uid, group=gid, extra_groups=[],
+                   close_fds=True, env=ENV, timeout=10, check=True)
+
+
+def check_restoration(binary, uid, gid, scenario):
+    # Fixed commands only, called inside the already verified sender namespace.
+    mutations = {
+        'ipv4': ([IP, '-4', 'route', 'add', 'blackhole', '192.0.2.2/32'],
+                 [IP, '-4', 'route', 'del', 'blackhole', '192.0.2.2/32'], '--route-denied-v4'),
+        'ipv6': ([IP, '-6', 'route', 'add', 'blackhole', '2001:db8:36::2/128'],
+                 [IP, '-6', 'route', 'del', 'blackhole', '2001:db8:36::2/128'], '--route-denied-v6'),
+        'link': ([IP, 'link', 'set', 'dev', 'ks36a', 'down'],
+                 [IP, 'link', 'set', 'dev', 'ks36a', 'up'], None),
+    }
+    require(scenario in mutations, 'nonfixture topology mutation')
+    change, restore, mode = mutations[scenario]
+    with subprocess.Popen([str(binary), '--watch-restoration'], stdin=subprocess.PIPE,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, user=uid, group=gid,
+                          extra_groups=[], close_fds=True, env=ENV) as watcher:
         try:
             require(bool(select.select([watcher.stdout], [], [], 5)[0]) and
-                    watcher.stdout.readline() == b'READY\n', 'watcher did not become ready')
-            command([IP, 'link', 'set', 'dev', 'ks36a', 'down'])
+                    watcher.stdout.readline() == b'READY\n', 'restoration watcher not ready')
+            command(change)
+            if mode:
+                run_binary(binary, uid, gid, mode)
+            watcher.stdin.write(b'\n')
+            watcher.stdin.flush()
+            require(bool(select.select([watcher.stdout], [], [], 5)[0]) and
+                    watcher.stdout.readline() == b'INVALIDATED\n', 'change did not invalidate authority')
+            command(restore)
+            no_default()
+            # Same watcher, same generation: undoing the mutation must not rearm it.
             watcher.communicate(input=b'\n', timeout=5)
-            require(watcher.returncode == 0, 'topology change did not revoke fixture authority')
+            require(watcher.returncode == 0, 'restoration rearmed old authority')
         finally:
             if watcher.poll() is None:
                 watcher.kill()
                 watcher.wait(timeout=5)
+    if mode:
+        run_binary(binary, uid, gid, '--live')
+    print(f'M3.7 {scenario} change and sticky withdrawal after restoration: PASS', flush=True)
 
 
 def wait_peer(pid):
@@ -218,7 +290,8 @@ def execute(binary):
         require(ns_id(pid) not in (original, ns_id()), 'peer namespace not independent')
         command([IP, 'link', 'add', 'ks36a', 'type', 'veth', 'peer', 'name', 'ks36b'])
         command([IP, 'link', 'set', 'dev', 'ks36b', 'netns', str(pid)])
-        configure('ks36a', ('192.0.2.1/24', '2001:db8:36::1/64'))
+        configure('ks36a', ('192.0.2.1/24', '2001:db8:36::1/64',
+                            '203.0.113.1/24', '2001:db8:38::1/64'))
         parent.sendall(b'G')
         require(parent.recv(1) == b'R', 'peer listeners not ready')
         print('M3.6 two isolated namespaces and veth: ENTERED', flush=True)
@@ -228,6 +301,11 @@ def execute(binary):
         for address, port, _ in CASES:
             probe(address, port, service.pw_uid, service.pw_gid, True)
         print('M3.6 all eight dual-stack TCP baseline endpoints: PASS', flush=True)
+        for address, port, _ in EXTRA_CASES:
+            probe(address, port, service.pw_uid, service.pw_gid, True)
+        for address, port in UDP_CASES:
+            udp_probe(address, port, service.pw_uid, service.pw_gid, True)
+        print('M3.7 additional subnet and UDP baseline delivery: PASS', flush=True)
         profile = rules(service.pw_uid)
         command([NFT, '-c', '-f', '-'], profile)
         command([NFT, '-f', '-'], profile)
@@ -241,12 +319,30 @@ def execute(binary):
             require(after[selected] > before[selected], 'expected firewall counter did not advance')
             probe(address, port, control.pw_uid, control.pw_gid, True)
         print('M3.6 scoped test-only TCP allow/deny and control UID: PASS', flush=True)
+        for address, port, _ in EXTRA_CASES:
+            before = counters()
+            probe(address, port, service.pw_uid, service.pw_gid, False)
+            require(counters()[2] > before[2], 'additional subnet drop counter did not advance')
+            probe(address, port, control.pw_uid, control.pw_gid, True)
+        for address, port in UDP_CASES:
+            before = counters()
+            udp_probe(address, port, service.pw_uid, service.pw_gid, False)
+            require(counters()[2] > before[2], 'UDP drop counter did not advance')
+            udp_probe(address, port, control.pw_uid, control.pw_gid, True)
+        print('M3.7 additional subnet TCP and unexpected dual-stack UDP denial: PASS', flush=True)
         command([NFT, 'delete', 'table', 'inet', TABLE])
         require(all(set(item) == {'metainfo'} for item in
                     json.loads(command([NFT, '-j', 'list', 'tables']))['nftables']), 'rollback incomplete')
         for address, port, _ in CASES:
             probe(address, port, service.pw_uid, service.pw_gid, True)
-        check_invalidation(binary, uid, gid)
+        for address, port, _ in EXTRA_CASES:
+            probe(address, port, service.pw_uid, service.pw_gid, True)
+        for address, port in UDP_CASES:
+            udp_probe(address, port, service.pw_uid, service.pw_gid, True)
+        print('M3.7 additional subnet and UDP restored after rollback: PASS', flush=True)
+        for scenario in ('ipv4', 'ipv6', 'link'):
+            print(f'M3.7 topology scenario: {scenario}', flush=True)
+            check_restoration(binary, uid, gid, scenario)
         print('M3.6 live link-change authorization withdrawal: PASS', flush=True)
         parent.sendall(b'X')
         status = wait_peer(pid)
@@ -261,6 +357,7 @@ def execute(binary):
             except ProcessLookupError:
                 pass
             os.waitpid(pid, 0)
+    print('M3.7 adversarial live fixture: COMPLETED', flush=True)
     print('M3.6 isolated network fixture: COMPLETED', flush=True)
 
 

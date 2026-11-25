@@ -277,3 +277,11 @@ The local runner flag is `--network-fixture`; retain `--firewall-namespace` to
 repeat M3.5. No external service or host firewall mutation is required. See the
 [M3.6 fixture contract](NETWORK_ISOLATION_FIXTURES_M36.md) for prerequisites,
 limits and cleanup. A failed or unexecuted live test is not enforcement evidence.
+
+### M3.7 Adversarial network-boundary qualification
+
+`knetsentry_network_adversarial_boundary` is mandatory in all seven presets.
+M3.7 inventories: desktop 38/33 (normal/sanitized), core-only 26/27.
+Run `python3 -B scripts/verify_m37_adversarial.py` for offline fixture checks.
+The existing explicit M3.6 live command now includes M3.7 packet and topology
+regressions; see [M3.7 qualification](NETWORK_ADVERSARIAL_M37.md).
