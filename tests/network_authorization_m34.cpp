@@ -3,6 +3,7 @@
 #include "knetsentry/core/network_authorization.hpp"
 
 #include <array>
+#include <bit>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -40,7 +41,7 @@ void lifecycle_tests() {
     denied(gate, 1, State::ConfigurationUnavailable);
     check(activate(gate, 1) == State::StaleGeneration, "failed revision consumed");
     check(activate(gate, 2, Config::Invalid) == State::InvalidConfiguration, "invalid configuration");
-    check(activate(gate, 3, static_cast<Config>(255)) == State::InvalidConfiguration,
+    check(activate(gate, 3, std::bit_cast<Config>(std::uint8_t{255})) == State::InvalidConfiguration,
         "unknown configuration classification");
     check(gate.activate(Config::Validated, 99, 4, approvals, {}, bindings) == State::InvalidPolicy,
         "unknown policy schema");
