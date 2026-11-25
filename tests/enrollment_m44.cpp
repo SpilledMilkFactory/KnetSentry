@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #include <knetsentry/core/tls_transport.hpp>
 #include <knetsentry/core/enrollment.hpp>
+#include <knetsentry/core/agent_health.hpp>
 #include <filesystem>
 #include <chrono>
 #include <thread>
@@ -383,12 +384,176 @@ void expiry(Fixture& fixture) {
     require(!Session::create(creds), "not-yet-valid credential accepted");
     std::cout << "M4.5 certificate expiration during TLS, buffered plaintext denial and future validity: PASS\n";
 }
+void heartbeat(Fixture& fixture) {
+    namespace health = knetsentry::agent_health;
+    namespace wire = knetsentry::core::agent_protocol;
+    using H = health::Health;
+    Store store;
+    enroll::EndpointId id{}; id.at(0) = 1;
+    auto unknown = id; unknown.at(0) = 2;
+    require(enroll::initialize(store.fd) == E::Ok &&
+        enroll::approve(store.fd, id, fixture.agent_pin) == E::Ok, "heartbeat approval");
+    health::Tracker tracker(store.fd, id);
+    health::Tracker stranger(store.fd, unknown);
+    auto a = Session::create(fixture.a()); auto m = Session::create(fixture.m());
+    require(a && m && !tracker.attach(std::move(m), 0), "unauthenticated attachment");
+    m = Session::create(fixture.m());
+    require(m && connect(*a, *m) && !stranger.attach(std::move(m), 0) &&
+        stranger.poll(0).health == H::Untrusted, "unenrolled agent accepted");
+    auto start = [&](health::Millis now) {
+        a = Session::create(fixture.a()); m = Session::create(fixture.m());
+        require(a && m && connect(*a, *m) && tracker.attach(std::move(m), now), "heartbeat attach");
+        require(tracker.poll(now).health == H::Awaiting && !tracker.poll(now).counters, "initial health");
+    };
+    auto transfer = [&](health::Millis now) {
+        std::array<unsigned char, max_ciphertext_chunk> buffer{};
+        for (int i = 0; i < 1024; ++i) {
+            const auto out = a->drain(std::span(buffer).first(17));
+            if (out.status == Status::WouldBlock) { return; }
+            require(out.status == Status::Ok, "heartbeat ciphertext output");
+            const auto in = tracker.ingest(std::span(buffer).first(out.bytes), now);
+            require(in.status == Status::Ok && in.bytes == out.bytes, "heartbeat ciphertext input");
+        }
+        throw std::runtime_error("heartbeat transfer budget");
+    };
+    auto send_raw = [&](std::span<const std::byte> bytes, health::Millis now) {
+        const auto sent = a->write({reinterpret_cast<const unsigned char*>(bytes.data()), bytes.size()});
+        require(sent.status == Status::Ok && sent.bytes == bytes.size(), "fixture write");
+        transfer(now);
+    };
+    start(10);
+    {
+        health::Reporter reporter(*a);
+        require(reporter.send(fixture.manager_pin, 10, {100, 0}) == Status::Ok, "reporter hello");
+        transfer(10);
+        require(tracker.poll(10).health == H::Awaiting, "hello marked healthy");
+        require(reporter.send(fixture.manager_pin, 10, {100, 0}) == Status::Ok, "first report");
+        transfer(10);
+        auto snap = tracker.poll(10);
+        require(snap.health == H::Healthy && snap.counters && snap.counters->uptime_ms == 100 &&
+            snap.counters->dropped_records == 0, "healthy report");
+        require(reporter.send(fixture.manager_pin, 30009, {200, 1}) == Status::NotReady, "early report");
+        require(reporter.send(fixture.manager_pin, 30010, {200, 1}) == Status::Ok, "second report");
+        transfer(30010);
+        snap = tracker.poll(30010);
+        require(snap.health == H::Degraded && snap.counters && snap.counters->dropped_records == 1, "degraded report");
+    }
+    auto duplicate_a = Session::create(fixture.a()); auto duplicate_m = Session::create(fixture.m());
+    require(duplicate_a && duplicate_m && connect(*duplicate_a, *duplicate_m) &&
+        !tracker.attach(std::move(duplicate_m), 30011) && tracker.poll(30011).health == H::Degraded,
+        "competing connection displaced live health");
+    require(tracker.poll(120009).health == H::Degraded && tracker.poll(120010).health == H::Missing &&
+        !tracker.poll(120010).counters, "missing deadline or stale metrics");
+    std::cout << "M4.6 actual authenticated reporting, cadence, degradation and missing deadline: PASS\n";
+
+    const auto hello = wire::encode({wire::Kind::Hello, 1, 0, 0});
+    const auto beat = wire::encode({wire::Kind::Heartbeat, 2, 1, 0});
+    start(120011);
+    send_raw(std::span(hello.bytes).first(7), 120011);
+    require(tracker.poll(120011).health == H::Awaiting, "partial hello");
+    std::array<std::byte, wire::header_size + wire::max_frame_size> combined{};
+    std::copy_n(hello.bytes.begin() + 7, hello.size - 7, combined.begin());
+    std::copy_n(beat.bytes.begin(), beat.size, combined.begin() + static_cast<std::ptrdiff_t>(hello.size - 7));
+    send_raw(std::span(combined).first(hello.size - 7 + beat.size), 120012);
+    require(tracker.poll(120012).health == H::Healthy, "fragmented/coalesced frames");
+    send_raw(std::span(beat.bytes).first(beat.size), 120013);
+    require(tracker.poll(120013).health == H::ProtocolError && !tracker.poll(120013).counters,
+        "duplicate sequence refreshed health");
+    start(120014);
+    send_raw(std::span(beat.bytes).first(beat.size), 120014);
+    require(tracker.poll(120014).health == H::ProtocolError, "heartbeat without hello");
+    start(120015);
+    send_raw(std::span(hello.bytes).first(hello.size), 120015);
+    require(tracker.poll(120015).health == H::Awaiting, "hello only");
+    require(tracker.poll(210015).health == H::Missing, "hello-only missing deadline");
+    start(210016);
+    auto malformed = hello; malformed.bytes[8] = std::byte{0xff};
+    send_raw(std::span(malformed.bytes).first(malformed.size), 210016);
+    require(tracker.poll(210016).health == H::ProtocolError, "oversized frame");
+    start(210017);
+    send_raw(std::span(hello.bytes).first(hello.size), 210017);
+    (void)tracker.poll(210017);
+    send_raw(std::span(beat.bytes).first(beat.size), 210018);
+    require(tracker.poll(210018).health == H::Healthy, "reconnect report");
+    const auto regressed = wire::encode({wire::Kind::Heartbeat, 3, 0, 0});
+    send_raw(std::span(regressed.bytes).first(regressed.size), 210019);
+    require(tracker.poll(210019).health == H::ProtocolError, "counter regression");
+    start(210020);
+    send_raw(std::span(hello.bytes).first(hello.size), 210020);
+    (void)tracker.poll(210020);
+    send_raw(std::span(beat.bytes).first(beat.size), 210021);
+    require(tracker.poll(210021).health == H::Healthy, "fresh report");
+    require(tracker.poll(210020).health == H::Untrusted && !tracker.poll(210021).counters, "clock regression");
+    start(210022);
+    {
+        health::Reporter denied(*a);
+        require(denied.send(std::nullopt, 210022, {}) == Status::Failed && a->state() == State::Failed,
+            "reporter accepted withdrawn manager approval");
+    }
+    tracker.disconnected();
+    require(tracker.poll(210022).health == H::Missing && !tracker.poll(210022).counters, "transport loss");
+    start(210022);
+    require(flock(store.fd, LOCK_EX | LOCK_NB) == 0, "registry lock fixture");
+    require(tracker.poll(210022).health == H::Untrusted && !tracker.poll(210022).counters, "busy registry accepted");
+    require(flock(store.fd, LOCK_UN) == 0, "registry unlock fixture");
+    start(210022);
+    require(enroll::rotate(store.fd, id, fixture.agent_pin, fixture.other_pin) == E::Ok &&
+        tracker.poll(210023).health == H::Untrusted, "idle rotation revalidation");
+    a = Session::create(fixture.a()); m = Session::create(fixture.m());
+    require(a && m && connect(*a, *m) && !tracker.attach(std::move(m), 210024), "retired key reattached");
+    const auto replacement_cert = certificate(fixture.other.get(), fixture.root.get(), fixture.ca.get(),
+        "replacement", "clientAuth");
+    const auto replacement_der = der(replacement_cert.get());
+    auto replacement_a = fixture.a(); replacement_a.key = fixture.other.get(); replacement_a.certificate = replacement_der;
+    auto replacement_m = fixture.m(); replacement_m.peer_pin = fixture.other_pin;
+    a = Session::create(replacement_a); m = Session::create(replacement_m);
+    require(a && m && connect(*a, *m) && tracker.attach(std::move(m), 210025), "replacement attachment");
+    send_raw(std::span(hello.bytes).first(hello.size), 210025);
+    (void)tracker.poll(210025);
+    send_raw(std::span(beat.bytes).first(beat.size), 210026);
+    require(tracker.poll(210026).health == H::Healthy, "replacement report");
+    const auto queued = wire::encode({wire::Kind::Heartbeat, 3, 2, 0});
+    send_raw(std::span(queued.bytes).first(queued.size), 210027);
+    require(enroll::revoke(store.fd, id, fixture.other_pin) == E::Ok &&
+        tracker.poll(210027).health == H::Untrusted && !tracker.poll(210027).counters,
+        "revoked agent updated buffered health");
+    std::cout << "M4.6 framing, ordering, timeout, clock and current enrollment rejection: PASS\n";
+
+    health::Reconnect retry;
+    using P = health::Reconnect::Phase;
+    const auto first = retry.begin(0);
+    require(first && !retry.begin(0) && retry.phase(9999) == P::Connecting &&
+        retry.phase(10000) == P::Waiting && !retry.connected(10000, *first) && !retry.begin(10999), "attempt timeout");
+    const auto second = retry.begin(11000);
+    require(second && *second != *first && !retry.connected(11001, *first), "stale attempt completion");
+    retry.lost(11001, *first);
+    require(retry.phase(11001) == P::Connecting && retry.connected(11001, *second), "stale loss affected current attempt");
+    retry.lost(11002, *second);
+    require(!retry.begin(13001), "second cooldown");
+    health::Millis now = 13002;
+    for (const health::Millis delay : {4000U, 8000U, 16000U, 32000U, 60000U, 60000U}) {
+        const auto attempt = retry.begin(now);
+        require(attempt.has_value(), "retry not due");
+        retry.lost(now, *attempt);
+        require(!retry.begin(now + delay - 1), "backoff too short");
+        now += delay;
+    }
+    const auto stable = retry.begin(now);
+    require(stable && retry.connected(now, *stable), "stable connection");
+    now += health::missing_after;
+    retry.lost(now, *stable);
+    require(!retry.begin(now + 999) && retry.begin(now + 1000).has_value() &&
+        retry.phase(now) == P::Blocked && !retry.begin(now + 100000), "stable reset or clock regression");
+    std::cout << "M4.6 bounded reconnect, stale attempt rejection and clock regression: PASS\n";
+}
 } // namespace
 int main(int argc, char** argv) {
     try {
         Fixture fixture;
         if (argc == 2 && std::string_view(argv[1]) == "--lifecycle") {
             lifecycle(fixture); manager_lifecycle(fixture); expiry(fixture);
+        } else if (argc == 2 && std::string_view(argv[1]) == "--heartbeat") {
+            heartbeat(fixture);
         } else if (argc == 1) {
             storage(fixture); malformed_registry(fixture); capacity(); admission(fixture);
         } else { return 2; }

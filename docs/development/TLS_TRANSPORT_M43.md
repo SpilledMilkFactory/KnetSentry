@@ -113,3 +113,9 @@ rotation/revocation policy, persistent retired identities and TLS validity
 rechecks. The original milestone contracts above describe their historical
 scope; operational networking and production administrative integration remain
 future work.
+
+## M4.6 extension
+
+See [agent heartbeat and health](AGENT_HEALTH_M46.md) for offline authenticated
+reporting, current enrollment revalidation and bounded reconnect scheduling.
+Operational network adapters remain future work.

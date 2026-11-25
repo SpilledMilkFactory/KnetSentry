@@ -62,6 +62,10 @@ revocation, established-session expiry and terminal admission revalidation.
 Production issuer, trusted time, manager trust distribution and operational
 session invalidation remain unqualified. No threat is closed.
 
+**M4.6 implementation:** [agent heartbeat and health](../development/AGENT_HEALTH_M46.md)
+adds partial TV-06/TV-07/TV-13 evidence for authenticated reports, bounded framing,
+current enrollment, missing/degraded health and retry scheduling. No threat is closed.
+
 | Test ID | Expected observable security outcome | Planned owner | Proposed evidence |
 | --- | --- | --- | --- |
 | `TV-01` | Approved segment supports agentless observation; unapproved interface/payload retention denied; passive discovery never grants management | M3.1 / M5.10 | Approved/denied scope fixture, consent and permission logs |

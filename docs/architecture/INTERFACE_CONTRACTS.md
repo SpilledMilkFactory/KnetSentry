@@ -168,3 +168,7 @@ M4.5 adds [credential lifecycle](../development/CREDENTIAL_LIFECYCLE_M45.md)
 for explicit new-key rotation, permanent revocation, current certificate
 validity and terminal revalidation. Future operational adapters must use the
 current approved identity and revalidate before application processing.
+
+M4.6 adds [authenticated agent health](../development/AGENT_HEALTH_M46.md) for
+I-07/I-08: KSAP framing over current TLS/enrollment, explicit missing/degraded
+state and reconnect scheduling. No operational ingestion authority is granted.

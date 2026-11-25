@@ -52,3 +52,11 @@ knetsentry_apply_project_options(knetsentry_enrollment)
 add_executable(knetsentry-enrollment enrollment_admin.cpp)
 target_link_libraries(knetsentry-enrollment PRIVATE KnetSentry::Enrollment)
 knetsentry_apply_project_options(knetsentry-enrollment)
+
+# M4.6: bounded agent reporting and health admission; no production linkage.
+add_library(knetsentry_agent_health STATIC agent_health.cpp)
+add_library(KnetSentry::AgentHealth ALIAS knetsentry_agent_health)
+target_compile_features(knetsentry_agent_health PUBLIC cxx_std_23)
+target_include_directories(knetsentry_agent_health PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_link_libraries(knetsentry_agent_health PUBLIC KnetSentry::Enrollment KnetSentry::Core)
+knetsentry_apply_project_options(knetsentry_agent_health)
