@@ -119,6 +119,42 @@ void route_tests() {
     check(detail::direct_route(v6prefix, v6, 3, true), "non-byte IPv6 prefix");
     check(!detail::direct_route(v6prefix, address("2001:db8:abcd:1280::1"), 3, true), "IPv6 prefix boundary");
     check(!detail::direct_route(v6prefix, target, 3, true), "family mismatch");
+    // Kernels with CONFIG_IPV6_SUBTREES report an unspecified source echo
+    // for effective IPv6 lookups. Reproduce both supported reply shapes.
+    const auto zero = address("::");
+    const auto with_source = [&](Buffer buffer, unsigned char bits, const detail::Address& source,
+                                 std::uint16_t type = RTA_SRC) {
+        rtmsg header{};
+        std::memcpy(&header, buffer.data(), sizeof(header));
+        header.rtm_src_len = bits;
+        std::memcpy(buffer.data(), &header, sizeof(header));
+        attr(buffer, type, detail::Bytes{source.bytes}.first(source.size));
+        return buffer;
+    };
+    const auto v6host = route_fixture(v6, 128);
+    const auto echo = with_source(v6host, 128, zero);
+    check(detail::direct_route(echo, v6, 3, false), "IPv6 unspecified effective source echo");
+    check(!detail::direct_route(echo, v6, 3, true), "source echo forbidden in FIB lookup");
+    check(!detail::direct_route(with_source(v6prefix, 128, zero), v6, 3, true), "source-specific FIB prefix");
+    check(!detail::direct_route(with_source(v6host, 128, v6), v6, 3, false), "nonzero effective source");
+    check(!detail::direct_route(with_source(v6host, 0, zero), v6, 3, false), "source echo missing length");
+    check(!detail::direct_route(with_source(v6host, 64, zero), v6, 3, false), "source echo partial length");
+    check(!detail::direct_route(with_source(v6host, 128, address("0.0.0.0")), v6, 3, false), "short source echo");
+    check(!detail::direct_route(with_source(echo, 128, zero), v6, 3, false), "duplicate source echo");
+    check(!detail::direct_route(with_source(v6host, 128, zero,
+        static_cast<std::uint16_t>(RTA_SRC | NLA_F_NESTED)), v6, 3, false), "flagged source echo");
+    check(!detail::direct_route(with_source(host, 32, address("0.0.0.0")), target, 3, false), "IPv4 source echo");
+    auto missing_source = v6host;
+    rtmsg header{};
+    std::memcpy(&header, missing_source.data(), sizeof(header));
+    header.rtm_src_len = 128;
+    std::memcpy(missing_source.data(), &header, sizeof(header));
+    check(!detail::direct_route(missing_source, v6, 3, false), "source length without echo");
+    auto echo_gateway = echo;
+    attr(echo_gateway, RTA_GATEWAY, detail::Bytes{v6.bytes});
+    check(!detail::direct_route(echo_gateway, v6, 3, false), "echo cannot rescue gateway");
+    check(!detail::direct_route(echo, v6, 4, false), "echo cannot rescue wrong output interface");
+    if (failures == 0) { std::cout << "M3.3 IPv6 effective source-echo compatibility fixtures: PASS\n"; }
     check(detail::direct_route(route_fixture(address("fe80::"), 64), address("fe80::10"), 3, true),
           "link-local route fixture");
     check(!detail::direct_route(route_fixture(address("::"), 0), v6, 3, true), "IPv6 default route");

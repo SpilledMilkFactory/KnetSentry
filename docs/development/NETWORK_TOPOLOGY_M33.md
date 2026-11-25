@@ -54,6 +54,13 @@ result is cached. A final notification check occurs after all kernel queries.
   (length <=30) are also denied. Reject gateway, multipath, nexthop object,
   encapsulation, source-specific, unknown route attributes and unsupported
   route flags/types. Known non-path metadata is ignored after envelope checks.
+  Effective IPv6 lookups without a requested source may report an unspecified
+  source echo on kernels built with `CONFIG_IPV6_SUBTREES`. Only a single
+  unflagged 16-byte all-zero `RTA_SRC` with source length 128 is recognized,
+  and only for effective IPv6 replies. The source-free form is also supported.
+  FIB replies must remain source-free; actual source-specific routes, nonzero
+  sources, malformed or duplicate echoes, and all other unsupported evidence
+  remain denied. All other route and attachment checks still apply.
 - Bounded single-reply netlink queries, kernel sender check, exact sequence
   correlation, truncation/error rejection, and 250 ms poll per request (up to
   three requests per eligible evaluation). No socket in AF_INET/AF_INET6, DNS,

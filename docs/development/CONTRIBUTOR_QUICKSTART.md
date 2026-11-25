@@ -264,3 +264,16 @@ requires the dedicated account, nftables, iproute2, IPv6 and a fresh privileged
 network namespace. It must pass before claiming kernel firewall qualification;
 no host rule installation is performed by it. See the
 [M3.5 firewall contract](FIREWALL_ENFORCEMENT_M35.md) for deployment and rollback.
+
+### M3.6 Isolated network policy fixtures
+
+`knetsentry_network_isolation_fixture` is mandatory in all seven presets.
+M3.6 inventories: desktop 37/32 (normal/sanitized), core-only 25/26.
+`python3 -B scripts/verify_m36_network_fixture.py` checks the offline fixture
+contract. Explicit live qualification uses `sudo /usr/bin/python3 -I -B
+scripts/network_fixture_m36.py --binary
+build/presets/linux-release/tests/knetsentry_network_isolation_test`.
+The local runner flag is `--network-fixture`; retain `--firewall-namespace` to
+repeat M3.5. No external service or host firewall mutation is required. See the
+[M3.6 fixture contract](NETWORK_ISOLATION_FIXTURES_M36.md) for prerequisites,
+limits and cleanup. A failed or unexecuted live test is not enforcement evidence.
