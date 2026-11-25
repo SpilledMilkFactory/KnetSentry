@@ -9,11 +9,51 @@ import signal
 import subprocess
 import sys
 import tempfile
+import time
+
+
+READY = b'knetsentry-agent: ready; collectors=0; monitoring=unavailable; network=disabled\n'
+STARTUP_ERRORS = {
+    b'knetsentry-agent: privilege policy rejected\n',
+    b'knetsentry-agent: signal setup failed\n',
+    *(b'knetsentry-agent: privilege policy rejected: ' + reason + b'\n' for reason in (
+        b'identity query failed', b'zero or mismatched identity', b'capability query failed',
+        b'active capability authority', b'no-new-privileges setup failed',
+        b'inheritable capability removal failed', b'capability readback failed',
+        b'nonempty capability readback')),
+}
 
 
 def require(ok, message):
     if not ok:
         raise RuntimeError(message)
+
+
+def process_status(pid):
+    return dict(line.split(':', 1) for line in
+                Path(f'/proc/{pid}/status').read_text().splitlines() if ':' in line)
+
+
+def expect_ready(proc):
+    # A readable pipe can indicate EOF or only a partial line. Use bounded
+    # unbuffered reads so the timeout covers the whole readiness message.
+    deadline = time.monotonic() + 5
+    received = bytearray()
+    while len(received) < len(READY):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0 or not select.select([proc.stdout], [], [], remaining)[0]:
+            raise RuntimeError(f'readiness timeout ({len(received)} bytes)')
+        chunk = os.read(proc.stdout.fileno(), len(READY) - len(received))
+        if not chunk:
+            # EOF without readiness: capture the exit code and known fixed
+            # startup diagnostics, never reflect arbitrary child output.
+            _, err = proc.communicate(timeout=5)
+            diagnostic = err.decode('ascii').strip() if err in STARTUP_ERRORS else f'unrecognized stderr ({len(err)} bytes)'
+            raise RuntimeError(f'agent exited before readiness: exit={proc.returncode}; '
+                               f'stdout={len(received)} bytes; {diagnostic}')
+        received.extend(chunk)
+        require(READY.startswith(received), 'unexpected readiness bytes')
+    require(received == READY, 'unexpected readiness')
 
 
 def main():
@@ -27,19 +67,21 @@ def main():
                 result.stderr == b'knetsentry-agent: configuration rejected\n',
                 'unsafe configuration accepted or reflected')
     require(os.getuid() != 0 and os.getgid() != 0, 'positive qualification requires ordinary user')
+    caller = process_status(os.getpid())
+    # Only capability masks are logged, never the host inventory or credentials.
+    print('M5.1 caller capability masks: ' + ' '.join(
+        f'{field}={int(caller[field], 16):016x}' for field in ('CapInh', 'CapPrm', 'CapEff', 'CapAmb')), flush=True)
     with tempfile.TemporaryDirectory(prefix='ks-agent-') as directory:
         for sig in (signal.SIGTERM, signal.SIGINT):
             with subprocess.Popen([binary, *args], cwd=directory, stdin=subprocess.DEVNULL,
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0) as proc:
                 try:
-                    require(select.select([proc.stdout], [], [], 5)[0], 'readiness timeout')
-                    require(proc.stdout.readline() == b'knetsentry-agent: ready; collectors=0; monitoring=unavailable; network=disabled\n',
-                            'unexpected readiness')
-                    status = dict(line.split(':', 1) for line in Path(f'/proc/{proc.pid}/status').read_text().splitlines() if ':' in line)
+                    expect_ready(proc)
+                    status = process_status(proc.pid)
                     for field, expected in (('Uid', os.getuid()), ('Gid', os.getgid())):
                         require([int(x) for x in status[field].split()] == [expected] * 4, 'identity mismatch')
                     for field in ('CapEff', 'CapPrm', 'CapInh', 'CapAmb'):
-                        require(int(status[field], 16) == 0, 'capability authority present')
+                        require(int(status[field], 16) == 0, f'capability authority present: {field}')
                     require(status['NoNewPrivs'].strip() == '1' and status['Umask'].strip() == '0077',
                             'runtime privilege/umask mismatch')
                     fds = Path(f'/proc/{proc.pid}/fd')
@@ -47,12 +89,19 @@ def main():
                     require(proc.poll() is None, 'agent not independently running')
                     proc.send_signal(sig)
                     out, err = proc.communicate(timeout=5)
-                    require(proc.returncode == 0 and out == b'knetsentry-agent: stopped\n' and not err, 'unclean shutdown')
+                    require(proc.returncode == 0 and out == b'knetsentry-agent: stopped\n' and not err,
+                            f'unclean shutdown: exit={proc.returncode}; stdout={len(out)} bytes; stderr={len(err)} bytes')
                     require(not list(Path(directory).iterdir()), 'unexpected filesystem writes')
                 finally:
                     if proc.poll() is None:
                         proc.kill()
                         proc.communicate(timeout=5)
+    after = process_status(os.getpid())
+    fields = ('CapInh', 'CapPrm', 'CapEff', 'CapAmb')
+    require(all(int(after[field], 16) == int(caller[field], 16) for field in fields),
+            'caller capability masks changed')
+    if int(caller['CapInh'], 16) != 0 and all(int(caller[field], 16) == 0 for field in fields[1:]):
+        print('M5.1 inherited-only capability removal with unchanged caller: PASS')
     print('M5.1 strict configuration, independent process, identity, empty capabilities, no-new-privileges, descriptors and SIGTERM/SIGINT: PASS')
 
 

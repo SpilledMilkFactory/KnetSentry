@@ -38,8 +38,14 @@ implementations must define cancellation and resource limits before activation.
 ## Privilege separation
 
 C-08/P-08 runs unprivileged. Startup rejects zero or mismatched real/effective/
-saved UID/GID, and nonempty effective, permitted or inheritable capabilities;
-sets and verifies Linux no-new-privileges, and sets umask 0077. SIGINT/SIGTERM
+saved UID/GID, and nonempty effective or permitted capabilities. An ordinary
+login can carry inheritable-only capability bits. The agent sets and verifies
+Linux no-new-privileges, removes any inheritable-only bits with a zero-only
+capability update, and reads back all capability words to require empty
+effective, permitted and inheritable sets before readiness. Ambient bits are
+a subset of permitted and inheritable bits and therefore must also be empty.
+A failed query, restriction, removal or readback rejects startup with exit 3
+and a fixed reason, never a caller-controlled value. The agent sets umask 0077. SIGINT/SIGTERM
 are blocked before readiness and consumed synchronously. There is no root
 operation, helper invocation, IPC endpoint, socket creation or file creation.
 This is an application startup policy, not a sandbox: inherited descriptors,
@@ -67,6 +73,15 @@ configuration, inspects actual Linux process identity, capabilities, no-new-priv
 umask and open descriptors, exercises SIGTERM and SIGINT and checks no working
 directory writes. It requires an ordinary non-root user; root-only negative
 qualification may be performed separately. Tests use no live endpoint evidence.
+Readiness is checked with bounded reads and reports early child exit status
+and recognized fixed startup diagnostics; the caller capability masks are
+reported for environment diagnosis. The original target-host run failed only
+the runtime CTest in all seven presets and the explicit verbose repetition
+(87 PASS, 8 FAIL, 3 SKIPPED, 0 BLOCKED); privileged gates were withheld.
+An inheritable-only launch reproduced the original rejection in a controlled
+fixture. The original log did not identify the exact privilege failure on the
+target host. The corrected process must still expose zero CapEff, CapPrm,
+CapInh and CapAmb, without changing the caller capability sets.
 The two tests are mandatory in all seven presets. No production service sandbox,
 helper privileges, operational networking or telemetry qualification is claimed.
 Target-host and hosted acceptance are pending.

@@ -9,7 +9,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
 M4.8 is qualified and merged. M5.1 introduces an independent lifecycle-only
-endpoint agent; qualification is pending.
+endpoint agent; qualification is pending. The initial M5.1 runtime test failed
+in all seven configurations and its verbose repetition (87 PASS, 8 FAIL,
+3 SKIPPED, 0 BLOCKED). The follow-up removes inheritable-only capabilities
+before readiness and provides actionable startup diagnostics; target-host
+requalification is required.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today

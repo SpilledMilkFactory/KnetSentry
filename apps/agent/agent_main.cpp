@@ -12,29 +12,56 @@
 #include <unistd.h>
 
 namespace {
-[[nodiscard]] bool restrict_privileges() noexcept {
+// Returns a fixed diagnostic on failure; no caller-controlled values are logged.
+[[nodiscard]] const char* restrict_privileges() noexcept {
     uid_t real{}, effective{}, saved{};
     gid_t group{}, effective_group{}, saved_group{};
     if (::getresuid(&real, &effective, &saved) != 0 ||
-        ::getresgid(&group, &effective_group, &saved_group) != 0 ||
-        real == 0 || effective != real || saved != real ||
+        ::getresgid(&group, &effective_group, &saved_group) != 0) {
+        return "identity query failed";
+    }
+    if (real == 0 || effective != real || saved != real ||
         group == 0 || effective_group != group || saved_group != group) {
-        return false;
+        return "zero or mismatched identity";
     }
     __user_cap_header_struct header{_LINUX_CAPABILITY_VERSION_3, 0};
     std::array<__user_cap_data_struct, _LINUX_CAPABILITY_U32S_3> data{};
-    if (::syscall(SYS_capget, &header, data.data()) != 0) { return false; }
+    if (::syscall(SYS_capget, &header, data.data()) != 0) {
+        return "capability query failed";
+    }
+    bool inherited = false;
     for (const auto& word : data) {
-        if (word.effective != 0 || word.permitted != 0 || word.inheritable != 0) {
-            return false;
+        if (word.effective != 0 || word.permitted != 0) {
+            return "active capability authority";
+        }
+        inherited = inherited || word.inheritable != 0;
+    }
+    if (::prctl(PR_SET_NO_NEW_PRIVS, 1L, 0L, 0L, 0L) != 0 ||
+        ::prctl(PR_GET_NO_NEW_PRIVS, 0L, 0L, 0L, 0L) != 1) {
+        return "no-new-privileges setup failed";
+    }
+    // Login environments may carry inheritable-only bits. Remove, never grant,
+    // capabilities. Ambient bits are necessarily a subset of permitted and
+    // inheritable bits, so an empty permitted set also excludes ambient bits.
+    if (inherited) {
+        data = {};
+        if (::syscall(SYS_capset, &header, data.data()) != 0) {
+            return "inheritable capability removal failed";
         }
     }
-    return ::prctl(PR_SET_NO_NEW_PRIVS, 1L, 0L, 0L, 0L) == 0 &&
-        ::prctl(PR_GET_NO_NEW_PRIVS, 0L, 0L, 0L, 0L) == 1;
+    if (::syscall(SYS_capget, &header, data.data()) != 0) {
+        return "capability readback failed";
+    }
+    for (const auto& word : data) {
+        if (word.effective != 0 || word.permitted != 0 || word.inheritable != 0) {
+            return "nonempty capability readback";
+        }
+    }
+    return nullptr;
 }
 int run() {
-    if (!restrict_privileges()) {
-        std::cerr << "knetsentry-agent: privilege policy rejected\n";
+    if (const auto* reason = restrict_privileges(); reason != nullptr) {
+        std::cerr << "knetsentry-agent: privilege policy rejected: " << reason << '\n';
         return 3;
     }
     ::umask(0077);
