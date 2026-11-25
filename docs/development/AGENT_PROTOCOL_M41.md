@@ -128,3 +128,7 @@ counter regressions and sticky closure are checked without sockets or privileges
 This is deterministic regression coverage, not exhaustive fuzzing or a TLS
 security assessment. See [logical interfaces](../architecture/INTERFACE_CONTRACTS.md)
 and [current status](../PROJECT_STATUS.md).
+
+[M4.4 explicit enrollment](ENDPOINT_ENROLLMENT_M44.md) adds an offline ID-to-pin
+registry and TLS-backed admission. KSAP payloads remain untrusted reported data;
+no wire field may grant or modify enrollment.

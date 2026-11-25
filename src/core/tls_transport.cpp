@@ -187,6 +187,10 @@ std::unique_ptr<Session> Session::create(const Credentials& credentials) noexcep
 }
 
 State Session::state() const noexcept { return impl_->state; }
+std::optional<identity::Fingerprint> Session::authenticated_agent() const noexcept {
+    if (impl_->state != State::Trusted || impl_->peer_role != Role::Agent || !impl_->peer_verified) { return {}; }
+    return impl_->peer_pin;
+}
 Status Session::handshake() noexcept {
     auto& s = *impl_;
     if (s.expired() || s.state == State::Failed) { return Status::Failed; }

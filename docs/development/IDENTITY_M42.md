@@ -108,3 +108,7 @@ verification. Test fixtures are destroyed on normal/handled
 failure; a hard kill may leave a private temporary directory. No private key
 bytes or certificate contents are printed. No live TLS or revocation coverage
 is claimed. See [current status](../PROJECT_STATUS.md).
+
+[M4.4 explicit enrollment](ENDPOINT_ENROLLMENT_M44.md) binds an independently
+approved public-key fingerprint to an administrator-assigned endpoint ID.
+Certificate validation alone still does not establish enrollment.

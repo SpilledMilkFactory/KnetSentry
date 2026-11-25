@@ -154,7 +154,8 @@ if args.build_dir:
         except (ValueError, TypeError) as exc:
             ERRORS.append(f"invalid compilation database: {exc}")
             commands = []
-        source_names = ("build_info.cpp", "core_smoke.cpp", "lifecycle.cpp", "main.cpp")
+        source_names = ("build_info.cpp", "core_smoke.cpp", "lifecycle.cpp", "main.cpp",
+                        "enrollment.cpp", "enrollment_admin.cpp", "enrollment_m44.cpp")
         for filename in source_names:
             entries = [item for item in commands if Path(item["file"]).name == filename]
             require(len(entries) >= 1, f"no actual compile command for {filename}")
@@ -182,7 +183,9 @@ if args.build_dir:
             for flag in ("-z,relro", "-z,now"):
                 require(flag in ninja_text, f"Release linker flags missing {flag}")
         executables = [directory / "tests/knetsentry_core_smoke",
-                       directory / "apps/manager/knetsentryd"]
+                       directory / "apps/manager/knetsentryd",
+                       directory / "src/core/knetsentry-enrollment",
+                       directory / "tests/knetsentry_enrollment_test"]
         if desktop:
             executables.append(directory / "apps/desktop/knetsentry")
         for exe in executables:

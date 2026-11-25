@@ -277,3 +277,10 @@ certificates using the system shared OpenSSL 3.5.x libcrypto. See the
 both sanitizers. The actual encrypted exchange and negative peer fixtures
 need no network or credentials. Inventories: desktop 41/36, core-only 29/30
 (normal/sanitized). See [transport contract](TLS_TRANSPORT_M43.md).
+
+## M4.4 explicit enrollment
+
+Both `knetsentry_enrollment_contract` and `knetsentry_enrollment_admin` are
+mandatory in all seven presets. Desktop inventories: 43/38, core-only 31/32
+(normal/sanitized). See [explicit enrollment](ENDPOINT_ENROLLMENT_M44.md).
+No additional package, real endpoint, or privileged operation is needed.
