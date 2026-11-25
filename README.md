@@ -15,7 +15,7 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M3.7 (adversarial network boundary fixtures):**
+> **Development status — M3.8 (read-only desktop LAN scope inspection):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
@@ -33,6 +33,8 @@ offline AI assistance.
 > live qualification is explicit and virtual attachments remain denied in production.
 > M3.7 adds adversarial policy, unexpected UDP, additional-subnet and
 > route/interface restoration regressions without granting production network access.
+> M3.8 adds read-only LAN scope inspection in Settings; the lifecycle-only
+> manager does not publish operational approvals or network denial records.
 > A green CI run validates only its documented tests, not release readiness.
 
 The M1.4 follow-up includes a page-lifecycle warning regression test and an
@@ -363,3 +365,10 @@ rollback and topology invalidation. No production transport is enabled.
 See the [M3.7 adversarial qualification contract](docs/development/NETWORK_ADVERSARIAL_M37.md).
 The extended M3.6 live fixture verifies additional reachable but unapproved
 subnets, unexpected dual-stack UDP, route changes and sticky withdrawal.
+
+### M3.8 — Desktop LAN scope inspection
+
+See the [M3.8 desktop scope contract](docs/development/DESKTOP_NETWORK_SCOPE_M38.md).
+Settings displays the current lifecycle-only boundary, unavailable operational
+approval inventories and separately labelled local IPC rejection diagnostics.
+No policy editing, monitoring or positive network access is introduced.

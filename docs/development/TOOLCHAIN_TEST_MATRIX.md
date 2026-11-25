@@ -246,3 +246,14 @@ M3.7 inventories: desktop 38/33 (normal/sanitized), core-only 26/27.
 Run `python3 -B scripts/verify_m37_adversarial.py` for offline fixture checks.
 The existing explicit M3.6 live command now includes M3.7 packet and topology
 regressions; see [M3.7 qualification](NETWORK_ADVERSARIAL_M37.md).
+
+### M3.8 Desktop LAN scope inspection
+
+See [M3.8 desktop scope contract](DESKTOP_NETWORK_SCOPE_M38.md). Test inventories
+remain desktop 38/33 (normal/sanitized), core-only 26/27. The existing health
+model, owned-daemon lifecycle, navigation and live GUI health regressions now
+cover scope inspection. Run `python3 -B scripts/verify_m38_desktop_scope.py`
+for the source contract, or add `--build-dir build/presets/linux-release` for
+configured model/navigation checks. The live GUI health regression also verifies
+Settings updates and the distinction between local IPC rejections and network
+denials. The existing strict QML and live network acceptance checks remain required.

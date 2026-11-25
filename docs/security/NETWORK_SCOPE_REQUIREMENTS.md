@@ -21,6 +21,9 @@ M3.6 adds test-only dual-namespace policy and packet fixtures; see
 [the fixture contract](../development/NETWORK_ISOLATION_FIXTURES_M36.md).
 M3.7 extends negative policy, packet and topology regression coverage; see
 [the adversarial qualification contract](../development/NETWORK_ADVERSARIAL_M37.md).
+M3.8 adds read-only lifecycle-only desktop inspection and distinguishes local IPC
+rejections from unavailable network-denial records; see the
+[desktop scope contract](../development/DESKTOP_NETWORK_SCOPE_M38.md).
 Operational IP transport and target-host production firewall deployment remain unqualified.
 **Target:** Ubuntu 26.04 LTS AMD64; proposed v1.0.0 product architecture.
 **Traceability:** GitHub issue #2 / M0.2.

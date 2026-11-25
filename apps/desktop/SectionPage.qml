@@ -16,6 +16,11 @@ Kirigami.Page {
     readonly property string displayedHealthResources: resourceCard.description
     readonly property string displayedHealthErrors: errorCard.description
     readonly property string displayedHealthComponents: componentCard.description
+    readonly property bool scopeVisible: scopePanel.visible
+    readonly property string displayedScopeState: scopeStateCard.description
+    readonly property string displayedScopeNetworks: scopeNetworksCard.description
+    readonly property string displayedScopeInterfaces: scopeInterfacesCard.description
+    readonly property string displayedScopeDenials: scopeDenialsCard.description
     title: sectionTitle
     DesignTokens { id: tokens }
     readonly property string visualSystemVersion: tokens.version
@@ -49,7 +54,7 @@ Kirigami.Page {
         case "investigations":
             return qsTr("Investigation timelines, incident cases, and preserved evidence will appear here after the incident workflow is implemented.")
         case "settings":
-            return qsTr("Authorized system settings, including future raw-event and database storage locations, will appear here after management APIs exist.")
+            return qsTr("Inspect LAN scope and network authorization below. Changes and other system settings require future authorized management APIs.")
         default:
             return qsTr("This section is not available.")
         }
@@ -155,6 +160,71 @@ Kirigami.Page {
                     id: errorCard
                     heading: qsTr("Operational counters — not incidents")
                     description: page.healthModel.errors
+                }
+            }
+
+            ColumnLayout {
+                id: scopePanel
+                visible: page.sectionId === "settings"
+                Layout.fillWidth: true
+                spacing: tokens.spaceM
+                Controls.Label {
+                    text: qsTr("LAN Scope & Network Authorization")
+                    font.pixelSize: tokens.sectionSize
+                    font.weight: Font.DemiBold
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    Accessible.role: Accessible.Heading
+                }
+                Kirigami.InlineMessage {
+                    visible: true
+                    type: Kirigami.MessageType.Information
+                    text: qsTr("Read-only inspection. Default-deny policy is implemented; no operational network scope can be activated here.")
+                    Layout.fillWidth: true
+                }
+                SurfaceCard {
+                    id: scopeStateCard
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: implicitHeight
+                    heading: qsTr("Policy state")
+                    description: page.healthModel.scopeState
+                    iconName: "security-high"
+                }
+                SurfaceCard {
+                    id: scopeNetworksCard
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: implicitHeight
+                    heading: qsTr("Approved networks and endpoints")
+                    description: page.healthModel.scopeNetworks
+                    iconName: "network-wired"
+                }
+                SurfaceCard {
+                    id: scopeInterfacesCard
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: implicitHeight
+                    heading: qsTr("Approved interfaces")
+                    description: page.healthModel.scopeInterfaces
+                    iconName: "network-wired"
+                }
+                SurfaceCard {
+                    id: scopeDenialsCard
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: implicitHeight
+                    heading: qsTr("Denied-connection diagnostics")
+                    description: page.healthModel.scopeDenials
+                    iconName: "dialog-information"
+                }
+                SurfaceCard {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: implicitHeight
+                    heading: qsTr("Policy requirements — not active approvals")
+                    description: qsTr("Agent transport requires explicit numeric IPv4/IPv6 scope, identity, TCP port, approved interface and current verified direct-route evidence. Passive monitoring and public intelligence have separate authorization requirements. A healthy daemon is not proof of firewall enforcement or monitoring coverage.")
+                    iconName: "dialog-information"
+                }
+                Controls.Label {
+                    text: qsTr("Runtime information uses the existing verified health snapshot (refreshed every 30 seconds). No configuration writes, network discovery or firewall changes are available from this page.")
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
                 }
             }
 

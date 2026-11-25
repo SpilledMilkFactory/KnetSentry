@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: MIT
 #include "service_health_model.hpp"
 
+#include <QMetaProperty>
 #include <QSignalSpy>
 #include <QTest>
 #include <QTemporaryDir>
+#include <QVariant>
+#include <initializer_list>
 #include <unistd.h>
 
 using knetsentry::desktop::ServiceHealthModel;
@@ -21,6 +24,28 @@ private Q_SLOTS:
         QCOMPARE(model.status(), QStringLiteral("Not connected — no IPC directory configured"));
         QCOMPARE(model.resources(), QStringLiteral("Uptime, CPU time and memory unavailable."));
         QCOMPARE(spy.count(), 0);
+    }
+    void scopeIsReadOnly() {
+        ServiceHealthModel model(QString{});
+        for (const auto* name : {"scopeState", "scopeNetworks", "scopeInterfaces", "scopeDenials"}) {
+            const int index = model.metaObject()->indexOfProperty(name);
+            QVERIFY(index >= 0);
+            const auto property = model.metaObject()->property(index);
+            QVERIFY(property.isReadable());
+            QVERIFY(!property.isWritable());
+            QVERIFY(property.hasNotifySignal());
+            QVERIFY(!property.write(&model, QVariant{QStringLiteral("synthetic approval")}));
+        }
+        QCOMPARE(model.scopeState(), QStringLiteral("Unavailable — no current verified daemon health"));
+        QCOMPARE(model.scopeNetworks(), QStringLiteral("Unavailable — approved network inventory not reported."));
+        QCOMPARE(model.scopeInterfaces(), QStringLiteral("Unavailable — approved interface inventory not reported."));
+        QCOMPARE(model.scopeDenials(), QStringLiteral("Network connection denials: unavailable (not collected).\n"
+                                                       "Local IPC rejected requests: unavailable."));
+        model.setDirectory(QStringLiteral("/nonexistent/ks38"));
+        model.refresh();
+        QVERIFY(!model.available());
+        QCOMPARE(model.scopeState(), QStringLiteral("Unavailable — no current verified daemon health"));
+        QVERIFY(model.scopeDenials().endsWith(QStringLiteral("unavailable.")));
     }
     void absentEndpoint() {
         QTemporaryDir dir(QStringLiteral("/tmp/ks26-qt-XXXXXX"));
