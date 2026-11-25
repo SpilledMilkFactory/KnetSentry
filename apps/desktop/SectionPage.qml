@@ -17,6 +17,10 @@ Kirigami.Page {
     readonly property string displayedHealthErrors: errorCard.description
     readonly property string displayedHealthComponents: componentCard.description
     readonly property bool scopeVisible: scopePanel.visible
+    readonly property bool agentRosterVisible: agentPanel.visible
+    readonly property string displayedAgentRegistry: agentRegistryCard.description
+    readonly property string displayedApprovedAgents: approvedAgentsCard.description
+    readonly property string displayedRevokedAgents: revokedAgentsCard.description
     readonly property string displayedScopeState: scopeStateCard.description
     readonly property string displayedScopeNetworks: scopeNetworksCard.description
     readonly property string displayedScopeInterfaces: scopeInterfacesCard.description
@@ -44,7 +48,7 @@ Kirigami.Page {
         case "dashboard":
             return qsTr("Management daemon health is shown below. Monitoring coverage and security activity remain unavailable.")
         case "assets":
-            return qsTr("Authorized LAN devices, including agentless IoT equipment, will appear here when asset inventory and telemetry are implemented.")
+            return qsTr("Inspect administrator-approved endpoint identities below. Live asset inventory and telemetry remain unavailable.")
         case "events":
             return qsTr("Validated security-event records and search controls will appear here after the ingestion and storage pipeline is implemented.")
         case "detections":
@@ -160,6 +164,65 @@ Kirigami.Page {
                     id: errorCard
                     heading: qsTr("Operational counters — not incidents")
                     description: page.healthModel.errors
+                }
+            }
+
+            ColumnLayout {
+                id: agentPanel
+                visible: page.sectionId === "assets"
+                Layout.fillWidth: true
+                spacing: tokens.spaceM
+                Controls.Label {
+                    text: qsTr("Enrollment & Agent Management")
+                    font.pixelSize: tokens.sectionSize
+                    font.weight: Font.DemiBold
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    Accessible.role: Accessible.Heading
+                }
+                Kirigami.InlineMessage {
+                    visible: true
+                    type: Kirigami.MessageType.Information
+                    text: qsTr("Read-only inspection of the explicitly selected manager registry. Approval is not certificate validity, connection health or monitoring authorization.")
+                    Layout.fillWidth: true
+                }
+                SurfaceCard {
+                    id: agentRegistryCard
+                    Layout.fillWidth: true
+                    heading: qsTr("Enrollment registry")
+                    description: page.healthModel.agentRegistryStatus
+                }
+                SurfaceCard {
+                    Layout.fillWidth: true
+                    heading: qsTr("Pending enrollments")
+                    description: qsTr("Unavailable — no enrollment request collection is active. Unknown agents are not automatically enrolled.")
+                }
+                SurfaceCard {
+                    id: approvedAgentsCard
+                    Layout.fillWidth: true
+                    heading: qsTr("Approved endpoint identities")
+                    description: page.healthModel.approvedAgents
+                }
+                SurfaceCard {
+                    id: revokedAgentsCard
+                    Layout.fillWidth: true
+                    heading: qsTr("Revoked endpoint identities")
+                    description: page.healthModel.revokedAgents
+                }
+                SurfaceCard {
+                    Layout.fillWidth: true
+                    heading: qsTr("Certificate status")
+                    description: qsTr("Unavailable — registry approval does not establish current certificate validity. No live certificate observations are published.")
+                }
+                SurfaceCard {
+                    Layout.fillWidth: true
+                    heading: qsTr("Agent connection health")
+                    description: qsTr("Unavailable — the manager does not host operational agent sessions. The global daemon heartbeat is local service health only.")
+                }
+                SurfaceCard {
+                    Layout.fillWidth: true
+                    heading: qsTr("Administrative actions")
+                    description: qsTr("Approval, rotation and revocation require the authorized offline enrollment tool. This desktop connection has read-only authority; no administrative actions are available here.")
                 }
             }
 

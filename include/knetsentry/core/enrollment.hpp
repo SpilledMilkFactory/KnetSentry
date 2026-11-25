@@ -13,6 +13,15 @@ enum class Status { Ok, InvalidInput, UnsafeStorage, Unavailable, Busy,
     Corrupt, Conflict, Full, Unknown, NotAuthenticated, IdentityMismatch, Io, Revoked };
 struct Lookup { Status status{Status::Unavailable}; std::optional<identity::Fingerprint> pin{}; };
 
+struct RosterEntry { EndpointId id{}; bool approved{}; };
+struct Roster {
+    Status status{Status::Unavailable};
+    std::array<RosterEntry, max_endpoints> entries{};
+    std::size_t size{};
+};
+// Read-only, bounded, pin-free snapshot; same protected storage and lock.
+[[nodiscard]] Roster inspect(int directory) noexcept;
+
 // Authority is the explicitly trusted, euid-owned private directory descriptor.
 // Never expose initialize/approve to peer requests. No implicit initialization.
 [[nodiscard]] Status initialize(int directory) noexcept;

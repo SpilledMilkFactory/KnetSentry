@@ -13,8 +13,8 @@
 namespace knetsentry::service {
 
 // Authorization is separate from SO_PEERCRED channel authentication. The
-// role matrix allows only same-UID/GID read-only STATUS and HEALTH.
-enum class IpcAction : unsigned char { Status, Administrative, Health };
+// role matrix allows only same-UID/GID read-only STATUS, HEALTH and AGENTS.
+enum class IpcAction : unsigned char { Status, Administrative, Health, Agents };
 [[nodiscard]] bool authorize_local_peer(uid_t peer_uid, gid_t peer_gid,
     uid_t service_uid, gid_t service_gid, IpcAction action) noexcept;
 
@@ -31,6 +31,8 @@ public:
     LocalIpcServer& operator=(LocalIpcServer&&) = delete;
 
     [[nodiscard]] bool open(std::string_view directory, const sigset_t& blocked_signals) noexcept;
+    // Explicit private registry; no initialization or mutation.
+    [[nodiscard]] bool set_enrollment_directory(std::string_view directory) noexcept;
     // SIGINT/SIGTERM must be blocked by the calling thread before this call.
     // Returns true only after a supported shutdown signal is consumed.
     [[nodiscard]] bool serve(const Lifecycle& lifecycle, HealthTracker& health, AuditLog& audit) noexcept;
@@ -39,6 +41,7 @@ private:
     void close_all() noexcept;
     void handle_client(int client, const Lifecycle& lifecycle, HealthTracker& health, AuditLog& audit) noexcept;
 
+    int enrollment_fd_{-1};
     int listen_fd_{-1};
     int signal_fd_{-1};
     int directory_fd_{-1};

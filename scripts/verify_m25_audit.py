@@ -36,7 +36,7 @@ def source_contract() -> None:
             'arbitrary request text must not be accepted by audit writer')
     require(ipc.index('::getsockopt(client, SOL_SOCKET, SO_PEERCRED') <
             ipc.index('audit.record(is_health'), 'audit must follow peer authentication')
-    require(ipc.index('audit.record(is_health') < ipc.index('const auto snapshot'),
+    require(ipc.index('audit.record(is_health') < min(ipc.index('const auto snapshot'), ipc.index('const auto roster =')),
             'authorization must be committed before response')
     for token in ('AuditEvent::AuthenticationFailed', 'AuditEvent::AdministrativeDenied',
                   'AuditEvent::TransportFailed', 'if (!audit.ok())'):

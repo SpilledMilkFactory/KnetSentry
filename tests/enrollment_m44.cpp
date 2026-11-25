@@ -141,6 +141,26 @@ void storage(Fixture& fixture) {
     require(enroll::initialize(AT_FDCWD) == E::UnsafeStorage, "ambient cwd accepted");
     require(enroll::initialize(store.fd) == E::Ok, "initialize");
     require(enroll::initialize(store.fd) == E::Conflict, "reset existing registry");
+    // Nonnegative descriptors can still fail the directory reopen (EBADF/ENOTDIR).
+    const auto reject_descriptor = [&](int fd) {
+        const auto roster = enroll::inspect(fd);
+        require(enroll::initialize(fd) == E::UnsafeStorage &&
+            enroll::approve(fd, id, fixture.agent_pin) == E::UnsafeStorage &&
+            enroll::rotate(fd, id, fixture.agent_pin, fixture.other_pin) == E::UnsafeStorage &&
+            enroll::revoke(fd, id, fixture.agent_pin) == E::UnsafeStorage &&
+            enroll::lookup(fd, id).status == E::UnsafeStorage &&
+            roster.status == E::UnsafeStorage && roster.size == 0,
+            "invalid directory descriptor accepted");
+    };
+    const int file = openat(store.fd, "endpoints.v1", O_RDONLY | O_CLOEXEC);
+    require(file >= 0, "non-directory descriptor fixture");
+    reject_descriptor(file);
+    require(close(file) == 0, "descriptor close");
+    reject_descriptor(file);
+    reject_descriptor(AT_FDCWD);
+    const auto unchanged = enroll::inspect(store.fd);
+    require(unchanged.status == E::Ok && unchanged.size == 0, "invalid descriptor changed registry");
+    std::cout << "M4.7 registry reopen failure across all operations: PASS\n";
     require(enroll::lookup(store.fd, id).status == E::Unknown, "unknown ID");
     require(enroll::approve(store.fd, {}, fixture.agent_pin) == E::InvalidInput &&
         enroll::approve(store.fd, id, {}) == E::InvalidInput, "zero fields");

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Chris Sutton
 // SPDX-License-Identifier: MIT
 #include "knetsentry/service/local_ipc.hpp"
+#include "knetsentry/service/agent_roster.hpp"
 
 #include <array>
 #include <cerrno>
@@ -21,6 +22,7 @@ constexpr std::uint32_t max_frame_size = 64;
 constexpr int client_deadline_ms = 250;
 constexpr std::string_view prefix = "KSIPC/1 STATUS ";
 constexpr std::string_view health_prefix = "KSIPC/1 HEALTH ";
+constexpr std::string_view agents_prefix = "KSIPC/1 AGENTS ";
 
 [[nodiscard]] bool valid_directory(std::string_view path) noexcept {
     if (path.size() < 2 || path.size() > 1024 ||
@@ -86,7 +88,7 @@ constexpr std::string_view health_prefix = "KSIPC/1 HEALTH ";
 }
 
 [[nodiscard]] bool send_frame(int fd, std::string_view payload, std::size_t limit) noexcept {
-    if (payload.empty() || payload.size() > limit || limit > max_health_response_size) { return false; }
+    if (payload.empty() || payload.size() > limit || limit > max_roster_response_size) { return false; }
     const auto len = static_cast<std::uint32_t>(payload.size());
     const std::array<char, 4> header{
         static_cast<char>((len >> 24U) & 0xffU),
@@ -109,12 +111,13 @@ constexpr std::string_view health_prefix = "KSIPC/1 HEALTH ";
 bool authorize_local_peer(uid_t peer_uid, gid_t peer_gid,
     uid_t service_uid, gid_t service_gid, IpcAction action) noexcept {
     return peer_uid == service_uid && peer_gid == service_gid &&
-        (action == IpcAction::Status || action == IpcAction::Health);
+        (action == IpcAction::Status || action == IpcAction::Health || action == IpcAction::Agents);
 }
 
 LocalIpcServer::~LocalIpcServer() noexcept { close_all(); }
 
 void LocalIpcServer::close_all() noexcept {
+    if (enrollment_fd_ >= 0) { static_cast<void>(::close(enrollment_fd_)); enrollment_fd_ = -1; }
     if (signal_fd_ >= 0) { static_cast<void>(::close(signal_fd_)); signal_fd_ = -1; }
     if (listen_fd_ >= 0) { static_cast<void>(::close(listen_fd_)); listen_fd_ = -1; }
     // Never unlink a different filesystem object (e.g. one replaced by a peer).
@@ -184,6 +187,18 @@ bool LocalIpcServer::open(std::string_view directory, const sigset_t& blocked_si
     return true;
 }
 
+bool LocalIpcServer::set_enrollment_directory(std::string_view directory) noexcept {
+    if (enrollment_fd_ >= 0 || !valid_directory(directory)) { return false; }
+    const std::string name(directory);
+    const int fd = ::open(name.c_str(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    if (fd < 0) { return false; }
+    struct stat st{};
+    if (::fstat(fd, &st) != 0 || !S_ISDIR(st.st_mode) || st.st_uid != ::geteuid() ||
+        (st.st_mode & 07777U) != 0700U) { static_cast<void>(::close(fd)); return false; }
+    enrollment_fd_ = fd;
+    return true;
+}
+
 void LocalIpcServer::handle_client(int client, const Lifecycle& lifecycle,
     HealthTracker& health, AuditLog& audit) noexcept {
     // Authenticate before reading untrusted bytes; operation authorization
@@ -224,8 +239,9 @@ void LocalIpcServer::handle_client(int client, const Lifecycle& lifecycle,
     }
     const std::string_view payload(request.data(), size);
     const bool is_health = payload.starts_with(health_prefix);
-    const auto operation_prefix = is_health ? health_prefix : prefix;
-    const auto action = is_health ? IpcAction::Health : IpcAction::Status;
+    const bool is_agents = payload.starts_with(agents_prefix);
+    const auto operation_prefix = is_health ? health_prefix : (is_agents ? agents_prefix : prefix);
+    const auto action = is_health ? IpcAction::Health : (is_agents ? IpcAction::Agents : IpcAction::Status);
     constexpr std::string_view admin_prefix = "KSIPC/1 ADMIN ";
     if (payload.size() == admin_prefix.size() + 17 && payload.starts_with(admin_prefix) &&
         payload.back() == '\n' && hex_id(payload.substr(admin_prefix.size(), 16))) {
@@ -244,7 +260,18 @@ void LocalIpcServer::handle_client(int client, const Lifecycle& lifecycle,
         return;
     }
     // Commit the authorization decision before exposing any response.
-    if (!audit.record(is_health ? AuditEvent::HealthAuthorized : AuditEvent::StatusAuthorized, actor)) {
+    if (!audit.record(is_health ? AuditEvent::HealthAuthorized :
+                      (is_agents ? AuditEvent::AgentsAuthorized : AuditEvent::StatusAuthorized), actor)) {
+        return;
+    }
+    if (is_agents) {
+        std::array<char, max_roster_response_size> response{};
+        const auto roster = enrollment_fd_ >= 0 ? enrollment::inspect(enrollment_fd_) : enrollment::Roster{};
+        const auto count = encode_roster(roster, request_id, response);
+        if (count == 0) { report(HealthError::Sampling, AuditEvent::SamplingFailed); return; }
+        if (!send_frame(client, std::string_view(response.data(), count), max_roster_response_size)) {
+            report(HealthError::Transport, AuditEvent::TransportFailed);
+        }
         return;
     }
     if (is_health) {

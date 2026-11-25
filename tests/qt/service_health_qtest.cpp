@@ -27,7 +27,8 @@ private Q_SLOTS:
     }
     void scopeIsReadOnly() {
         ServiceHealthModel model(QString{});
-        for (const auto* name : {"scopeState", "scopeNetworks", "scopeInterfaces", "scopeDenials"}) {
+        for (const auto* name : {"scopeState", "scopeNetworks", "scopeInterfaces", "scopeDenials",
+                                 "agentRegistryStatus", "approvedAgents", "revokedAgents"}) {
             const int index = model.metaObject()->indexOfProperty(name);
             QVERIFY(index >= 0);
             const auto property = model.metaObject()->property(index);
@@ -36,6 +37,9 @@ private Q_SLOTS:
             QVERIFY(property.hasNotifySignal());
             QVERIFY(!property.write(&model, QVariant{QStringLiteral("synthetic approval")}));
         }
+        QVERIFY(model.agentRegistryStatus().startsWith(QStringLiteral("Unavailable")));
+        QVERIFY(model.approvedAgents().startsWith(QStringLiteral("Unavailable")));
+        QVERIFY(model.revokedAgents().startsWith(QStringLiteral("Unavailable")));
         QCOMPARE(model.scopeState(), QStringLiteral("Unavailable — no current verified daemon health"));
         QCOMPARE(model.scopeNetworks(), QStringLiteral("Unavailable — approved network inventory not reported."));
         QCOMPARE(model.scopeInterfaces(), QStringLiteral("Unavailable — approved interface inventory not reported."));

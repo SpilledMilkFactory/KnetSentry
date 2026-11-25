@@ -250,7 +250,8 @@ if(KNETSENTRY_BUILD_DESKTOP)
     if(NOT KNETSENTRY_ENABLE_SANITIZERS)
         add_test(NAME knetsentry_gui_health_runtime
             COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/check_m26_gui_runtime.py"
-                --desktop $<TARGET_FILE:knetsentry> --manager $<TARGET_FILE:knetsentryd>)
+                --desktop $<TARGET_FILE:knetsentry> --manager $<TARGET_FILE:knetsentryd>
+                --admin $<TARGET_FILE:knetsentry-enrollment>)
         set_tests_properties(knetsentry_gui_health_runtime PROPERTIES
             LABELS "qt;desktop;qml;integration;ipc;regression" TIMEOUT 45)
     endif()
@@ -420,3 +421,14 @@ set_tests_properties(knetsentry_credential_lifecycle PROPERTIES LABELS "integrat
 # M4.6: actual encrypted heartbeat and bounded reconnect regression.
 add_test(NAME knetsentry_agent_health_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --heartbeat)
 set_tests_properties(knetsentry_agent_health_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)
+
+# M4.7 bounded read-only registry inspection, actual local manager and client.
+add_executable(knetsentry_agent_roster_test agent_roster_m47.cpp)
+target_link_libraries(knetsentry_agent_roster_test PRIVATE KnetSentry::Service)
+knetsentry_apply_project_options(knetsentry_agent_roster_test)
+add_test(NAME knetsentry_agent_roster_contract COMMAND $<TARGET_FILE:knetsentry_agent_roster_test>)
+set_tests_properties(knetsentry_agent_roster_contract PROPERTIES LABELS "unit;security;regression;ipc" TIMEOUT 15)
+add_test(NAME knetsentry_agent_roster_runtime COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/agent_roster_m47.py" $<TARGET_FILE:knetsentryd>
+    $<TARGET_FILE:knetsentry-enrollment> $<TARGET_FILE:knetsentry_agent_roster_test>)
+set_tests_properties(knetsentry_agent_roster_runtime PROPERTIES LABELS "integration;security;regression;privacy;ipc" TIMEOUT 45)

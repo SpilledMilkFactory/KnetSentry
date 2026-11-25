@@ -21,7 +21,8 @@ trusted private registry directory. An ordinary user can create their own
 unrelated registry; that registry is not thereby trusted by a manager. Future
 production integration must establish the canonical directory and authorized
 administrator identity through privileged deployment/RBAC and safe path ancestry.
-There is no production manager registry selection or operational admission yet.
+M4.7 adds explicitly selected read-only local manager registry inspection;
+there is no production enrollment or operational agent admission yet.
 Do not expose `initialize` or `approve` to any peer, telemetry or discovery path.
 
 ## Administrative workflow
@@ -132,3 +133,9 @@ future work.
 See [agent heartbeat and health](AGENT_HEALTH_M46.md) for offline authenticated
 reporting, current enrollment revalidation and bounded reconnect scheduling.
 Operational network adapters remain future work.
+
+## M4.7 extension
+
+See [desktop enrollment management](DESKTOP_AGENT_MANAGEMENT_M47.md) for the
+manager-selected, pin-free read-only roster. Existing owner-authorized mutation
+and TLS-backed admission remain separate.

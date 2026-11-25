@@ -172,3 +172,9 @@ current approved identity and revalidate before application processing.
 M4.6 adds [authenticated agent health](../development/AGENT_HEALTH_M46.md) for
 I-07/I-08: KSAP framing over current TLS/enrollment, explicit missing/degraded
 state and reconnect scheduling. No operational ingestion authority is granted.
+
+## M4.7 read-only agent roster (I-01 / I-23)
+
+[Desktop enrollment management](../development/DESKTOP_AGENT_MANAGEMENT_M47.md)
+publishes a bounded pin-free registry snapshot through authenticated local IPC.
+No operational agent session or administrative mutation interface is exposed.

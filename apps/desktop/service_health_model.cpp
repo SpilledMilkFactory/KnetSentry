@@ -4,6 +4,7 @@
 
 #include <QFile>
 #include <QRandomGenerator>
+#include <QStringList>
 #include <unistd.h>
 
 namespace knetsentry::desktop {
@@ -30,6 +31,7 @@ void ServiceHealthModel::setDirectory(const QString& directory) {
     refresh_timer_.stop();
     exchange_timer_.stop();
     client_.cancel();
+    agent_client_.cancel();
     directory_ = QFile::encodeName(directory);
     Q_EMIT changed();
 }
@@ -46,6 +48,7 @@ void ServiceHealthModel::start() {
 
 void ServiceHealthModel::refresh() {
     if (directory_.isEmpty() || ::geteuid() == 0 || exchange_timer_.isActive()) { return; }
+    agent_client_.cancel();
     const auto id = QByteArray::number(QRandomGenerator::system()->generate64(), 16).rightJustified(16, '0');
     client_.begin(std::string_view(directory_.constData(), static_cast<std::size_t>(directory_.size())),
                   std::string_view(id.constData(), static_cast<std::size_t>(id.size())));
@@ -54,8 +57,20 @@ void ServiceHealthModel::refresh() {
 }
 
 void ServiceHealthModel::advance() {
-    client_.advance();
-    if (client_.state() != service::HealthQueryState::Pending) {
+    if (client_.state() == service::HealthQueryState::Pending) {
+        client_.advance();
+        if (client_.state() == service::HealthQueryState::Pending) { return; }
+        if (available()) {
+            const auto id = QByteArray::number(QRandomGenerator::system()->generate64(), 16).rightJustified(16, '0');
+            agent_client_.begin_agents(std::string_view(directory_.constData(), static_cast<std::size_t>(directory_.size())),
+                std::string_view(id.constData(), static_cast<std::size_t>(id.size())));
+        }
+        if (agent_client_.state() != service::HealthQueryState::Pending) { exchange_timer_.stop(); }
+        Q_EMIT changed();
+        return;
+    }
+    agent_client_.advance();
+    if (agent_client_.state() != service::HealthQueryState::Pending) {
         exchange_timer_.stop();
         Q_EMIT changed();
     }
@@ -123,4 +138,31 @@ QString ServiceHealthModel::scopeDenials() const {
               "Local IPC rejected requests: %1 (not network denials or incidents).")
         .arg(decimal(client_.snapshot()->rejected));
 }
+QString ServiceHealthModel::agentRegistryStatus() const {
+    if (!available()) { return tr("Unavailable — no current verified daemon health"); }
+    if (agent_client_.state() == service::HealthQueryState::Pending) { return tr("Checking enrollment registry…"); }
+    if (!agent_client_.roster() || agent_client_.roster()->status != enrollment::Status::Ok) {
+        return tr("Unavailable — no readable manager-selected enrollment registry");
+    }
+    return tr("Verified registry snapshot — %1 endpoint identities (not live sessions)")
+        .arg(decimal(agent_client_.roster()->size));
+}
+namespace {
+QString roster_text(const service::HealthClient& client, bool approved) {
+    if (!client.roster() || client.roster()->status != enrollment::Status::Ok) {
+        return QObject::tr("Unavailable — no current registry snapshot.");
+    }
+    QStringList rows;
+    for (std::size_t i = 0; i < client.roster()->size; ++i) {
+        const auto& entry = client.roster()->entries.at(i);
+        if (entry.approved != approved) { continue; }
+        const auto id = QByteArray(reinterpret_cast<const char*>(entry.id.data()),
+            static_cast<qsizetype>(entry.id.size())).toHex();
+        rows.append(QString::fromLatin1(id.constData(), id.size()));
+    }
+    return rows.isEmpty() ? QObject::tr("None in the verified registry snapshot.") : rows.join(QLatin1Char('\n'));
+}
+} // namespace
+QString ServiceHealthModel::approvedAgents() const { return roster_text(agent_client_, true); }
+QString ServiceHealthModel::revokedAgents() const { return roster_text(agent_client_, false); }
 } // namespace knetsentry::desktop

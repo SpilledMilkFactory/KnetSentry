@@ -14,7 +14,7 @@ enum class AuditEvent : std::uint8_t {
     Starting, Ready, Stopping, Stopped, Failed, ConfigDefault, ConfigValidated,
     ConfigRejected, IpcReady, IpcRejected, AuthenticationFailed, RequestRejected,
     AdministrativeDenied, StatusAuthorized, HealthAuthorized, TransportFailed,
-    SamplingFailed
+    SamplingFailed, AgentsAuthorized
 };
 
 struct AuditActor final {

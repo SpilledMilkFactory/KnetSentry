@@ -129,3 +129,10 @@ rather than specific attacks. The existing
 [NETWORK_SCOPE_VERIFICATION_PLAN.md](NETWORK_SCOPE_VERIFICATION_PLAN.md)
 provides individual `MON-*`, `CTL-*`, `INT-*` and `OPS-*` cases. Threat tests
 **supplement**, not replace, those requirements or their verification plan.
+
+## M4.7 partial interface evidence
+
+[Desktop enrollment management](../development/DESKTOP_AGENT_MANAGEMENT_M47.md)
+adds read-only authorization, bounded roster validation, and explicit
+unavailable-state evidence at TB-05 / I-01 / I-23, supporting TV-01, TV-06
+and TV-13 without claiming operational agent or administrative GUI qualification.

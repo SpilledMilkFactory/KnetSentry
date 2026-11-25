@@ -120,3 +120,9 @@ M2.7's explicit systemd profile requires auditing and creates a fresh private
 session directory on each start; no previous evidence is overwritten or deleted.
 See [systemd service integration](SYSTEMD_SERVICE_M27.md). Aggregate quota and
 retention remain deferred, and automatic restart is disabled.
+
+## M4.7 extension
+
+The read-only [agent roster query](DESKTOP_AGENT_MANAGEMENT_M47.md) records
+`agents_authorized` before responding when the audit sink is enabled. Endpoint
+identifiers, pins and paths are excluded from records.

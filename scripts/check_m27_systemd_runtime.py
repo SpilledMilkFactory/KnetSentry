@@ -90,7 +90,12 @@ def installed(binary: Path) -> tuple[int, int]:
                             (INSTALL / 'manager-launcher', UNIT.parent / 'manager-launcher', 0o755),
                             (INSTALL / 'knetsentryd', binary, 0o755)):
         protected(path, 0, 0, mode, stat.S_ISREG)
-        require(digest(path) == digest(src), 'installed file differs from tested revision: ' + path.name)
+        if digest(path) != digest(src):
+            message = 'installed file differs from tested revision: ' + path.name
+            if path == INSTALL / 'knetsentryd':
+                message += ('; rebuild Release and explicitly refresh the inactive, disabled '
+                            'development binary (see docs/development/SYSTEMD_SERVICE_M27.md)')
+            raise ValueError(message)
         for parent in path.parents:
             info = parent.lstat()
             require(stat.S_ISDIR(info.st_mode) and info.st_uid == 0 and

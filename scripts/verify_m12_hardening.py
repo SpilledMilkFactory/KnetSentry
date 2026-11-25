@@ -155,7 +155,7 @@ if args.build_dir:
             ERRORS.append(f"invalid compilation database: {exc}")
             commands = []
         source_names = ("build_info.cpp", "core_smoke.cpp", "lifecycle.cpp", "main.cpp",
-                        "enrollment.cpp", "enrollment_admin.cpp", "enrollment_m44.cpp", "agent_health.cpp")
+                        "enrollment.cpp", "enrollment_admission.cpp", "agent_roster.cpp", "agent_roster_m47.cpp", "enrollment_admin.cpp", "enrollment_m44.cpp", "agent_health.cpp")
         for filename in source_names:
             entries = [item for item in commands if Path(item["file"]).name == filename]
             require(len(entries) >= 1, f"no actual compile command for {filename}")

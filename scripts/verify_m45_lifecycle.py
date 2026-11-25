@@ -14,7 +14,7 @@ def require(condition, label):
 
 
 def main():
-    registry = (ROOT / 'src/core/enrollment.cpp').read_text()
+    registry = (ROOT / 'src/core/enrollment.cpp').read_text() + (ROOT / 'src/core/enrollment_admission.cpp').read_text()
     tls = (ROOT / 'src/core/tls_transport.cpp').read_text()
     admin = (ROOT / 'src/core/enrollment_admin.cpp').read_text()
     tests = (ROOT / 'tests/CMakeLists.txt').read_text()

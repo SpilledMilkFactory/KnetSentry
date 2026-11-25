@@ -90,6 +90,35 @@ the unit. Review the verifier before executing it with administrator privileges.
 sudo python3 -B scripts/check_m27_systemd_runtime.py --binary build/presets/linux-release/apps/manager/knetsentryd --outsider "$(id -un)"
 ```
 
+### Refresh the installed development binary after source changes
+
+The installed executable is a separate root-owned copy, not a link to the build
+output. Whenever a reviewed revision changes `knetsentryd` (including M4.7),
+rebuild Release and refresh that copy before requesting live acceptance. A hash
+mismatch is a failure, not permission to skip or weaken the runtime check.
+Only on the approved development host, with no concurrent administrator and the
+existing dedicated installation inactive, disabled and without overrides:
+
+```bash
+cmake --preset linux-release
+cmake --build --preset linux-release --parallel
+systemctl show knetsentry-manager.service --property=ActiveState,UnitFileState,DropInPaths,NeedDaemonReload
+```
+
+Confirm `inactive`, `disabled`, empty `DropInPaths` and `NeedDaemonReload=no`.
+Review the built executable and existing protected installation. Then explicitly
+refresh only the binary and compare the bytes:
+
+```bash
+sudo install -o root -g root -m 0755 build/presets/linux-release/apps/manager/knetsentryd /usr/local/libexec/knetsentry/knetsentryd
+sha256sum build/presets/linux-release/apps/manager/knetsentryd /usr/local/libexec/knetsentry/knetsentryd
+```
+
+The digests must match. Do not reinstall the unit, recreate the account, delete
+state, enable the unit, or reload systemd solely for a binary-only refresh.
+The verifier still checks the exact installed unit, launcher, binary, ownership
+and confinement before accepting live evidence. It never installs anything.
+
 It examines actual process identities, capabilities, NoNewPrivs, seccomp,
 network/mount namespaces, mount permissions and cgroup/rlimit values; verifies
 an authorized health query and a distinct ordinary user's filesystem denial;
