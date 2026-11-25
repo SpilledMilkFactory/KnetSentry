@@ -61,7 +61,8 @@ namespace {
     }
     return nullptr;
 }
-int run(std::string_view unit = {}, std::string_view directory = {}) {
+int run(std::string_view unit = {}, std::string_view directory = {},
+        knetsentry::agent::JournalMode mode = knetsentry::agent::JournalMode::Metadata) {
     if (const auto* reason = restrict_privileges(); reason != nullptr) {
         std::cerr << "knetsentry-agent: privilege policy rejected: " << reason << '\n';
         return 3;
@@ -73,11 +74,11 @@ int run(std::string_view unit = {}, std::string_view directory = {}) {
         std::cerr << "knetsentry-agent: signal setup failed\n";
         return 1;
     }
-    auto source = unit.empty() ? nullptr : knetsentry::agent::make_journal_source();
+    auto source = unit.empty() ? nullptr : knetsentry::agent::make_journal_source({}, mode);
     std::unique_ptr<knetsentry::agent::JournalCollector> journal;
     if (source) {
         journal = std::make_unique<knetsentry::agent::JournalCollector>(
-            *source, std::string(unit), std::string(directory));
+            *source, std::string(unit), std::string(directory), mode);
     }
     knetsentry::agent::Lifecycle lifecycle;
     const std::array<knetsentry::agent::Collector*, 1> modules{journal.get()};
@@ -87,7 +88,9 @@ int run(std::string_view unit = {}, std::string_view directory = {}) {
         return 1;
     }
     if (journal) {
-        std::cout << "knetsentry-agent: ready; collectors=1; journal=local-metadata; monitoring=unavailable; network=disabled\n" << std::flush;
+        std::cout << (mode == knetsentry::agent::JournalMode::Authentication ?
+            "knetsentry-agent: ready; collectors=1; journal=local-authentication; monitoring=unavailable; network=disabled\n" :
+            "knetsentry-agent: ready; collectors=1; journal=local-metadata; monitoring=unavailable; network=disabled\n") << std::flush;
     } else {
         std::cout << "knetsentry-agent: ready; collectors=0; monitoring=unavailable; network=disabled\n" << std::flush;
     }
@@ -116,15 +119,17 @@ int run(std::string_view unit = {}, std::string_view directory = {}) {
 
 int main(int argc, char** argv) {
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
-        std::cout << "Usage: knetsentry-agent --run --schema-version 1 --collectors none\n       knetsentry-agent --run --schema-version 1 --collectors journal --unit NAME.service --state-dir /absolute/private/directory\n";
+        std::cout << "Usage: knetsentry-agent --run --schema-version 1 --collectors none\n       knetsentry-agent --run --schema-version 1 --collectors journal --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors authentication --unit NAME.service --state-dir /absolute/private/directory\n";
         return 0;
     }
     if (argc == 10 && std::string_view(argv[1]) == "--run" &&
         std::string_view(argv[2]) == "--schema-version" && std::string_view(argv[3]) == "1" &&
-        std::string_view(argv[4]) == "--collectors" && std::string_view(argv[5]) == "journal" &&
+        std::string_view(argv[4]) == "--collectors" && (std::string_view(argv[5]) == "journal" ||
+         (std::string_view(argv[5]) == "authentication" && knetsentry::agent::valid_auth_unit(argv[7]))) &&
         std::string_view(argv[6]) == "--unit" && std::string_view(argv[8]) == "--state-dir" &&
         knetsentry::agent::valid_journal_unit(argv[7]) && knetsentry::agent::valid_journal_directory(argv[9])) {
-        try { return run(argv[7], argv[9]); }
+        try { return run(argv[7], argv[9], std::string_view(argv[5]) == "authentication" ?
+            knetsentry::agent::JournalMode::Authentication : knetsentry::agent::JournalMode::Metadata); }
         catch (...) { std::cerr << "knetsentry-agent: journal startup failed\n"; return 1; }
     }
     if (argc != 6 || std::string_view(argv[1]) != "--run") {

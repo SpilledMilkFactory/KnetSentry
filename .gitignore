@@ -18,3 +18,8 @@ endpoints.v1.new
 # Private M5.2 journal metadata/checkpoints (never public evidence).
 journal-m52.v1
 journal-m52.pending
+
+# Private M5.3 authentication observations and snapshots.
+auth-m53.v1
+auth-m53.pending
+before-restart.snapshot

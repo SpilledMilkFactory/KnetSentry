@@ -456,3 +456,12 @@ add_test(NAME knetsentry_journal_collection_contract
     COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/tests/journal_fixture_m52.py"
         $<TARGET_FILE:knetsentry_journal_test>)
 set_tests_properties(knetsentry_journal_collection_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M5.3: classification and populated isolated native authentication sources.
+add_executable(knetsentry_authentication_test authentication_m53.cpp)
+target_link_libraries(knetsentry_authentication_test PRIVATE KnetSentry::AgentJournal)
+knetsentry_apply_project_options(knetsentry_authentication_test)
+add_test(NAME knetsentry_authentication_collection_contract
+    COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/tests/authentication_fixture_m53.py"
+        $<TARGET_FILE:knetsentry_authentication_test>)
+set_tests_properties(knetsentry_authentication_collection_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)

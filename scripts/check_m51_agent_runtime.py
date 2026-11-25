@@ -66,7 +66,10 @@ def main():
         require(result.returncode == 2 and not result.stdout and
                 result.stderr == b'knetsentry-agent: configuration rejected\n',
                 'unsafe configuration accepted or reflected')
-    for invalid in (['--run', '--schema-version', '1', '--collectors', 'journal'],
+    for invalid in (['--run', '--schema-version', '1', '--collectors', 'authentication'],
+                    ['--run', '--schema-version', '1', '--collectors', 'authentication', '--unit', 'other.service', '--state-dir', '/tmp/private'],
+                    ['--run', '--schema-version', '1', '--collectors', 'authentication', '--unit', 'ssh@*.service', '--state-dir', '/tmp/private'],
+                    ['--run', '--schema-version', '1', '--collectors', 'journal'],
                     ['--run', '--schema-version', '1', '--collectors', 'journal', '--unit', '*.service', '--state-dir', '/tmp/private'],
                     ['--run', '--schema-version', '1', '--collectors', 'journal', '--unit', 'fixture.service', '--state-dir', '/tmp/../private']):
         result = subprocess.run([binary, *invalid], capture_output=True, timeout=5)
@@ -86,6 +89,12 @@ def main():
         require(result.returncode == 1 and not result.stdout and
                 result.stderr == b'knetsentry-agent: journal rejected: unsafe or busy state directory\n',
                 'journal mode did not fail closed before source access')
+        result = subprocess.run([binary, '--run', '--schema-version', '1', '--collectors', 'authentication',
+                                 '--unit', 'ssh.service', '--state-dir', directory + '/missing'],
+                                capture_output=True, timeout=5)
+        require(result.returncode == 1 and not result.stdout and
+                result.stderr == b'knetsentry-agent: journal rejected: unsafe or busy state directory\n',
+                'authentication mode did not fail closed before source access')
         for sig in (signal.SIGTERM, signal.SIGINT):
             with subprocess.Popen([binary, *args], cwd=directory, stdin=subprocess.DEVNULL,
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0) as proc:

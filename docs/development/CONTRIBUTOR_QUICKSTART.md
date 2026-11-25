@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **51 CTest tests**, including
+The Release desktop suite currently contains **52 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **46 CTests**, including the
+The full sanitizer suite currently contains **47 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **39 CTests**) and `linux-sanitize-core-only` for **40**.
+C++ test (currently **40 CTests**) and `linux-sanitize-core-only` for **41**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -368,3 +368,8 @@ Install `libsystemd-dev` and `pkg-config` from the distro. Keep journal collecti
 explicitly opt-in and run as an ordinary user; never elevate to read additional
 logs. See [M5.2 journal collection](JOURNAL_COLLECTION_M52.md) for the private
 state directory, bounded cursor and separate live-source qualification.
+
+## M5.3 authentication and SSH collection
+
+Use the explicit authentication mode and separate protected local state described
+in [M5.3](AUTHENTICATION_COLLECTION_M53.md). Mandatory tests use synthetic data.

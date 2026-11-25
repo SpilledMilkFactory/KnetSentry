@@ -18,9 +18,6 @@ namespace knetsentry::agent {
 namespace {
 constexpr std::size_t max_cursor = 1024;
 constexpr std::size_t max_state = 256 * 1024;
-constexpr auto state_name = "journal-m52.v1";
-constexpr auto pending_name = "journal-m52.pending";
-constexpr auto prefix = "KNETSENTRY-JOURNAL-V1\t";
 struct File final {
     int fd;
     ~File() { if (fd >= 0) { ::close(fd); } }
@@ -74,16 +71,24 @@ bool number(std::string_view value, std::uint64_t& out) {
     const auto result = std::from_chars(value.data(), value.data() + value.size(), out);
     return result.ec == std::errc{} && result.ptr == value.data() + value.size();
 }
-bool record_valid(const JournalRecord& r, std::string_view unit) {
-    return r.unit == unit && cursor_valid(r.cursor) && id_valid(r.machine) &&
+bool record_valid(const JournalRecord& r, std::string_view unit, JournalMode mode) {
+    return (mode == JournalMode::Authentication ? valid_auth_event(unit, r.auth) : r.auth == AuthEvent::None) && r.unit == unit && cursor_valid(r.cursor) && id_valid(r.machine) &&
         id_valid(r.boot) && r.realtime_usec != 0 &&
         r.realtime_usec < (std::uint64_t{1} << 55) && r.monotonic_usec < (std::uint64_t{1} << 55);
 }
 std::string row(const JournalRecord& r) {
     return r.cursor + '\t' + std::to_string(r.realtime_usec) + '\t' +
-        std::to_string(r.monotonic_usec) + '\t' + r.machine + '\t' + r.boot + '\t' + r.unit + '\n';
+        std::to_string(r.monotonic_usec) + '\t' + r.machine + '\t' + r.boot + '\t' + r.unit +
+        (r.auth == AuthEvent::None ? std::string{} : '\t' + std::string(auth_event_name(r.auth))) + '\n';
 }
-bool parse_row(std::string_view line, JournalRecord& r) {
+bool parse_row(std::string_view line, JournalRecord& r, JournalMode mode) {
+    if (mode == JournalMode::Authentication) {
+        const auto tab = line.rfind('\t');
+        if (tab == line.npos) { return false; }
+        r.auth = parse_auth_event(line.substr(tab + 1));
+        if (r.auth == AuthEvent::None) { return false; }
+        line = line.substr(0, tab);
+    }
     std::array<std::string_view, 6> fields{};
     for (std::size_t i = 0; i < fields.size() - 1; ++i) {
         const auto tab = line.find('\t');
@@ -125,8 +130,10 @@ bool valid_journal_directory(std::string_view path) noexcept {
     }
     return false;
 }
-JournalCollector::JournalCollector(JournalSource& source, std::string unit, std::string directory)
-    : source_(source), unit_(std::move(unit)), directory_(std::move(directory)) {}
+JournalCollector::JournalCollector(JournalSource& source, std::string unit, std::string directory, JournalMode mode)
+    : source_(source), mode_(mode),
+      state_name_(mode == JournalMode::Authentication ? "auth-m53.v1" : "journal-m52.v1"),
+      pending_name_(mode == JournalMode::Authentication ? "auth-m53.pending" : "journal-m52.pending"), unit_(std::move(unit)), directory_(std::move(directory)) {}
 bool JournalCollector::fail(const char* reason) noexcept {
     error_ = reason;
     stop();
@@ -138,9 +145,9 @@ void JournalCollector::stop() noexcept {
     if (fd_ >= 0) { ::close(fd_); fd_ = -1; }
 }
 bool JournalCollector::load() {
-    state_ = std::string(prefix) + unit_ + '\n';
+    state_ = std::string(mode_ == JournalMode::Authentication ? "KNETSENTRY-AUTH-V1\t" : "KNETSENTRY-JOURNAL-V1\t") + unit_ + '\n';
     const std::string header = state_;
-    File file(::openat(fd_, state_name, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK));
+    File file(::openat(fd_, state_name_, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK));
     if (file.fd < 0) { return errno == ENOENT; }
     if (!regular_private(file.fd)) { return false; }
     state_.clear();
@@ -160,7 +167,7 @@ bool JournalCollector::load() {
         const auto end = rest.find('\n');
         if (end == rest.npos || ++count_ > max_records) { return false; }
         JournalRecord record;
-        if (!parse_row(rest.substr(0, end), record) || !record_valid(record, unit_) ||
+        if (!parse_row(rest.substr(0, end), record, mode_) || !record_valid(record, unit_, mode_) ||
             std::ranges::find(seen_, record.cursor) != seen_.end()) { return false; }
         cursor_ = record.cursor;
         seen_.push_back(cursor_);
@@ -169,7 +176,8 @@ bool JournalCollector::load() {
     return true;
 }
 bool JournalCollector::start() noexcept {
-    if (started_ || !valid_journal_unit(unit_) || !valid_journal_directory(directory_)) { return false; }
+    if (started_ || !valid_journal_unit(unit_) || !valid_journal_directory(directory_) ||
+        (mode_ == JournalMode::Authentication && !valid_auth_unit(unit_))) { return false; }
     started_ = true;
     try {
         fd_ = open_directory(directory_);
@@ -179,9 +187,9 @@ bool JournalCollector::start() noexcept {
         if (!load()) { return fail("invalid or inaccessible state"); }
         // A crash before rename leaves only an uncommitted temporary file. Never
         // unlink an unverified object, and never use pending contents as a cursor.
-        File pending(::openat(fd_, pending_name, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK));
+        File pending(::openat(fd_, pending_name_, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK));
         if (pending.fd >= 0) {
-            if (!regular_private(pending.fd) || ::unlinkat(fd_, pending_name, 0) != 0 ||
+            if (!regular_private(pending.fd) || ::unlinkat(fd_, pending_name_, 0) != 0 ||
                 ::fsync(fd_) != 0) { return fail("unsafe pending state"); }
         } else if (errno != ENOENT) { return fail("unsafe pending state"); }
         if (!source_.open(unit_)) { return fail("journal open failed"); }
@@ -195,9 +203,9 @@ bool JournalCollector::commit(const JournalRecord& record) {
     if (!directory_private(fd_)) { return false; }
     const auto next = state_ + row(record);
     if (next.size() > max_state) { return false; }
-    File pending(::openat(fd_, pending_name, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600));
+    File pending(::openat(fd_, pending_name_, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600));
     if (pending.fd < 0 || !regular_private(pending.fd) || !write_all(pending.fd, next) ||
-        ::fsync(pending.fd) != 0 || ::renameat(fd_, pending_name, fd_, state_name) != 0 ||
+        ::fsync(pending.fd) != 0 || ::renameat(fd_, pending_name_, fd_, state_name_) != 0 ||
         ::fsync(fd_) != 0) { return false; }
     state_ = next;
     cursor_ = record.cursor;
@@ -214,7 +222,7 @@ bool JournalCollector::pump() noexcept {
             JournalRecord record;
             const auto result = source_.next(record);
             if (result == JournalResult::End) { return true; }
-            if (result != JournalResult::Record || !record_valid(record, unit_) ||
+            if (result != JournalResult::Record || !record_valid(record, unit_, mode_) ||
                 std::ranges::find(seen_, record.cursor) != seen_.end()) { return fail("invalid journal record"); }
             if (count_ >= max_records) { return fail("journal state capacity reached"); }
             if (!commit(record)) { return fail("journal state commit failed"); }

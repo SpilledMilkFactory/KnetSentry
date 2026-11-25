@@ -23,7 +23,9 @@ def main():
                    'sd_journal_get_realtime_usec', '_SYSTEMD_UNIT', '_MACHINE_ID'):
         if marker not in source:
             raise ValueError('missing native selection/provenance/cursor contract')
-    if '"MESSAGE"' in source or 'JOURNAL_COLLECTION_M52.md' not in docs:
+    branch = 'if (mode_ == JournalMode::Authentication) {'
+    if source.count('"MESSAGE"') != 1 or branch not in source or not (
+            source.index(branch) < source.index('"MESSAGE"') < source.index('return JournalResult::Record;')) or 'JOURNAL_COLLECTION_M52.md' not in docs:
         raise ValueError('privacy boundary or documentation index missing')
     print('M5.2 native journal and cursor registration: PASS (runtime separate)')
 
