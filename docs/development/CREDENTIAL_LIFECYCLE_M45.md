@@ -125,3 +125,9 @@ and CLI tests also cover capacity and offline lifecycle operations. Run
 Traceability: I-07, I-08, TB-04, TH-007, TH-040, TV-06, KS-NET-008,
 KS-NET-011, KS-NET-014. Evidence remains partial; no threat closure, release
 qualification, operational socket adapter or firewall change is claimed.
+
+## M4.6 extension
+
+See [agent heartbeat and health](AGENT_HEALTH_M46.md) for offline authenticated
+reporting, current enrollment revalidation and bounded reconnect scheduling.
+Operational network adapters remain future work.

@@ -5,8 +5,8 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M4.4 — explicit endpoint enrollment.** Milestone 3 is complete
-through issue #33. M4.5 adds offline credential rotation, revocation and TLS validity rechecks;
+**Accepted baseline: M4.5 — credential lifecycle.** Milestone 3 is complete
+through issue #33. M4.6 adds offline authenticated agent heartbeat, health tracking and reconnect scheduling;
 target-host qualification of this revision is pending. This is an
 unreleased development baseline, not a v1.0.0 security qualification.
 
@@ -22,6 +22,7 @@ unreleased development baseline, not a v1.0.0 security qualification.
 | Cryptographic identity | Offline Ed25519 key generation, protected role-specific storage and explicit X.509 trust/role/pin validation; no issuance or enrollment |
 | TLS transport | TLS 1.3 mutual identity, explicit root and role/pin validation, bounded encrypted byte stream; no operational socket adapter |
 | Endpoint enrollment | Offline registry, TLS-backed admission, explicit rotation/revocation and live validity rechecks; no production integration or automatic enrollment |
+| Agent health | Offline TLS-backed KSAP reporting, current enrollment rechecks, bounded health snapshots and reconnect scheduling; no deployed agent |
 | Verification | Mandatory compiled regressions, static analysis, sanitizer configurations, strict QML diagnostics, isolated dual-stack kernel firewall and topology fixtures |
 
 The policy engine does not grant operational transport authority. The manager
@@ -72,6 +73,12 @@ and core-only 31/32 CTests (normal/sanitized), and nine green hosted checks
 (`8dc778f`). The maintainer reported manual GUI and offline administrative
 verification and merge.
 
+The M4.5 maintainer acceptance (2026-11-25 UTC, working tree based on
+`8dc778f`) reported 90 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, desktop 44/39
+and core-only 32/33 CTests (normal/sanitized), matching OpenSSL 3.5.5 headers
+and runtime, and nine green hosted checks (`a1cf0b0`). The maintainer reported
+manual GUI verification and merge.
+
 The earlier M3.8 run included 34 structural verifiers; official REUSE, strict QML checks, installed systemd,
 and the isolated M3.5–M3.7 live regressions passed. This snapshot is historical
 evidence, not an assertion about any subsequent revision or environment.
@@ -87,7 +94,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M1 — C++/Qt foundation, testing and CI | Complete |
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
-| M4 — identity, PKI and secure agent enrollment | M4.4 accepted; M4.5 implementation, qualification pending |
+| M4 — identity, PKI and secure agent enrollment | M4.5 accepted; M4.6 implementation, qualification pending |
 | M5–M7 — functional SIEM foundations | Planned |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |

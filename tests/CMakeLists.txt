@@ -405,7 +405,7 @@ set_tests_properties(knetsentry_tls_contract PROPERTIES LABELS "integration;secu
 
 # M4.4: persistent approvals, genuine TLS admission, and offline admin CLI.
 add_executable(knetsentry_enrollment_test enrollment_m44.cpp)
-target_link_libraries(knetsentry_enrollment_test PRIVATE KnetSentry::Enrollment)
+target_link_libraries(knetsentry_enrollment_test PRIVATE KnetSentry::AgentHealth)
 knetsentry_apply_project_options(knetsentry_enrollment_test)
 add_test(NAME knetsentry_enrollment_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test>)
 set_tests_properties(knetsentry_enrollment_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)
@@ -416,3 +416,7 @@ set_tests_properties(knetsentry_enrollment_admin PROPERTIES LABELS "integration;
 # M4.5: credential lifecycle and live TLS expiry regression.
 add_test(NAME knetsentry_credential_lifecycle COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --lifecycle)
 set_tests_properties(knetsentry_credential_lifecycle PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)
+
+# M4.6: actual encrypted heartbeat and bounded reconnect regression.
+add_test(NAME knetsentry_agent_health_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --heartbeat)
+set_tests_properties(knetsentry_agent_health_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)

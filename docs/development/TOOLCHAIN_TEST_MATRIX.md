@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** Accepted through M4.1; Ubuntu 26.04 AMD64. Seven mandatory build/test
-presets and nine hosted CI checks are active. Current CTest inventories are
-40 Release/Debug/Clazy/analysis, 35 full ASan/UBSan, 28 core-only and 29
-sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+**State:** Accepted through M4.5; M4.6 qualification pending; Ubuntu 26.04 AMD64.
+Seven mandatory build/test presets and nine hosted CI checks are active. Current
+CTest inventories are 45 Release/Debug/Clazy/analysis, 40 full ASan/UBSan,
+33 core-only and 34 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -291,3 +291,9 @@ No additional package, real endpoint, or privileged operation is needed.
 inventories: 44/39, core-only 32/33 (normal/sanitized). The enrollment CLI
 regression also exercises rotation and revocation. See the
 [credential lifecycle contract](CREDENTIAL_LIFECYCLE_M45.md).
+
+## M4.6 agent heartbeat and health
+
+`knetsentry_agent_health_contract` is mandatory in all seven presets. Desktop
+inventories: 45/40, core-only 33/34 (normal/sanitized). See the
+[agent health contract](AGENT_HEALTH_M46.md). No new dependencies or privileges.
