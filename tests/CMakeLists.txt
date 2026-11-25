@@ -80,6 +80,13 @@ add_test(NAME knetsentry_network_fail_closed_authorization
 set_tests_properties(knetsentry_network_fail_closed_authorization PROPERTIES
     LABELS "unit;security;network;regression" TIMEOUT 15)
 
+# M3.5: unprivileged rule-generation and strict applied-policy fixtures.
+add_test(NAME knetsentry_firewall_profile_contract
+    COMMAND "${Python3_EXECUTABLE}" -B
+        "${PROJECT_SOURCE_DIR}/scripts/verify_m35_firewall.py")
+set_tests_properties(knetsentry_firewall_profile_contract PROPERTIES
+    LABELS "unit;security;network;regression" TIMEOUT 15)
+
 # M2.1 management process: test explicit state transitions and real POSIX
 # shutdown from a separate process, including both supported stop signals.
 add_executable(knetsentry_service_lifecycle_test service_lifecycle_m21.cpp)

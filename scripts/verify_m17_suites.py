@@ -22,7 +22,7 @@ CORE_TESTS = {
     "knetsentry_core_boundary_contract", "knetsentry_configuration_contract",
     "knetsentry_build_hardening", "knetsentry_network_scope_policy",
     "knetsentry_network_prefix_validation", "knetsentry_network_topology_awareness",
-    "knetsentry_network_fail_closed_authorization",
+    "knetsentry_network_fail_closed_authorization", "knetsentry_firewall_profile_contract",
     "knetsentry_manager_state_contract", "knetsentry_manager_signal_lifecycle",
     "knetsentry_manager_configuration_contract", "knetsentry_manager_configuration_runtime",
     "knetsentry_local_ipc_authorization_contract", "knetsentry_local_ipc_runtime",

@@ -15,7 +15,7 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M3.4 (fail-closed network authorization):**
+> **Development status — M3.5 (lifecycle-only firewall profile):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
@@ -27,6 +27,8 @@ offline AI assistance.
 > to the existing dual-stack network scope preflight; no live IP transport or
 > network enforcement has been activated. M3.4 adds an owned fail-closed
 > authorization lifecycle for configuration, policy revisions and topology loss.
+> M3.5 supplies an opt-in, dedicated-UID nftables deny-all IP egress profile;
+> firewall deployment is not automatic and live enforcement needs qualification.
 > A green CI run validates only its documented tests, not release readiness.
 
 The M1.4 follow-up includes a page-lifecycle warning regression test and an
@@ -339,3 +341,9 @@ optional isolated namespace qualification. No IP transport is enabled.
 See the [M3.4 authorization contract](docs/development/NETWORK_AUTHORIZATION_M34.md)
 for explicit configuration withdrawal, monotonic revisions, owned interface
 bindings and sticky denial on uncertain topology. No IP transport is enabled.
+
+### M3.5 — Operating-system firewall enforcement
+
+See the [M3.5 firewall contract](docs/development/FIREWALL_ENFORCEMENT_M35.md)
+for the dedicated-service UID profile, explicit deployment/read-back, isolated
+live tests and rollback. No operational transport or provider access is enabled.

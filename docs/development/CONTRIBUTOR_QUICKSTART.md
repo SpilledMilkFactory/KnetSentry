@@ -246,9 +246,21 @@ No real IP network transport is enabled.
 ### M3.4 Fail-closed network authorization
 
 The mandatory `knetsentry_network_fail_closed_authorization` regression runs
-in all seven presets. Current expected inventories: desktop 35/30
+in all seven presets. M3.4 inventories: desktop 35/30
 (normal/sanitized), core-only 23/24 (normal/sanitized). Run `python3
 scripts/verify_m34_network_authorization.py --build-dir build/presets/linux-release`
 for configured verification. See the [M3.4 authorization contract](NETWORK_AUTHORIZATION_M34.md).
 The optional M3.3 namespace watcher also checks the new gate's invalidation;
 standard acceptance needs no namespace creation or host security changes.
+
+### M3.5 Lifecycle-only nftables firewall
+
+The mandatory `knetsentry_firewall_profile_contract` runs in all seven presets
+and the policy job runs `python3 -B scripts/verify_m35_firewall.py`. Current
+inventories: desktop 36/31 (normal/sanitized), core-only 24/25. Source fixtures
+never invoke nft or require administrator privileges. The separate explicitly
+requested `sudo /usr/bin/python3 -I -B scripts/firewall_m35.py live-isolated`
+requires the dedicated account, nftables, iproute2, IPv6 and a fresh privileged
+network namespace. It must pass before claiming kernel firewall qualification;
+no host rule installation is performed by it. See the
+[M3.5 firewall contract](FIREWALL_ENFORCEMENT_M35.md) for deployment and rollback.

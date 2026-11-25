@@ -15,7 +15,9 @@ M3.3 adds read-only Linux topology inspection and invalidation; see
 M3.4 adds explicit fail-closed configuration and revision activation,
 owned interface bindings and withdrawal on topology uncertainty; see
 [the M3.4 authorization contract](../development/NETWORK_AUTHORIZATION_M34.md).
-Operational IP transport and OS enforcement remain unqualified.
+M3.5 supplies an opt-in dedicated-manager UID nftables IP egress deny profile;
+see [the firewall contract](../development/FIREWALL_ENFORCEMENT_M35.md).
+Operational IP transport and target-host firewall enforcement remain unqualified.
 **Target:** Ubuntu 26.04 LTS AMD64; proposed v1.0.0 product architecture.
 **Traceability:** GitHub issue #2 / M0.2.
 **See also:** [network communication matrix](../architecture/NETWORK_COMMUNICATION_MATRIX.md),
