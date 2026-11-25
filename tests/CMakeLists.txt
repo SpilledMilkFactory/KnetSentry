@@ -87,6 +87,16 @@ add_test(NAME knetsentry_firewall_profile_contract
 set_tests_properties(knetsentry_firewall_profile_contract PROPERTIES
     LABELS "unit;security;network;regression" TIMEOUT 15)
 
+# M3.6: mandatory offline policy fixture; privileged live fixture is explicit.
+add_executable(knetsentry_network_isolation_test network_isolation_m36.cpp)
+target_include_directories(knetsentry_network_isolation_test PRIVATE "${PROJECT_SOURCE_DIR}/src/core")
+target_link_libraries(knetsentry_network_isolation_test PRIVATE KnetSentry::Core Threads::Threads)
+knetsentry_apply_project_options(knetsentry_network_isolation_test)
+add_test(NAME knetsentry_network_isolation_fixture
+    COMMAND $<TARGET_FILE:knetsentry_network_isolation_test>)
+set_tests_properties(knetsentry_network_isolation_fixture PROPERTIES
+    LABELS "unit;security;network;regression" TIMEOUT 15)
+
 # M2.1 management process: test explicit state transitions and real POSIX
 # shutdown from a separate process, including both supported stop signals.
 add_executable(knetsentry_service_lifecycle_test service_lifecycle_m21.cpp)

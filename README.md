@@ -15,7 +15,7 @@ network sensors and gateway telemetry**, optional Ubuntu endpoint agents, a
 security-event pipeline, detection and investigation tools, and optional
 offline AI assistance.
 
-> **Development status — M3.5 (lifecycle-only firewall profile):**
+> **Development status — M3.6 (isolated network policy fixtures):**
 > The repository contains a Qt-independent C++23 core, a seven-section Qt 6 /
 > Kirigami desktop preview, privacy-bounded structured diagnostics, CTest and
 > Qt Test suites, compiler hardening, sanitizers and **nine passing Ubuntu
@@ -29,6 +29,8 @@ offline AI assistance.
 > authorization lifecycle for configuration, policy revisions and topology loss.
 > M3.5 supplies an opt-in, dedicated-UID nftables deny-all IP egress profile;
 > firewall deployment is not automatic and live enforcement needs qualification.
+> M3.6 adds disposable dual-namespace virtual Ethernet test fixtures;
+> live qualification is explicit and virtual attachments remain denied in production.
 > A green CI run validates only its documented tests, not release readiness.
 
 The M1.4 follow-up includes a page-lifecycle warning regression test and an
@@ -347,3 +349,9 @@ bindings and sticky denial on uncertain topology. No IP transport is enabled.
 See the [M3.5 firewall contract](docs/development/FIREWALL_ENFORCEMENT_M35.md)
 for the dedicated-service UID profile, explicit deployment/read-back, isolated
 live tests and rollback. No operational transport or provider access is enabled.
+
+### M3.6 — Network isolation and policy test fixtures
+
+See the [M3.6 fixture contract](docs/development/NETWORK_ISOLATION_FIXTURES_M36.md)
+for offline policy checks and explicit isolated dual-stack TCP delivery, filtering,
+rollback and topology invalidation. No production transport is enabled.
