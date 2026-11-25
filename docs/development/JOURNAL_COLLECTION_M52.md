@@ -144,3 +144,10 @@ No complete Ubuntu target-host, production service,
 source availability, power-loss, raw-store or release-security qualification is
 claimed before the corresponding evidence is available. Relevant partial evidence:
 TV-13 (source loss), TV-25 (diagnostics privacy), TH-033; no threat closure claimed.
+
+## Maintainer acceptance
+
+M5.2 qualified and merged after 101 PASS and 329 CTest executions, nine green
+hosted checks, and live verification of 54 records with unchanged unique
+cursors after restart. The original journal mode still excludes MESSAGE;
+[M5.3](AUTHENTICATION_COLLECTION_M53.md) adds a separate opt-in classification mode.

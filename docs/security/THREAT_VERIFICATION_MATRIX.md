@@ -155,3 +155,11 @@ this supports TV-13, TV-25 and TV-26 (including TH-033 and TH-034), not full
 coverage, disk-fault or production-storage qualification. DEP-008 introduces
 an additional TB-10/TV-24 dependency review responsibility. No operational
 TB-04 transport or authorization is introduced. Target-host acceptance is pending.
+
+## M5.3 authentication observations
+
+The [M5.3 contract](../development/AUTHENTICATION_COLLECTION_M53.md) adds partial
+evidence for TB-06/TB-07 and TV-13/TV-25/TV-26 (bounded untrusted messages,
+provenance, recovery and minimization). Classification is advisory; source
+spoofing, completeness, correlation, and production evidence integrity are
+not closed by this test. No additional privileges or external transport.

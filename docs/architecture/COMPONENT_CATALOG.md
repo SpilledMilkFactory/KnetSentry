@@ -151,3 +151,9 @@ Production service confinement is not yet qualified.
 C-08/P-08 gains an opt-in, unit-filtered local journal metadata collector with
 a protected bounded development checkpoint. C-09/P-09 and I-07/I-09 remain
 undeployed. See [M5.2 journal collection](../development/JOURNAL_COLLECTION_M52.md).
+
+## M5.3 authentication observations
+
+C-08/P-08 adds opt-in source-specific local authentication classifications,
+without raw message persistence or operational I-07/I-09 connectivity. See
+[M5.3 authentication collection](../development/AUTHENTICATION_COLLECTION_M53.md).

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 #include "knetsentry/agent/lifecycle.hpp"
+#include "knetsentry/agent/authentication.hpp"
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -9,9 +10,11 @@
 #include <vector>
 
 namespace knetsentry::agent {
+enum class JournalMode { Metadata, Authentication };
 struct JournalRecord {
     std::string cursor, unit, machine, boot;
     std::uint64_t realtime_usec{}, monotonic_usec{};
+    AuthEvent auth{AuthEvent::None};
 };
 enum class JournalResult { Record, End, Error };
 class JournalSource {
@@ -24,14 +27,15 @@ public:
     virtual void close() noexcept = 0;
 };
 // An empty directory argument uses the local journal. Nonempty is for isolated tests only.
-std::unique_ptr<JournalSource> make_journal_source(std::string directory = {});
+std::unique_ptr<JournalSource> make_journal_source(std::string directory = {}, JournalMode mode = JournalMode::Metadata);
 [[nodiscard]] bool valid_journal_unit(std::string_view unit) noexcept;
 [[nodiscard]] bool valid_journal_directory(std::string_view path) noexcept;
 class JournalCollector final : public Collector {
 public:
     static constexpr std::size_t max_records = 128;
     static constexpr std::size_t batch_size = 16;
-    JournalCollector(JournalSource& source, std::string unit, std::string directory);
+    JournalCollector(JournalSource& source, std::string unit, std::string directory,
+                     JournalMode mode = JournalMode::Metadata);
     ~JournalCollector() override { stop(); }
     JournalCollector(const JournalCollector&) = delete;
     JournalCollector& operator=(const JournalCollector&) = delete;
@@ -46,6 +50,9 @@ private:
     bool load();
     bool commit(const JournalRecord& record);
     JournalSource& source_;
+    JournalMode mode_;
+    const char* state_name_;
+    const char* pending_name_;
     std::string unit_, directory_, state_, cursor_;
     int fd_{-1};
     std::size_t count_{};
