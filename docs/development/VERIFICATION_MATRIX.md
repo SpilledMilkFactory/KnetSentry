@@ -5,6 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Planned Verification Gates and Ownership Matrix
 
+> Historical baseline and design contract. For current implemented behavior and
+> acceptance evidence, see [project status](../PROJECT_STATUS.md). Future requirements
+> and original milestone-specific test counts below are not release claims.
+
 **Issue:** M0.7 / GitHub #7. **State:** all `VG-01`–`VG-30` cases
 are future gates; none has been executed by the M0.7 documentation update.
 The existing M0.3–M0.6 documentation verifiers are real and must still pass.

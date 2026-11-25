@@ -78,7 +78,7 @@ def main() -> None:
         'src/core/linux_topology.cpp': ('RTM_GETLINK', 'RTM_GETROUTE', 'RTM_F_FIB_MATCH',
                                        'NETLINK_ADD_MEMBERSHIP', 'TopologyState::Invalidated'),
         'include/knetsentry/core/linux_topology.hpp': ('check_changes', 'TopologyResult'),
-        'README.md': ('NETWORK_TOPOLOGY_M33.md',),
+        'docs/README.md': ('NETWORK_TOPOLOGY_M33.md',),
     }
     for path, tokens in checks.items():
         source = (ROOT / path).read_text(encoding='utf-8')

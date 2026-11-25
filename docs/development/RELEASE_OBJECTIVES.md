@@ -5,9 +5,9 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Release Objectives and Acceptance Strategy
 
-**Status:** M0.1 planning baseline refined by M0.2 monitoring and network
-security requirements. Milestone success requires future implementation and
-repeatable verification evidence.
+**Status:** Release criteria remain prospective; development is accepted through
+M3.8. See [current project status](../PROJECT_STATUS.md). Release success requires
+implementation and repeatable evidence against the intended artifacts.
 
 ## 1. Release target
 
@@ -17,15 +17,12 @@ manager service, an agentless network-sensor capability, and an **optional**
 endpoint agent, packaged with appropriate dependencies.
 The desktop must operate under GNOME and KDE Plasma on the supported OS.
 
-M0.1 ships **documentation only**. It does not claim that software, tests,
-security controls, or release artifacts already exist.
-
-M1.1 introduces the [Qt-aware CMake foundation](BUILD_FOUNDATION.md);
-M1.2 adds [target-scoped hardening and sanitizers](HARDENING_AND_ANALYSIS.md).
-M1.3 adds a real Qt Quick/Kirigami window and a mandatory runtime import test.
-The application shell remains non-operational; navigation (M1.4), services,
-and actual SIEM capabilities are future work. A passing core-only build does
-not qualify the desktop or production security requirements.
+M0 established documentation; M1 established the [CMake foundation](BUILD_FOUNDATION.md)
+and [hardening](HARDENING_AND_ANALYSIS.md). M2 added the lifecycle-only manager,
+authorized local IPC, health, audit and desktop controls. M3 added tested network
+policy and isolated firewall foundations plus read-only scope inspection.
+Operational monitoring and production release qualification remain future work.
+A core-only build does not qualify the desktop or production security requirements.
 
 ## 2. Roadmap stages
 

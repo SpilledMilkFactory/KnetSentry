@@ -21,7 +21,7 @@ def main() -> None:
         'include/knetsentry/core/network_authorization.hpp': ('ConfigurationEvidence', 'high_water_generation', 'candidate_in_scope'),
         'src/core/network_authorization.cpp': ('topology_->evaluate', 'topology_->check_changes', 'TopologyInvalidated',
                                                 'RouteUnverified', 'StaleGeneration'),
-        'README.md': ('NETWORK_AUTHORIZATION_M34.md',),
+        'docs/README.md': ('NETWORK_AUTHORIZATION_M34.md',),
     }
     for path, tokens in checks.items():
         source = (ROOT / path).read_text(encoding='utf-8')

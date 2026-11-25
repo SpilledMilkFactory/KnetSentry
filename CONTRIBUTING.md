@@ -7,8 +7,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 KnetSentry welcomes contributions to an **early, non-operational** C++23/Qt 6
 security application. A GUI, typed diagnostics, CTest/Qt Test suites, and nine
-GitHub Actions CI checks exist. A manager, packet sensors, endpoint agents,
-security event indexing, and the operational SIEM do **not** exist yet.
+GitHub Actions CI checks exist, along with the lifecycle-only manager, local IPC,
+audit logging and network authorization foundations. Packet sensors, operational
+endpoint agents, security event indexing and detection do **not** exist yet.
+See [project status](docs/PROJECT_STATUS.md) for current capability and evidence.
 
 **First-time contributors:** follow the step-by-step
 [Ubuntu 26.04 developer quickstart](docs/development/CONTRIBUTOR_QUICKSTART.md)

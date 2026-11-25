@@ -5,6 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M1.9 — Repository metadata and contributor documentation audit
 
+> Historical baseline and design contract. For current implemented behavior and
+> acceptance evidence, see [project status](../PROJECT_STATUS.md). Future requirements
+> and original milestone-specific test counts below are not release claims.
+
 **Issue:** #17 — Establish Repository Metadata and Contributor Documentation.
 
 ## What is already implemented and retained
@@ -26,7 +30,9 @@ The user previously reported enabling GitHub private vulnerability reporting and
 all nine M1.8 Actions PR jobs passing, but these facts do not establish that
 any required-check ruleset or conduct mailbox is currently configured.
 
-## Suggested public GitHub metadata (maintainer applies manually)
+## Original M1.9 metadata recommendation (historical)
+
+For the current metadata and Wiki publishing process, see [Wiki publishing](WIKI_PUBLISHING.md).
 
 - **Repository description:** `KDE-compatible, local-first LAN security intelligence and SIEM (in development; Qt 6/C++23, agentless-first).`
 - **Homepage:** leave unset until a maintained official project site exists;

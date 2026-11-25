@@ -80,7 +80,7 @@ check("0.0.0" in root and "not a functioning siem" in read("docs/development/BUI
       "foundation version/status not clearly specified")
 check("#include <QCoreApplication>" in read("apps/desktop/main.cpp"),
       "desktop program is not Qt-linked")
-for rel in ("README.md", "docs/development/TOOLCHAIN_TEST_MATRIX.md",
+for rel in ("docs/README.md", "docs/development/TOOLCHAIN_TEST_MATRIX.md",
             "docs/development/RELEASE_OBJECTIVES.md"):
     check("BUILD_FOUNDATION.md" in read(rel), f"{rel} missing build guide link")
 check("MIT License" in read("LICENSE"), "root MIT license changed")

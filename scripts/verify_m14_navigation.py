@@ -46,7 +46,7 @@ cmake = read("apps/desktop/CMakeLists.txt")
 tests = read("tests/CMakeLists.txt")
 policy = read("scripts/verify_m13_lsan.py")
 guide = read("docs/development/GUI_NAVIGATION.md")
-readme = read("README.md")
+readme = read("docs/README.md")
 
 for name, content in (("Main.qml", main), ("SectionPage.qml", page)):
     require(content.startswith("// SPDX-FileCopyrightText: 2026 Chris Sutton\n"
@@ -106,7 +106,7 @@ require('set_property(TEST knetsentry_primary_navigation APPEND PROPERTY ENVIRON
 require('tests.count("LSAN_OPTIONS=suppressions=") == 3' in policy,
         "existing negative-control policy must remain scoped to only two QML tests and probe")
 require("CC-BY-SA-4.0" in guide[:140], "navigation guide must have docs license")
-require("GUI_NAVIGATION.md" in readme, "README needs new navigation guide link")
+require("GUI_NAVIGATION.md" in readme, "Documentation index needs new navigation guide link")
 
 if args.build_dir:
     path = (ROOT / args.build_dir).resolve()

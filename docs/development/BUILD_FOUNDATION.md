@@ -5,6 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M1.1 — Build and Source Architecture
 
+> Historical baseline and design contract. For current implemented behavior and
+> acceptance evidence, see [project status](../PROJECT_STATUS.md). Future requirements
+> and original milestone-specific test counts below are not release claims.
+
 **Status:** M1.3 desktop foundation implemented; NOT a functioning SIEM.
 **Scope:** GitHub issue #9; Ubuntu 26.04 LTS AMD64 is the supported build target.
 

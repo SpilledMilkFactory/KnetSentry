@@ -5,6 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Modular System Architecture
 
+> Historical baseline and design contract. For current implemented behavior and
+> acceptance evidence, see [project status](../PROJECT_STATUS.md). Future requirements
+> and original milestone-specific test counts below are not release claims.
+
 **Issue:** M0.4 / GitHub #4. **State:** design contract; no software, sockets,
 firewall policies, or isolation mechanisms are implemented by this change.
 **Target:** Ubuntu 26.04 LTS AMD64; Qt 6/Kirigami GNOME- and Plasma-compatible GUI.

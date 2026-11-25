@@ -140,7 +140,7 @@ need("SPDX\x2dLicense-Identifier: CC-BY-SA-4.0" in guide[:180],
 for phrase in ("light", "dark", "spacing", "accessibility", "contrast",
                "reduced motion", "severity", "monitoring availability", "GNOME", "Plasma"):
     need(phrase.lower() in guide.lower(), f"missing visual design policy: {phrase}")
-need("VISUAL_DESIGN_SYSTEM.md" in read("README.md"),
+need("VISUAL_DESIGN_SYSTEM.md" in read("docs/README.md"),
      "README must link to visual design system guidance")
 
 if args.build_dir:

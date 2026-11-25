@@ -5,12 +5,12 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M1.2 hardening and sanitizer/analysis presets, M1.3–M1.5 Qt/Kirigami
-window/navigation/design, M1.6 diagnostics, M1.7 CTest/Qt Test suites and M1.8
-Ubuntu 26.04 GitHub Actions CI exist. Nine M1.8 PR checks were reported green;
-M1.9's CI dependency optimization is not yet qualified on hosted runners.
-Initial supported target is Ubuntu 26.04 AMD64. See the
-[M1.1 build guide](BUILD_FOUNDATION.md).
+**State:** Accepted through M3.8; Ubuntu 26.04 AMD64. Seven mandatory build/test
+presets and nine hosted CI checks are active. Current CTest inventories are
+38 Release/Debug/Clazy/analysis, 33 full ASan/UBSan, 26 core-only and 27
+sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
+sections below describe earlier inventories, not today's totals.
 
 ## Planned build and analysis matrix
 
@@ -18,9 +18,9 @@ Initial supported target is Ubuntu 26.04 AMD64. See the
 | --- | --- | --- | --- |
 | Build | GCC C++23, CMake + Ninja, compiler warning flags | M1.1/M1.2 | Pin actual compiler and CMake minimum after local check; do not assume a GitHub runner image version |
 | Release | `linux-release` configure/build/test presets | M1.1/M1.2 | First-party warnings-as-errors and ELF hardening active; final packaging inspection remains M15 |
-| Sanitizer | `linux-sanitize` ASan + UBSan with symbols | M1.2/M1.7 | Presets implemented; validate on Ubuntu 26.04; dynamic third-party libraries may not be instrumented |
-| Static C++ | opt-in `linux-analysis` clang-tidy | M1.2/M1.8 | Preset configured; mandatory CI checks remain M1.8 |
-| Static Qt C++ | opt-in `linux-clazy` compiler preset | M1.2/M1.8 | Requires installed Clazy; release CI integration remains M1.8 |
+| Sanitizer | `linux-sanitize` ASan + UBSan with symbols | M1.2/M1.7 | Presets qualified for M3.8 on Ubuntu 26.04; dynamic third-party libraries may not be instrumented |
+| Static C++ | opt-in `linux-analysis` clang-tidy | M1.2/M1.8 | Preset configured; mandatory CI checks active |
+| Static Qt C++ | opt-in `linux-clazy` compiler preset | M1.2/M1.8 | Requires installed Clazy; CI integration active |
 | QML | `qmllint` and `qmlformat` | M1.8 | Require module import paths; validate available versions |
 | C++/Qt unit | CTest and Qt Test | M1.7 | Synthetic deterministic fixtures, unique test IDs |
 | GUI interaction | Qt Quick Test and offscreen smoke tests | M1.7/M8.9 | Headless result is not KDE Plasma/GNOME human acceptance |
@@ -96,7 +96,7 @@ All counts are targets until CTest has run on the intended revision.
 
 ## M1.8 hosted CI implementation
 
-The [Ubuntu 26.04 workflow](../../.github/workflows/ubuntu-26-04.yml) covers the seven accepted M1.7 presets, source policy verification and Qt-generated QML lint. **Host-run evidence pending.** See [CI implementation details](CI_IMPLEMENTATION_M18.md).
+The [Ubuntu 26.04 workflow](../../.github/workflows/ubuntu-26-04.yml) covers the seven accepted M1.7 presets, source policy verification and Qt-generated QML lint. The maintainer reported nine passing M1.8 hosted checks; see the current status for later evidence. See [CI implementation details](CI_IMPLEMENTATION_M18.md).
 
 ## M2.1 manager lifecycle verification
 

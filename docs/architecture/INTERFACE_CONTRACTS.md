@@ -5,6 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Logical Interface and Data Contracts
 
+> Historical baseline and design contract. For current implemented behavior and
+> acceptance evidence, see [project status](../PROJECT_STATUS.md). Future requirements
+> and original milestone-specific test counts below are not release claims.
+
 **Issue:** M0.4. **State:** architecture proposals; interfaces are not yet
 implemented. See [components](COMPONENT_CATALOG.md),
 [system architecture](SYSTEM_ARCHITECTURE.md) and

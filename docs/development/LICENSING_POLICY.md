@@ -35,7 +35,7 @@ A root `LICENSE` is not a declaration that all files are MIT; **per-file SPDX me
 ## 3. REUSE / SPDX policy
 
 - Put an `SPDX-FileCopyrightText` and an `SPDX-License-Identifier` in each text source/doc file, using comment syntax for that file type.
-- Put license text for **each actually used** SPDX license in `LICENSES/<id>.txt` (currently `MIT` and `CC-BY-SA-4.0`). Add `BSD-2-Clause.txt` when a BSD-2-Clause CMake file is first introduced; do not create unused placeholders.
+- Put license text for **each actually used** SPDX license in `LICENSES/<id>.txt` (currently `MIT`, `CC-BY-SA-4.0` and `BSD-2-Clause` for CMake). Do not create unused placeholders.
 - Maintain `REUSE.toml` for a file unable to embed an SPDX comment (currently the existing unmodified root `LICENSE`).
 - Use standard REUSE metadata or `.license` companions for binary and third-party files; keep proof of ownership and attribution.
 - Use clear SPDX expressions with `AND`/`OR` only when legally applicable, not as substitutes for review.

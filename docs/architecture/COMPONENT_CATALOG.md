@@ -5,6 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Component and Process Catalog
 
+> Historical baseline and design contract. For current implemented behavior and
+> acceptance evidence, see [project status](../PROJECT_STATUS.md). Future requirements
+> and original milestone-specific test counts below are not release claims.
+
 **Issue:** M0.4. **Status:** proposed architecture; M2.1 implements the
 `C-01` / `P-01` lifecycle foundation and M2.2 adds a strict, non-operational
 configuration contract; the planned security services remain unimplemented.

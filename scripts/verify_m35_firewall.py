@@ -109,7 +109,7 @@ def main() -> None:
                   'CapabilityBoundingSet=\n', 'NoNewPrivileges=yes'):
         assert token in unit
     assert 'NAME knetsentry_firewall_profile_contract' in (ROOT / 'tests/CMakeLists.txt').read_text()
-    assert 'FIREWALL_ENFORCEMENT_M35.md' in (ROOT / 'README.md').read_text()
+    assert 'FIREWALL_ENFORCEMENT_M35.md' in (ROOT / 'docs/README.md').read_text()
     print('M3.5 rule generation, identity, read-back and isolation negative fixtures: PASS')
     print('M3.5 source-only: live nftables enforcement NOT verified')
 

@@ -8,7 +8,8 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 **Supported development target:** Ubuntu 26.04 x86-64, with C++23, Qt 6,
 KDE Frameworks 6/Kirigami, CMake and Ninja. A GNOME session is supported;
 KDE Plasma is **not** required. This is a developer build of a **non-operational
-SIEM shell**; no LAN capture, manager, agent, or production service exists.
+SIEM shell** with a lifecycle-only manager and read-only scope inspection; no
+operational capture, agent transport or event processing exists.
 
 ## 1. Prepare a clean developer workstation
 
@@ -49,7 +50,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **15 CTest tests**, including
+The Release desktop suite currently contains **38 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -88,7 +89,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **12 CTests**, including the
+The full sanitizer suite currently contains **33 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -96,7 +97,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **7 CTests**) and `linux-sanitize-core-only` for **8**.
+C++ test (currently **26 CTests**) and `linux-sanitize-core-only` for **27**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -135,7 +136,12 @@ of a documentation/test change.
 The repository's future KDE adoption is an aspiration; it is not an official
 KDE project, and no binary redistribution has been cleared by this guide.
 
-## M2.1 — Local management daemon (non-operational)
+## Milestone-specific reference (M2–M3)
+
+The following sections describe incremental implementation contracts. For
+current capabilities and accepted verification see [project status](../PROJECT_STATUS.md).
+
+### M2.1 — Local management daemon (non-operational)
 
 The independent unprivileged foreground process builds with *every* preset,
 including core-only. See [M2.1 daemon guide](MANAGER_DAEMON_M21.md).
@@ -146,8 +152,9 @@ including core-only. See [M2.1 daemon guide](MANAGER_DAEMON_M21.md).
 # Stop with Ctrl+C (or SIGTERM from another terminal). Do not run as root.
 ```
 
-No network listeners, IPC, telemetry, persistent audit logs, or GUI integration
-are active. Two new CTests exercise real SIGTERM/SIGINT shutdown.
+At M2.1 there were no IPC, audit or GUI integrations. The current manager
+supports the opt-in local features documented below; operational IP transport
+and telemetry remain disabled. The lifecycle tests exercise SIGTERM/SIGINT.
 
 
 ### M2.2 configuration verification

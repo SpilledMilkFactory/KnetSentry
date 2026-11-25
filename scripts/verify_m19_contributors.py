@@ -139,15 +139,18 @@ def check_docs() -> None:
                     'reuse lint', 'scripts/verify_m17_suites.py',
                     'scripts/verify_m18_ci.py --format'):
         require(command in quick, f'quickstart missing command: {command}')
-    for required in ('15 CTest', '12 CTests', 'core-only', 'non-operational',
+    from verify_m17_suites import CORE_TESTS, DESKTOP_TESTS, NONSAN_DESKTOP_TESTS
+    desktop = len(CORE_TESTS | DESKTOP_TESTS | NONSAN_DESKTOP_TESTS)
+    sanitizer = len(CORE_TESTS | DESKTOP_TESTS) + 1
+    for required in (f'{desktop} CTest', f'{sanitizer} CTests', 'core-only', 'non-operational',
                      'security', 'private advisory'):
         require(required.lower() in quick.lower(),
                 f'quickstart missing qualification/safety statement: {required}')
-    readme = read('README.md')
+    readme = read('docs/README.md')
     for reference in ('CONTRIBUTOR_QUICKSTART.md', 'CI_EFFICIENCY_M19.md',
                       'REPOSITORY_METADATA_M19.md',
-                      'M1.9', 'nine successful M1.8'):
-        require(reference in readme, f'README omits {reference}')
+                      'PROJECT_STATUS.md'):
+        require(reference in readme, f'Documentation index omits {reference}')
     metadata = read('docs/development/REPOSITORY_METADATA_M19.md')
     for asset in ('.github/ISSUE_TEMPLATE/', '.github/pull_request_template.md',
                   'CODEOWNERS', 'SECURITY.md', 'reuse lint'):

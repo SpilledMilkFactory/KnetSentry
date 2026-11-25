@@ -20,7 +20,7 @@ FILES={
  'template': 'docs/development/BENCHMARK_RESULT_TEMPLATE.md',
  'storage': 'docs/architecture/STORAGE_PLACEMENT_CONTRACT.md',
  'adr': 'docs/architecture/adr/0005-configurable-evidence-storage.md',
- 'readme': 'README.md',
+ 'readme': 'docs/README.md',
  'release': 'docs/development/RELEASE_OBJECTIVES.md',
 }
 errors=[]

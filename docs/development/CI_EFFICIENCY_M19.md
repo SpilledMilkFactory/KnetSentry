@@ -5,6 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M1.9 — CI dependency provisioning efficiency
 
+> Historical baseline and design contract. For current implemented behavior and
+> acceptance evidence, see [project status](../PROJECT_STATUS.md). Future requirements
+> and original milestone-specific test counts below are not release claims.
+
 **Scope:** Optimize Ubuntu 26.04 GitHub Actions dependency provisioning;
 preserve all nine existing required checks and all seven CMake/CTest presets.
 This is **not** a GitHub Actions execution report or benchmark claim.
