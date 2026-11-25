@@ -77,6 +77,15 @@ certificate-valid or monitored. The local daemon heartbeat is not agent health.
 Registry IDs are potentially sensitive inventory metadata: keep screenshots and
 logs with real IDs private. No IDs or pins are added to diagnostic messages.
 
+## Installed development service qualification
+
+M4.7 changes the manager executable even though the unit and launcher remain
+unchanged. Refresh the reviewed root-owned installed binary before requesting
+live systemd acceptance; see [systemd development service](SYSTEMD_SERVICE_M27.md).
+The verifier must continue rejecting stale deployed binaries. Registry operations
+also explicitly reject failed directory reopens before locking or inspecting
+storage; the enrollment contract exercises non-directory and closed descriptors.
+
 ## Synthetic verification
 
 From the project root, use an isolated private fixture (no real credentials):

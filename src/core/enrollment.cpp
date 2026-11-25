@@ -35,7 +35,7 @@ template<typename T> bool nonzero(const T& data) noexcept {
 }
 bool safe_dir(int fd) noexcept {
     struct stat st{};
-    return fstat(fd, &st) == 0 && S_ISDIR(st.st_mode) && st.st_uid == geteuid() &&
+    return fd >= 0 && fstat(fd, &st) == 0 && S_ISDIR(st.st_mode) && st.st_uid == geteuid() &&
         (st.st_mode & 07777) == 0700;
 }
 bool safe_file(const struct stat& st) noexcept {
@@ -143,6 +143,7 @@ Status publish(int dir, const Data& data) noexcept {
 Status initialize(int directory) noexcept {
     if (directory < 0) { return Status::UnsafeStorage; }
     Fd dir(openat(directory, ".", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
+    if (dir.value < 0) { return Status::UnsafeStorage; }
     const auto status = lock(dir.value);
     if (status != Status::Ok) { return status; }
     struct stat st{};
@@ -154,6 +155,7 @@ Status approve(int directory, const EndpointId& id, const identity::Fingerprint&
     if (!nonzero(id) || !nonzero(pin)) { return Status::InvalidInput; }
     if (directory < 0) { return Status::UnsafeStorage; }
     Fd dir(openat(directory, ".", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
+    if (dir.value < 0) { return Status::UnsafeStorage; }
     const auto status = lock(dir.value);
     if (status != Status::Ok) { return status; }
     Data data{};
@@ -174,6 +176,7 @@ Status change(int directory, const EndpointId& id, const identity::Fingerprint& 
     }
     if (directory < 0) { return Status::UnsafeStorage; }
     Fd dir(openat(directory, ".", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
+    if (dir.value < 0) { return Status::UnsafeStorage; }
     const auto status = lock(dir.value);
     if (status != Status::Ok) { return status; }
     Data data{};
@@ -213,6 +216,7 @@ Lookup lookup(int directory, const EndpointId& id) noexcept {
     if (!nonzero(id)) { return {Status::InvalidInput}; }
     if (directory < 0) { return {Status::UnsafeStorage}; }
     Fd dir(openat(directory, ".", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
+    if (dir.value < 0) { return {Status::UnsafeStorage}; }
     const auto status = lock(dir.value);
     if (status != Status::Ok) { return {status}; }
     Data data{};
@@ -230,6 +234,7 @@ Roster inspect(int directory) noexcept {
     Roster result{};
     if (directory < 0) { result.status = Status::UnsafeStorage; return result; }
     Fd dir(openat(directory, ".", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC));
+    if (dir.value < 0) { result.status = Status::UnsafeStorage; return result; }
     result.status = lock(dir.value);
     if (result.status != Status::Ok) { return result; }
     Data data{};
