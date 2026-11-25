@@ -157,3 +157,9 @@ undeployed. See [M5.2 journal collection](../development/JOURNAL_COLLECTION_M52.
 C-08/P-08 adds opt-in source-specific local authentication classifications,
 without raw message persistence or operational I-07/I-09 connectivity. See
 [M5.3 authentication collection](../development/AUTHENTICATION_COLLECTION_M53.md).
+
+## M5.4 journal-mediated Linux Audit
+
+C-08/P-08 gains opt-in structured audit record collection through the already
+readable local journal. No direct audit authority or operational I-07/I-09
+connection is introduced. See [M5.4](../development/AUDIT_COLLECTION_M54.md).

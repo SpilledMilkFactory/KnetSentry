@@ -23,3 +23,7 @@ journal-m52.pending
 auth-m53.v1
 auth-m53.pending
 before-restart.snapshot
+
+# Private M5.4 audit observations and transactions.
+audit-m54.v1
+audit-m54.pending

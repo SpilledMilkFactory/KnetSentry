@@ -90,3 +90,11 @@ The normal journal mode remains metadata-only. No new dependencies.
 Target-host live verification is conditional on already readable authorized
 records; never deliberately fail real logins or grant additional permissions
 for a test. Report only aggregate categories and counts, not raw state.
+
+## Maintainer acceptance
+
+On 2026-11-25 UTC the maintainer reported 103 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED,
+336 configured CTests, nine hosted checks and merge. Live collection retained 63
+records, including 14 session-removal observations and 49 unclassified records;
+restart preserved 63 unique cursors. Manual schema, permissions and negative CLI
+checks passed. M5.4 adds a separate audit mode; existing formats are unchanged.
