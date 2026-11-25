@@ -148,3 +148,8 @@ register and its verification matrix, with an explicit regression test owner.
 HELLO/HEARTBEAT encoding and connection-local sequencing. It does not implement
 the operational authenticated channel, source binding, enrollment or telemetry
 envelope. Those requirements and the I-08 provenance boundary remain in force.
+
+M4.2 defines the offline [identity contract](../development/IDENTITY_M42.md)
+for I-07/I-08: role-bound certificate validation against an explicit trust
+anchor and independently approved public-key fingerprint. This does not
+establish proof of possession, enrollment, revocation or network authority.

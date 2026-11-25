@@ -37,8 +37,14 @@ closed by this refresh; see [accepted baseline](../PROJECT_STATUS.md).
 
 **M4.1 implementation:** [KSAP 1.0](../development/AGENT_PROTOCOL_M41.md) adds
 offline framing and connection-local sequence regression coverage for TV-07.
-Target acceptance is pending; cross-connection replay and authenticated ingestion
+M4.1 target acceptance passed; cross-connection replay and authenticated ingestion
 remain unqualified. No threat is closed.
+
+**M4.2 implementation:** [identity contract](../development/IDENTITY_M42.md)
+adds partial TV-06 evidence for protected key storage, explicit trust roots,
+certificate purpose, validity and pinned public-key identity. Target acceptance,
+proof of possession, issuance, enrollment, rotation and revocation remain
+required. No threat is closed.
 
 | Test ID | Expected observable security outcome | Planned owner | Proposed evidence |
 | --- | --- | --- | --- |

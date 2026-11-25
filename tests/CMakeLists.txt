@@ -388,3 +388,10 @@ add_test(NAME knetsentry_agent_protocol_contract
     COMMAND $<TARGET_FILE:knetsentry_agent_protocol_test>)
 set_tests_properties(knetsentry_agent_protocol_contract PROPERTIES
     LABELS "unit;security;regression" TIMEOUT 15)
+
+# M4.2: ephemeral key-storage and explicit certificate trust regressions.
+add_executable(knetsentry_identity_test identity_m42.cpp)
+target_link_libraries(knetsentry_identity_test PRIVATE KnetSentry::Identity)
+knetsentry_apply_project_options(knetsentry_identity_test)
+add_test(NAME knetsentry_identity_contract COMMAND $<TARGET_FILE:knetsentry_identity_test>)
+set_tests_properties(knetsentry_identity_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)

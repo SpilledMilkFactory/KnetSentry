@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Initial Dependency Candidate Register
 
-**Status:** Architecture-stage inventory; **zero third-party implementations or runtime bundles have been approved** by this register. These are candidates, not exact installed versions, confirmed apt packages, approved license grants or a dependency lockfile.
+**Status:** Candidate inventory with one scoped M4.2 development-build decision. No runtime bundle or distribution clearance has been approved. This is not a dependency lockfile.
 
 | ID | Candidate / class | Planned use | License / constraint to verify | Future owner | Decision |
 |---|---|---|---|---|---|
@@ -13,7 +13,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 | `DEP-002` | KDE Frameworks 6 (selected modules) | Kirigami-compatible desktop | Module-specific SPDX/license and dependencies | M1.3 | `CANDIDATE` |
 | `DEP-003` | Kirigami / Kirigami Addons (if needed) | Qt Quick UI patterns | Exact KDE module, packaging and LGPL/other license | M1.3 | `CANDIDATE` |
 | `DEP-004` | Extra CMake Modules (ECM) | KDE-oriented build configuration | Tooling license, package origin; custom CMake files BSD-2-Clause | M1.1 | `CANDIDATE` |
-| `DEP-005` | TLS / cryptography library (e.g. OpenSSL) | Authentication and encrypted agent transport | Exact version, license, provider and FIPS claims if made | M4.2 | `CANDIDATE` |
+| `DEP-005` | OpenSSL 3.5.x system shared libcrypto | Offline key management and X.509 validation | Apache-2.0; [scoped build decision and evidence](IDENTITY_M42.md) | M4.2 | `APPROVED_FOR_BUILD` |
 | `DEP-006` | SQLite | Indexed event and metadata store | Source provenance, public-domain status/attestation and bundled components | M6.4 | `CANDIDATE` |
 | `DEP-007` | Linux capture stack (e.g. libpcap) | Privileged capture broker / passive sensor | Licensing, privileges, parser security and deployment | M5.10 | `CANDIDATE` |
 | `DEP-008` | systemd / libsystemd | Journal collectors and service control | Module license, Ubuntu packages, privilege model | M2.7/M5.2 | `CANDIDATE` |
@@ -23,4 +23,4 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 | `DEP-012` | Offline AI inference engine and model weights | Optional local investigation assistance | Runtime code vs model weights terms, source provenance and privacy | M12.3 | `CANDIDATE` |
 | `DEP-013` | Qt Graphs / other Qt GPL-only add-ons | Optional rich visualizations | **GPL-only open-source option may conflict with MIT-app distribution goal**; not an approved default | M8.2 | `REVIEW_REQUIRED` |
 
-The `CANDIDATE` label means **not approved**. This is not a record of installed artifacts; it is a planned review queue. Future entries must include a separate version/source digest, exact licenses and artifact approval evidence. Relevant security risk: `TH-031` / `TB-10` / `TV-24` in the [threat model](../security/THREAT_MODEL.md) and [verification matrix](../security/THREAT_VERIFICATION_MATRIX.md).
+The `CANDIDATE` label means **not approved**. DEP-005 is limited to maintained distro 3.5.x packages for this development build; exact package versions are recorded by CI and the acceptance runner. No provider, TLS transport, bundled artifact or release approval follows. Other candidates remain a review queue. Future distribution entries must include version/source digest, exact licenses and artifact approval evidence. Relevant security risk: `TH-031` / `TB-10` / `TV-24` in the [threat model](../security/THREAT_MODEL.md) and [verification matrix](../security/THREAT_VERIFICATION_MATRIX.md).
