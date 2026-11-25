@@ -5,11 +5,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M5.2 — systemd journal collection.**
+**Accepted baseline: M5.3 — authentication and SSH event collection.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
-M4.8, M5.1 and M5.2 are qualified and merged. M5.3 introduces opt-in local
-authentication and SSH classification; qualification is pending.
+M4.8, M5.1, M5.2 and M5.3 are qualified and merged. M5.4 introduces opt-in
+journal-mediated Linux Audit records; qualification is pending.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
@@ -24,7 +24,7 @@ This is an unreleased development baseline, not a v1.0.0 security qualification.
 | Cryptographic identity | Offline Ed25519 key generation, protected role-specific storage and explicit X.509 trust/role/pin validation; no issuance or enrollment |
 | TLS transport | TLS 1.3 mutual identity, explicit root and role/pin validation, bounded encrypted byte stream; no operational socket adapter |
 | Endpoint enrollment | Offline registry, TLS-backed admission, explicit rotation/revocation and live validity rechecks; explicit local read-only roster selection; no operational admission or automatic enrollment |
-| Endpoint agent | Independent foreground process, strict v1 startup configuration, bounded static collector lifecycle and non-root capability checks; opt-in selected journal metadata and authentication categories, no operational network |
+| Endpoint agent | Independent foreground process, strict v1 startup configuration, bounded static collector lifecycle and non-root capability checks; opt-in selected journal metadata, authentication categories and journal-mediated audit records, no operational network |
 | Agent health | Offline TLS-backed KSAP reporting, current enrollment rechecks, bounded health snapshots and reconnect scheduling; no deployed agent |
 | Verification | Mandatory compiled regressions, static analysis, sanitizer configurations, strict QML diagnostics, isolated dual-stack kernel firewall and topology fixtures |
 
@@ -36,6 +36,16 @@ rules. Monitoring is unavailable, and no operational remote telemetry transport,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M5.3 maintainer acceptance (2026-11-25 UTC, applied working tree based on
+`010b788`) recorded 103 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, 336 CTest executions,
+46 structural verifiers and nine green hosted checks (`a6802ec`). Live collection
+retained 63 records (14 recognized session removals, 49 unclassified), validated
+permissions and metadata structure, and retained 63 unique cursors after restart.
+Unsupported source, wildcard and missing directory were rejected. The maintainer
+reported manual GUI functionality and merge; the previously reported desktop
+diagnostics remain unresolved (no new diagnostic evidence supplied).
+
 
 M5.2 maintainer acceptance (2026-11-25 UTC, applied working tree based on
 `b25cf83`) recorded 101 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, 329 CTest executions,
@@ -138,7 +148,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
-| M5–M7 — functional SIEM foundations | M5.2 accepted; M5.3 implementation pending qualification |
+| M5–M7 — functional SIEM foundations | M5.3 accepted; M5.4 implementation pending qualification |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |

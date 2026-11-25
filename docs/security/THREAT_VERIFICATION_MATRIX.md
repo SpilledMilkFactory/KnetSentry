@@ -163,3 +163,11 @@ evidence for TB-06/TB-07 and TV-13/TV-25/TV-26 (bounded untrusted messages,
 provenance, recovery and minimization). Classification is advisory; source
 spoofing, completeness, correlation, and production evidence integrity are
 not closed by this test. No additional privileges or external transport.
+
+## M5.4 Linux Audit observations
+
+The [M5.4 contract](../development/AUDIT_COLLECTION_M54.md) contributes partial
+TB-06/TB-07, TV-13/TV-25/TV-26 evidence for structured audit provenance, minimization,
+recovery and unavailable-source handling. No direct audit control, rule mutation
+or privileged helper is introduced. Complete coverage, event assembly and
+production evidence integrity remain unqualified.

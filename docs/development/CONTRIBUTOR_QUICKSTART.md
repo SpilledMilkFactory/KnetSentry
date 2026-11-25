@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **52 CTest tests**, including
+The Release desktop suite currently contains **53 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **47 CTests**, including the
+The full sanitizer suite currently contains **48 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **40 CTests**) and `linux-sanitize-core-only` for **41**.
+C++ test (currently **41 CTests**) and `linux-sanitize-core-only` for **42**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -373,3 +373,9 @@ state directory, bounded cursor and separate live-source qualification.
 
 Use the explicit authentication mode and separate protected local state described
 in [M5.3](AUTHENTICATION_COLLECTION_M53.md). Mandatory tests use synthetic data.
+
+## M5.4 Linux Audit integration
+
+Use the explicit audit mode in [M5.4](AUDIT_COLLECTION_M54.md) with a separate
+private directory. Empty selection is unknown visibility; never grant privileges
+for qualification. The mandatory regression uses synthetic native records.

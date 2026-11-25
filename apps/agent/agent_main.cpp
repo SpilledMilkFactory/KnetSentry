@@ -88,7 +88,9 @@ int run(std::string_view unit = {}, std::string_view directory = {},
         return 1;
     }
     if (journal) {
-        std::cout << (mode == knetsentry::agent::JournalMode::Authentication ?
+        std::cout << (mode == knetsentry::agent::JournalMode::Audit ?
+            "knetsentry-agent: ready; collectors=1; journal=local-audit; monitoring=unavailable; network=disabled\n" :
+            mode == knetsentry::agent::JournalMode::Authentication ?
             "knetsentry-agent: ready; collectors=1; journal=local-authentication; monitoring=unavailable; network=disabled\n" :
             "knetsentry-agent: ready; collectors=1; journal=local-metadata; monitoring=unavailable; network=disabled\n") << std::flush;
     } else {
@@ -96,10 +98,23 @@ int run(std::string_view unit = {}, std::string_view directory = {},
     }
     if (!std::cout) { return 1; }
     if (journal) {
+        bool audit_visibility_reported = false;
         for (;;) {
+            const auto previous = journal->count();
             if (!journal->pump()) {
                 std::cerr << "knetsentry-agent: journal rejected: " << journal->error() << '\n';
                 return 1;
+            }
+            if (mode == knetsentry::agent::JournalMode::Audit && !audit_visibility_reported) {
+                std::cout << (journal->count() > previous ?
+                    "knetsentry-agent: audit records observed; coverage=unknown\n" :
+                    "knetsentry-agent: no new readable audit records; coverage=unknown\n") << std::flush;
+                if (!std::cout) { return 1; }
+                audit_visibility_reported = true;
+            } else if (mode == knetsentry::agent::JournalMode::Audit && journal->count() > previous) {
+                // Fixed diagnostic; never print record content or identifiers.
+                std::cout << "knetsentry-agent: audit records observed; coverage=unknown\n" << std::flush;
+                if (!std::cout) { return 1; }
             }
             const timespec delay{1, 0};
             const int signal = ::sigtimedwait(&signals, nullptr, &delay);
@@ -119,8 +134,15 @@ int run(std::string_view unit = {}, std::string_view directory = {},
 
 int main(int argc, char** argv) {
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
-        std::cout << "Usage: knetsentry-agent --run --schema-version 1 --collectors none\n       knetsentry-agent --run --schema-version 1 --collectors journal --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors authentication --unit NAME.service --state-dir /absolute/private/directory\n";
+        std::cout << "Usage: knetsentry-agent --run --schema-version 1 --collectors none\n       knetsentry-agent --run --schema-version 1 --collectors journal --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors authentication --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors audit --state-dir /absolute/private/directory\n";
         return 0;
+    }
+    if (argc == 8 && std::string_view(argv[1]) == "--run" &&
+        std::string_view(argv[2]) == "--schema-version" && std::string_view(argv[3]) == "1" &&
+        std::string_view(argv[4]) == "--collectors" && std::string_view(argv[5]) == "audit" &&
+        std::string_view(argv[6]) == "--state-dir" && knetsentry::agent::valid_journal_directory(argv[7])) {
+        try { return run("audit", argv[7], knetsentry::agent::JournalMode::Audit); }
+        catch (...) { std::cerr << "knetsentry-agent: journal startup failed\n"; return 1; }
     }
     if (argc == 10 && std::string_view(argv[1]) == "--run" &&
         std::string_view(argv[2]) == "--schema-version" && std::string_view(argv[3]) == "1" &&

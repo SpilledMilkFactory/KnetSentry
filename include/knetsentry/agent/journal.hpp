@@ -10,11 +10,12 @@
 #include <vector>
 
 namespace knetsentry::agent {
-enum class JournalMode { Metadata, Authentication };
+enum class JournalMode { Metadata, Authentication, Audit };
 struct JournalRecord {
     std::string cursor, unit, machine, boot;
     std::uint64_t realtime_usec{}, monotonic_usec{};
     AuthEvent auth{AuthEvent::None};
+    std::uint64_t audit_type{}, audit_id{};
 };
 enum class JournalResult { Record, End, Error };
 class JournalSource {
@@ -28,6 +29,8 @@ public:
 };
 // An empty directory argument uses the local journal. Nonempty is for isolated tests only.
 std::unique_ptr<JournalSource> make_journal_source(std::string directory = {}, JournalMode mode = JournalMode::Metadata);
+// Audit uses the fixed source marker "audit", not a service unit.
+[[nodiscard]] bool parse_audit_number(std::string_view value, std::uint64_t& output) noexcept;
 [[nodiscard]] bool valid_journal_unit(std::string_view unit) noexcept;
 [[nodiscard]] bool valid_journal_directory(std::string_view path) noexcept;
 class JournalCollector final : public Collector {

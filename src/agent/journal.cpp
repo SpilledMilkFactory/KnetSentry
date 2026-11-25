@@ -72,16 +72,28 @@ bool number(std::string_view value, std::uint64_t& out) {
     return result.ec == std::errc{} && result.ptr == value.data() + value.size();
 }
 bool record_valid(const JournalRecord& r, std::string_view unit, JournalMode mode) {
-    return (mode == JournalMode::Authentication ? valid_auth_event(unit, r.auth) : r.auth == AuthEvent::None) && r.unit == unit && cursor_valid(r.cursor) && id_valid(r.machine) &&
+    const bool event_valid = mode == JournalMode::Authentication ? valid_auth_event(unit, r.auth) : r.auth == AuthEvent::None;
+    const bool audit_valid = mode == JournalMode::Audit ? (unit == "audit" && r.audit_type >= 1000 && r.audit_type <= 65535 && r.audit_id != 0) :
+        (r.audit_type == 0 && r.audit_id == 0);
+    return event_valid && audit_valid && r.unit == unit && cursor_valid(r.cursor) && id_valid(r.machine) &&
         id_valid(r.boot) && r.realtime_usec != 0 &&
         r.realtime_usec < (std::uint64_t{1} << 55) && r.monotonic_usec < (std::uint64_t{1} << 55);
 }
 std::string row(const JournalRecord& r) {
     return r.cursor + '\t' + std::to_string(r.realtime_usec) + '\t' +
         std::to_string(r.monotonic_usec) + '\t' + r.machine + '\t' + r.boot + '\t' + r.unit +
-        (r.auth == AuthEvent::None ? std::string{} : '\t' + std::string(auth_event_name(r.auth))) + '\n';
+        (r.auth == AuthEvent::None ? std::string{} : '\t' + std::string(auth_event_name(r.auth))) +
+        (r.audit_type == 0 ? std::string{} : '\t' + std::to_string(r.audit_type) + '\t' + std::to_string(r.audit_id)) + '\n';
 }
 bool parse_row(std::string_view line, JournalRecord& r, JournalMode mode) {
+    if (mode == JournalMode::Audit) {
+        const auto id_tab = line.rfind('\t');
+        if (id_tab == line.npos || !parse_audit_number(line.substr(id_tab + 1), r.audit_id)) { return false; }
+        line = line.substr(0, id_tab);
+        const auto type_tab = line.rfind('\t');
+        if (type_tab == line.npos || !parse_audit_number(line.substr(type_tab + 1), r.audit_type)) { return false; }
+        line = line.substr(0, type_tab);
+    }
     if (mode == JournalMode::Authentication) {
         const auto tab = line.rfind('\t');
         if (tab == line.npos) { return false; }
@@ -110,6 +122,11 @@ bool write_all(int fd, std::string_view text) {
     return true;
 }
 } // namespace
+bool parse_audit_number(std::string_view value, std::uint64_t& output) noexcept {
+    if (value.empty() || value.size() > 20 || (value.size() > 1 && value.front() == '0') ||
+        !std::ranges::all_of(value, [](char c) { return c >= '0' && c <= '9'; })) { return false; }
+    return number(value, output);
+}
 bool valid_journal_unit(std::string_view unit) noexcept {
     return unit.size() > 8 && unit.size() <= 128 && unit.ends_with(".service") &&
         std::ranges::all_of(unit, [](char c) {
@@ -132,8 +149,10 @@ bool valid_journal_directory(std::string_view path) noexcept {
 }
 JournalCollector::JournalCollector(JournalSource& source, std::string unit, std::string directory, JournalMode mode)
     : source_(source), mode_(mode),
-      state_name_(mode == JournalMode::Authentication ? "auth-m53.v1" : "journal-m52.v1"),
-      pending_name_(mode == JournalMode::Authentication ? "auth-m53.pending" : "journal-m52.pending"), unit_(std::move(unit)), directory_(std::move(directory)) {}
+      state_name_(mode == JournalMode::Audit ? "audit-m54.v1" :
+                  mode == JournalMode::Authentication ? "auth-m53.v1" : "journal-m52.v1"),
+      pending_name_(mode == JournalMode::Audit ? "audit-m54.pending" :
+                    mode == JournalMode::Authentication ? "auth-m53.pending" : "journal-m52.pending"), unit_(std::move(unit)), directory_(std::move(directory)) {}
 bool JournalCollector::fail(const char* reason) noexcept {
     error_ = reason;
     stop();
@@ -145,7 +164,8 @@ void JournalCollector::stop() noexcept {
     if (fd_ >= 0) { ::close(fd_); fd_ = -1; }
 }
 bool JournalCollector::load() {
-    state_ = std::string(mode_ == JournalMode::Authentication ? "KNETSENTRY-AUTH-V1\t" : "KNETSENTRY-JOURNAL-V1\t") + unit_ + '\n';
+    state_ = std::string(mode_ == JournalMode::Audit ? "KNETSENTRY-AUDIT-V1\t" :
+                         mode_ == JournalMode::Authentication ? "KNETSENTRY-AUTH-V1\t" : "KNETSENTRY-JOURNAL-V1\t") + unit_ + '\n';
     const std::string header = state_;
     File file(::openat(fd_, state_name_, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK));
     if (file.fd < 0) { return errno == ENOENT; }
@@ -176,7 +196,7 @@ bool JournalCollector::load() {
     return true;
 }
 bool JournalCollector::start() noexcept {
-    if (started_ || !valid_journal_unit(unit_) || !valid_journal_directory(directory_) ||
+    if (started_ || (mode_ == JournalMode::Audit ? unit_ != "audit" : !valid_journal_unit(unit_)) || !valid_journal_directory(directory_) ||
         (mode_ == JournalMode::Authentication && !valid_auth_unit(unit_))) { return false; }
     started_ = true;
     try {

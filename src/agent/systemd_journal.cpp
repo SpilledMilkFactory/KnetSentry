@@ -14,7 +14,7 @@ public:
     SystemJournal(std::string directory, JournalMode mode) : directory_(std::move(directory)), mode_(mode) {}
     ~SystemJournal() override { close(); }
     bool open(std::string_view unit) override {
-        if (journal_ != nullptr || !valid_journal_unit(unit) ||
+        if (journal_ != nullptr || (mode_ == JournalMode::Audit ? unit != "audit" : !valid_journal_unit(unit)) ||
             (mode_ == JournalMode::Authentication && !valid_auth_unit(unit))) { return false; }
         const int result = directory_.empty() ? sd_journal_open(&journal_, SD_JOURNAL_LOCAL_ONLY) :
             sd_journal_open_directory(&journal_, directory_.c_str(), 0);
@@ -25,7 +25,12 @@ public:
             if (sd_id128_get_machine(&machine) < 0) { return false; }
             local_machine_ = sd_id128_to_string(machine, text);
         }
-        const auto match = std::string("_SYSTEMD_UNIT=") + std::string(unit);
+        const auto match = mode_ == JournalMode::Audit ? std::string("_TRANSPORT=audit") :
+            std::string("_SYSTEMD_UNIT=") + std::string(unit);
+        if (mode_ == JournalMode::Audit && !local_machine_.empty()) {
+            const auto machine_match = std::string("_MACHINE_ID=") + local_machine_;
+            if (sd_journal_add_match(journal_, machine_match.data(), machine_match.size()) < 0) { return false; }
+        }
         return sd_journal_set_data_threshold(journal_, 2048) >= 0 &&
             sd_journal_add_match(journal_, match.data(), match.size()) >= 0;
     }
@@ -48,7 +53,7 @@ public:
         if (cursor_result < 0 || !cursor ||
             sd_journal_get_realtime_usec(journal_, &record.realtime_usec) < 0 ||
             sd_journal_get_monotonic_usec(journal_, &record.monotonic_usec, &boot) < 0 ||
-            !field("_SYSTEMD_UNIT", record.unit, 128) || !field("_MACHINE_ID", record.machine, 32)) {
+            !field("_MACHINE_ID", record.machine, 32)) {
             return JournalResult::Error;
         }
         const auto length = ::strnlen(cursor.get(), 1025);
@@ -58,6 +63,17 @@ public:
         char boot_text[SD_ID128_STRING_MAX]{};
         record.boot = sd_id128_to_string(boot, boot_text);
         record.auth = AuthEvent::None;
+        record.audit_type = 0;
+        record.audit_id = 0;
+        if (mode_ == JournalMode::Audit) {
+            std::string transport, type, id;
+            if (!field("_TRANSPORT", transport, 16) || transport != "audit" ||
+                !field("_AUDIT_TYPE", type, 5) || !field("_AUDIT_ID", id, 20) ||
+                !parse_audit_number(type, record.audit_type) || !parse_audit_number(id, record.audit_id)) {
+                return JournalResult::Error;
+            }
+            record.unit = "audit";
+        } else if (!field("_SYSTEMD_UNIT", record.unit, 128)) { return JournalResult::Error; }
         if (mode_ == JournalMode::Authentication) {
             // Inspect a bounded message view only in opt-in authentication mode.
             // Never copy the message into a JournalRecord or persistent state.

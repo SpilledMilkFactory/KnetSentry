@@ -64,6 +64,7 @@ qualification targets, not measured results.
 - [M5.1 — Endpoint-agent service architecture](development/ENDPOINT_AGENT_SERVICE_M51.md)
 - [M5.2 — systemd journal collection](development/JOURNAL_COLLECTION_M52.md)
 - [M5.3 — authentication and SSH event collection](development/AUTHENTICATION_COLLECTION_M53.md)
+- [M5.4 — Linux Audit-event integration](development/AUDIT_COLLECTION_M54.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)

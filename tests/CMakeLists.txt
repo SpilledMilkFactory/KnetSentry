@@ -465,3 +465,12 @@ add_test(NAME knetsentry_authentication_collection_contract
     COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/tests/authentication_fixture_m53.py"
         $<TARGET_FILE:knetsentry_authentication_test>)
 set_tests_properties(knetsentry_authentication_collection_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M5.4: native audit transport, structured metadata and unavailable source.
+add_executable(knetsentry_audit_test audit_m54.cpp)
+target_link_libraries(knetsentry_audit_test PRIVATE KnetSentry::AgentJournal)
+knetsentry_apply_project_options(knetsentry_audit_test)
+add_test(NAME knetsentry_audit_collection_contract
+    COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/tests/audit_fixture_m54.py"
+        $<TARGET_FILE:knetsentry_audit_test>)
+set_tests_properties(knetsentry_audit_collection_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
