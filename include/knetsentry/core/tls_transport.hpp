@@ -36,6 +36,8 @@ public:
     Session(const Session&) = delete;
     Session& operator=(const Session&) = delete;
     [[nodiscard]] State state() const noexcept;
+    // Verified peer pin only for a currently trusted manager-side session.
+    [[nodiscard]] std::optional<identity::Fingerprint> authenticated_agent() const noexcept;
     [[nodiscard]] Status handshake() noexcept;
     [[nodiscard]] Result ingest(std::span<const unsigned char> ciphertext) noexcept;
     [[nodiscard]] Result drain(std::span<unsigned char> ciphertext) noexcept;

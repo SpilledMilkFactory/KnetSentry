@@ -9,3 +9,8 @@ __pycache__/
 
 # Private service audit evidence must never be committed.
 service-audit.jsonl
+
+# Private endpoint enrollment registry and interrupted transactions.
+endpoints.v1
+endpoints.v1.pending
+endpoints.v1.new

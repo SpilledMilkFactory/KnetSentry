@@ -101,3 +101,7 @@ Before a real socket adapter is enabled, bind the approved identity and
 endpoint to the M3 network policy, revalidate routes and policy, enforce
 independent OS restrictions, define revocation/rotation and session invalidation,
 and qualify the adapter's I/O, timeouts and cleanup. No threat is closed here.
+
+M4.4 adds the [explicit enrollment registry](ENDPOINT_ENROLLMENT_M44.md)
+and a read-only manager-side authenticated agent pin accessor. Enrollment
+admission remains separate from TLS trust and operational network permission.

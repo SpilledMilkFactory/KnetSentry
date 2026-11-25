@@ -402,3 +402,13 @@ target_link_libraries(knetsentry_tls_test PRIVATE KnetSentry::Tls KnetSentry::Co
 knetsentry_apply_project_options(knetsentry_tls_test)
 add_test(NAME knetsentry_tls_contract COMMAND $<TARGET_FILE:knetsentry_tls_test>)
 set_tests_properties(knetsentry_tls_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)
+
+# M4.4: persistent approvals, genuine TLS admission, and offline admin CLI.
+add_executable(knetsentry_enrollment_test enrollment_m44.cpp)
+target_link_libraries(knetsentry_enrollment_test PRIVATE KnetSentry::Enrollment)
+knetsentry_apply_project_options(knetsentry_enrollment_test)
+add_test(NAME knetsentry_enrollment_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test>)
+set_tests_properties(knetsentry_enrollment_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)
+add_test(NAME knetsentry_enrollment_admin COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/enrollment_admin_m44.py" $<TARGET_FILE:knetsentry-enrollment>)
+set_tests_properties(knetsentry_enrollment_admin PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)

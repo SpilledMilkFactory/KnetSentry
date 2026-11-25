@@ -48,6 +48,13 @@ remain required. No threat is closed.
 **M4.3 implementation:** [mutual TLS](../development/TLS_TRANSPORT_M43.md) adds
 partial TV-06 proof-of-possession and invalid-peer handshake evidence;
 operational network binding and enrollment/revocation remain unqualified.
+Target M4.3 acceptance passed.
+
+**M4.4 implementation:** [explicit enrollment](../development/ENDPOINT_ENROLLMENT_M44.md)
+adds partial TV-01/TV-06 evidence for administrator-approved unique ID/pin
+bindings and TLS-backed admission. Unknown or mismatched endpoints deny;
+passive discovery cannot create approvals. Production RBAC, revocation and
+network integration remain unqualified. No threat is closed.
 
 | Test ID | Expected observable security outcome | Planned owner | Proposed evidence |
 | --- | --- | --- | --- |

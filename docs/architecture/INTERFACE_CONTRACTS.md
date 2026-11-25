@@ -158,3 +158,8 @@ M4.3 implements [mutual TLS](../development/TLS_TRANSPORT_M43.md) for I-07/I-08
 with bounded in-memory ciphertext endpoints, explicit role/pin checks and
 proof of key possession. No operational network adapter, enrollment authority,
 revocation or ingestion authorization is introduced.
+
+M4.4 adds [explicit endpoint enrollment](../development/ENDPOINT_ENROLLMENT_M44.md)
+for I-07/I-08: a local administrative ID-to-pin registry and admission check
+against a currently trusted manager-side TLS session. No peer can approve itself.
+Operational adapter, RBAC, revocation and ingestion authorization remain pending.
