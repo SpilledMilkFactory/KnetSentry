@@ -3,6 +3,7 @@
 #pragma once
 
 #include "knetsentry/service/health.hpp"
+#include "knetsentry/service/agent_roster.hpp"
 
 #include <array>
 #include <chrono>
@@ -26,11 +27,14 @@ public:
     HealthClient(const HealthClient&) = delete;
     HealthClient& operator=(const HealthClient&) = delete;
     void begin(std::string_view directory, std::string_view request_id) noexcept;
+    void begin_agents(std::string_view directory, std::string_view request_id) noexcept;
     void advance() noexcept;
     void cancel() noexcept;
     [[nodiscard]] HealthQueryState state() const noexcept { return state_; }
     [[nodiscard]] const std::optional<HealthSnapshot>& snapshot() const noexcept { return snapshot_; }
+    [[nodiscard]] const std::optional<enrollment::Roster>& roster() const noexcept { return roster_; }
 private:
+    void begin_query(std::string_view directory, std::string_view request_id, bool agents) noexcept;
     void finish(HealthQueryState state) noexcept;
     [[nodiscard]] bool verify_peer() const noexcept;
     enum class Phase { Connect, Send, Receive };
@@ -43,9 +47,11 @@ private:
     std::size_t request_size_{0};
     std::size_t sent_{0};
     // One extra byte detects oversized/trailing data without allocating.
-    std::array<char, max_health_response_size + 5> response_{};
+    std::array<char, max_roster_response_size + 5> response_{};
     std::size_t received_{0};
     std::optional<HealthSnapshot> snapshot_{};
+    std::optional<enrollment::Roster> roster_{};
+    bool agents_{};
 };
 
 } // namespace knetsentry::service

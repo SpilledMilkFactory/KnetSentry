@@ -14,7 +14,7 @@ def require(condition, label):
 
 
 def main():
-    source = (ROOT / 'src/core/enrollment.cpp').read_text()
+    source = (ROOT / 'src/core/enrollment.cpp').read_text() + (ROOT / 'src/core/enrollment_admission.cpp').read_text()
     tls = (ROOT / 'src/core/tls_transport.cpp').read_text()
     admin = (ROOT / 'src/core/enrollment_admin.cpp').read_text()
     cmake = (ROOT / 'src/core/CMakeLists.txt').read_text()

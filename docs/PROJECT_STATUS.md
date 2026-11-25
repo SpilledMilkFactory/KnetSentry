@@ -5,23 +5,23 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M4.5 — credential lifecycle.** Milestone 3 is complete
-through issue #33. M4.6 adds offline authenticated agent heartbeat, health tracking and reconnect scheduling;
-target-host qualification of this revision is pending. This is an
+**Accepted baseline: M4.6 — agent heartbeat and health.** Milestone 3 is complete
+through issue #33. M4.7 adds read-only manager-selected enrollment roster inspection;
+its target-host qualification and remaining operational GUI capabilities are pending. This is an
 unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
 
 | Area | Implemented behavior |
 | --- | --- |
-| Desktop | Seven Qt 6/Kirigami sections; global health indicator and heartbeat; owned-manager Play/Stop and cleanup; Dashboard health and read-only Settings scope |
-| Manager | Non-root lifecycle, strict lifecycle-only v1 configuration, opt-in same-UID/GID authenticated Unix IPC (`STATUS`, `HEALTH`), bounded health and protected audit logging |
+| Desktop | Seven Qt 6/Kirigami sections; global health indicator and heartbeat; owned-manager Play/Stop and cleanup; Dashboard health, read-only Settings scope and Assets enrollment roster |
+| Manager | Non-root lifecycle, strict lifecycle-only v1 configuration, opt-in same-UID/GID authenticated Unix IPC (`STATUS`, `HEALTH`, `AGENTS`), bounded health and protected audit logging |
 | Deployment | Explicit development systemd deployment under a dedicated non-login identity with confinement; ordinary desktop IPC remains separate |
 | Network security | Default-deny preflight, strict IPv4/IPv6 prefixes and interface binding, Linux effective/FIB route checks, sticky authorization invalidation, optional dedicated-UID deny-all nftables profile |
 | Agent protocol | KSAP 1.0 bounded HELLO/HEARTBEAT codec and connection-local ordering; no operational transport or enrollment |
 | Cryptographic identity | Offline Ed25519 key generation, protected role-specific storage and explicit X.509 trust/role/pin validation; no issuance or enrollment |
 | TLS transport | TLS 1.3 mutual identity, explicit root and role/pin validation, bounded encrypted byte stream; no operational socket adapter |
-| Endpoint enrollment | Offline registry, TLS-backed admission, explicit rotation/revocation and live validity rechecks; no production integration or automatic enrollment |
+| Endpoint enrollment | Offline registry, TLS-backed admission, explicit rotation/revocation and live validity rechecks; explicit local read-only roster selection; no operational admission or automatic enrollment |
 | Agent health | Offline TLS-backed KSAP reporting, current enrollment rechecks, bounded health snapshots and reconnect scheduling; no deployed agent |
 | Verification | Mandatory compiled regressions, static analysis, sanitizer configurations, strict QML diagnostics, isolated dual-stack kernel firewall and topology fixtures |
 
@@ -79,6 +79,11 @@ and core-only 32/33 CTests (normal/sanitized), matching OpenSSL 3.5.5 headers
 and runtime, and nine green hosted checks (`a1cf0b0`). The maintainer reported
 manual GUI verification and merge.
 
+The M4.6 maintainer acceptance (2026-11-25 UTC, working tree based on
+`a1cf0b0`) reported 92 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, desktop 45/40
+and core-only 33/34 CTests (normal/sanitized), and nine green hosted checks
+(`779e8a5`). The maintainer reported manual GUI verification and merge.
+
 The earlier M3.8 run included 34 structural verifiers; official REUSE, strict QML checks, installed systemd,
 and the isolated M3.5–M3.7 live regressions passed. This snapshot is historical
 evidence, not an assertion about any subsequent revision or environment.
@@ -94,7 +99,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M1 — C++/Qt foundation, testing and CI | Complete |
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
-| M4 — identity, PKI and secure agent enrollment | M4.5 accepted; M4.6 implementation, qualification pending |
+| M4 — identity, PKI and secure agent enrollment | M4.6 accepted; M4.7 read-only implementation, remaining capabilities and qualification pending |
 | M5–M7 — functional SIEM foundations | Planned |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |

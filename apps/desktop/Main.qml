@@ -48,6 +48,10 @@ Kirigami.ApplicationWindow {
         ? currentSectionPage.displayedHealthErrors : ""
     readonly property string currentPageHealthComponents: currentSectionPage
         ? currentSectionPage.displayedHealthComponents : ""
+    readonly property bool currentPageAgentRosterVisible: currentSectionPage ? currentSectionPage.agentRosterVisible : false
+    readonly property string currentPageAgentRegistry: currentSectionPage ? currentSectionPage.displayedAgentRegistry : ""
+    readonly property string currentPageApprovedAgents: currentSectionPage ? currentSectionPage.displayedApprovedAgents : ""
+    readonly property string currentPageRevokedAgents: currentSectionPage ? currentSectionPage.displayedRevokedAgents : ""
     readonly property bool currentPageScopeVisible: currentSectionPage ? currentSectionPage.scopeVisible : false
     readonly property string currentPageScopeState: currentSectionPage ? currentSectionPage.displayedScopeState : ""
     readonly property string currentPageScopeNetworks: currentSectionPage ? currentSectionPage.displayedScopeNetworks : ""
@@ -310,7 +314,7 @@ Kirigami.ApplicationWindow {
                 elide: Text.ElideRight
             }
             Controls.Label {
-                text: qsTr("M3.8")
+                text: qsTr("M4.7")
             }
         }
     }

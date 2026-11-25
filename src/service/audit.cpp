@@ -33,6 +33,7 @@ struct Code { const char* event; const char* outcome; };
     case AuditEvent::AdministrativeDenied: return {"administrative_denied", "denied"};
     case AuditEvent::StatusAuthorized: return {"status_authorized", "authorized"};
     case AuditEvent::HealthAuthorized: return {"health_authorized", "authorized"};
+    case AuditEvent::AgentsAuthorized: return {"agents_authorized", "authorized"};
     case AuditEvent::TransportFailed: return {"transport_failed", "failure"};
     case AuditEvent::SamplingFailed: return {"sampling_failed", "failure"};
     }

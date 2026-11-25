@@ -42,11 +42,17 @@ target_link_libraries(knetsentry_tls PUBLIC KnetSentry::Identity OpenSSL::SSL)
 knetsentry_apply_project_options(knetsentry_tls)
 
 # M4.4: offline administrative registry and TLS-backed admission boundary.
-add_library(knetsentry_enrollment STATIC enrollment.cpp)
+add_library(knetsentry_registry STATIC enrollment.cpp)
+add_library(KnetSentry::Registry ALIAS knetsentry_registry)
+target_compile_features(knetsentry_registry PUBLIC cxx_std_23)
+target_include_directories(knetsentry_registry PUBLIC "${PROJECT_SOURCE_DIR}/include")
+knetsentry_apply_project_options(knetsentry_registry)
+
+add_library(knetsentry_enrollment STATIC enrollment_admission.cpp)
 add_library(KnetSentry::Enrollment ALIAS knetsentry_enrollment)
 target_compile_features(knetsentry_enrollment PUBLIC cxx_std_23)
 target_include_directories(knetsentry_enrollment PUBLIC "${PROJECT_SOURCE_DIR}/include")
-target_link_libraries(knetsentry_enrollment PUBLIC KnetSentry::Tls)
+target_link_libraries(knetsentry_enrollment PUBLIC KnetSentry::Tls KnetSentry::Registry)
 knetsentry_apply_project_options(knetsentry_enrollment)
 
 add_executable(knetsentry-enrollment enrollment_admin.cpp)

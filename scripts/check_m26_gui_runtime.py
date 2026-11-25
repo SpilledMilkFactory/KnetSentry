@@ -45,6 +45,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--desktop', type=Path, required=True)
     parser.add_argument('--manager', type=Path, required=True)
+    parser.add_argument('--admin', type=Path, required=True)
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='ks26-gui-', dir='/tmp') as name:
         base = Path(name)
@@ -56,7 +57,13 @@ def main() -> None:
         env.update(QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software',
                    QT_QUICK_CONTROLS_STYLE='Basic', XDG_RUNTIME_DIR=str(runtime),
                    LC_ALL='C')
-        manager = start(args.manager.resolve(), ['--ipc-dir', str(ipc)])
+        store = private(base / 'registry')
+        for command in (['init'], ['approve', '01' * 16, '03' * 32],
+                        ['approve', '02' * 16, '04' * 32], ['revoke', '02' * 16, '04' * 32]):
+            subprocess.run([str(args.admin.resolve()), command[0], str(store), *command[1:]],
+                           capture_output=True, check=True, timeout=5,
+                           preexec_fn=unprivileged if DROP else None)
+        manager = start(args.manager.resolve(), ['--ipc-dir', str(ipc), '--enrollment-dir', str(store)])
         gui = None
         try:
             ready(manager)
@@ -77,6 +84,9 @@ def main() -> None:
             output = wait_marker(gui, b'M2.6 GUI reconnected: PASS', output)
             require(b'M3.8 scope connected, denied IPC, disconnected and reconnected: PASS' in output,
                     'missing real Settings scope transition evidence')
+            require(b'M4.7 GUI approved and revoked registry identities: PASS' in output and
+                    b'M4.7 GUI registry cleared on disconnect and unconfigured restart: PASS' in output,
+                    'missing rendered agent roster evidence')
             _, errors = gui.communicate(timeout=5)
             require(gui.returncode == 0, 'GUI health verification failed')
             require(b'ReferenceError' not in errors and b'TypeError' not in errors,
@@ -87,6 +97,7 @@ def main() -> None:
             stop(manager)
     print('M2.6 actual GUI health, disconnection and reconnection: PASS')
     print('M3.8 actual Settings scope and local IPC counter separation: PASS')
+    print('M4.7 actual Assets roster, disconnection and unconfigured restart: PASS')
 
 
 if __name__ == '__main__':

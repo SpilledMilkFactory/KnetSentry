@@ -27,6 +27,9 @@ class ServiceHealthModel : public QObject {
     Q_PROPERTY(QString scopeNetworks READ scopeNetworks NOTIFY changed FINAL)
     Q_PROPERTY(QString scopeInterfaces READ scopeInterfaces NOTIFY changed FINAL)
     Q_PROPERTY(QString scopeDenials READ scopeDenials NOTIFY changed FINAL)
+    Q_PROPERTY(QString agentRegistryStatus READ agentRegistryStatus NOTIFY changed FINAL)
+    Q_PROPERTY(QString approvedAgents READ approvedAgents NOTIFY changed FINAL)
+    Q_PROPERTY(QString revokedAgents READ revokedAgents NOTIFY changed FINAL)
 public:
     explicit ServiceHealthModel(const QString& directory, QObject* parent = nullptr);
     [[nodiscard]] QString status() const;
@@ -38,6 +41,9 @@ public:
     [[nodiscard]] QString scopeNetworks() const;
     [[nodiscard]] QString scopeInterfaces() const;
     [[nodiscard]] QString scopeDenials() const;
+    [[nodiscard]] QString agentRegistryStatus() const;
+    [[nodiscard]] QString approvedAgents() const;
+    [[nodiscard]] QString revokedAgents() const;
     void start();
     void setDirectory(const QString& directory);
     [[nodiscard]] service::HealthQueryState queryState() const noexcept;
@@ -49,6 +55,7 @@ private:
     void advance();
     QByteArray directory_;
     service::HealthClient client_;
+    service::HealthClient agent_client_;
     QTimer refresh_timer_;
     QTimer exchange_timer_;
 };

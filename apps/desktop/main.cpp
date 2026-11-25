@@ -36,11 +36,11 @@ void set_application_metadata() {
 
 void configure_parser(QCommandLineParser &parser) {
     parser.setApplicationDescription(QStringLiteral(
-        "KnetSentry M3.8 read-only network scope inspection and local manager health; no SIEM monitoring is active."));
+        "KnetSentry read-only network scope, enrollment inspection and local manager health; no SIEM monitoring is active."));
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addOption(QCommandLineOption(QStringLiteral("ipc-dir"),
-        QStringLiteral("Explicit private manager IPC directory for read-only health."),
+        QStringLiteral("Explicit private manager IPC directory for read-only health and enrollment inspection."),
         QStringLiteral("absolute-directory")));
 }
 
@@ -215,6 +215,11 @@ int main(int argc, char *argv[]) {
                 if (root->property("activeSection").toString() != section ||
                     root->property("currentPageSection").toString() != section ||
                     root->property("navigationDepth").toInt() != 1 ||
+                    root->property("currentPageAgentRosterVisible").toBool() != (section == QStringLiteral("assets")) ||
+                    (section == QStringLiteral("assets") &&
+                     (!root->property("currentPageAgentRegistry").toString().startsWith(QStringLiteral("Unavailable")) ||
+                      !root->property("currentPageApprovedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
+                      !root->property("currentPageRevokedAgents").toString().startsWith(QStringLiteral("Unavailable")))) ||
                     root->property("currentPageScopeVisible").toBool() != (section == QStringLiteral("settings")) ||
                     (section == QStringLiteral("settings") && !scope_page_matches(*root, false))) {
                     std::cerr << "KnetSentry: failed navigation or unbounded page stack.\n";
@@ -318,31 +323,59 @@ int main(int argc, char *argv[]) {
                 stage = 1;
                 return; // Let the page replacement settle before inspecting it.
             } else if (stage == 1 && health.available()) {
-                if (!scope_page_matches(*root, true, true)) { loop.exit(1); return; }
-                std::cout << "M2.6 GUI connected\n" << std::flush;
+                if (!scope_page_matches(*root, true, true) ||
+                    !root->setProperty("navigationRequest", QStringLiteral("assets"))) { loop.exit(1); return; }
                 stage = 2;
-            } else if (stage == 2 && !health.available() &&
+                return;
+            } else if (stage == 2 && health.available()) {
+                if (health.agentRegistryStatus().startsWith(QStringLiteral("Checking"))) { return; }
+                if (!root->property("currentPageAgentRosterVisible").toBool() ||
+                    !root->property("currentPageAgentRegistry").toString().startsWith(QStringLiteral("Verified registry snapshot")) ||
+                    root->property("currentPageApprovedAgents").toString() != QStringLiteral("01010101010101010101010101010101") ||
+                    root->property("currentPageRevokedAgents").toString() != QStringLiteral("02020202020202020202020202020202")) {
+                    loop.exit(1); return;
+                }
+                std::cout << "M4.7 GUI approved and revoked registry identities: PASS\n";
+                std::cout << "M2.6 GUI connected\n" << std::flush;
+                stage = 3;
+            } else if (stage == 3 && !health.available() &&
                        health.status() == QStringLiteral("Disconnected or unavailable")) {
                 if (health.resources() != QStringLiteral("Uptime, CPU time and memory unavailable.") ||
                     health.errors() != QStringLiteral("Operational error counters unavailable.") ||
-                    !scope_page_matches(*root, false)) {
-                    loop.exit(1); return;
-                }
-                std::cout << "M2.6 GUI disconnected\n" << std::flush;
-                stage = 3;
-            } else if (stage == 3 && health.available()) {
-                if (!scope_page_matches(*root, true, false, true) ||
-                    !root->setProperty("navigationRequest", QStringLiteral("dashboard"))) {
+                    !root->property("currentPageApprovedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
+                    !root->property("currentPageRevokedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
+                    !root->setProperty("navigationRequest", QStringLiteral("settings"))) {
                     loop.exit(1); return;
                 }
                 stage = 4;
                 return;
-            } else if (stage == 4 && health.available()) {
+            } else if (stage == 4 && !health.available()) {
+                if (!scope_page_matches(*root, false)) { loop.exit(1); return; }
+                std::cout << "M2.6 GUI disconnected\n" << std::flush;
+                stage = 5;
+            } else if (stage == 5 && health.available()) {
+                if (!scope_page_matches(*root, true, false, true) ||
+                    !root->setProperty("navigationRequest", QStringLiteral("assets"))) {
+                    loop.exit(1); return;
+                }
+                stage = 6;
+                return;
+            } else if (stage == 6 && health.available()) {
+                if (health.agentRegistryStatus().startsWith(QStringLiteral("Checking"))) { return; }
+                if (!root->property("currentPageAgentRegistry").toString().startsWith(QStringLiteral("Unavailable")) ||
+                    !root->property("currentPageApprovedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
+                    !root->property("currentPageRevokedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
+                    !root->setProperty("navigationRequest", QStringLiteral("dashboard"))) { loop.exit(1); return; }
+                stage = 7;
+                return;
+            } else if (stage == 7 && health.available()) {
                 if (root->property("currentPageSection").toString() != QStringLiteral("dashboard") ||
                     root->property("currentPageScopeVisible").toBool() ||
+                    root->property("currentPageAgentRosterVisible").toBool() ||
                     root->property("currentPageHealthStatus").toString() != health.status()) {
                     loop.exit(1); return;
                 }
+                std::cout << "M4.7 GUI registry cleared on disconnect and unconfigured restart: PASS\n";
                 std::cout << "M3.8 scope connected, denied IPC, disconnected and reconnected: PASS\n";
                 std::cout << "M2.6 GUI reconnected: PASS\n" << std::flush;
                 loop.exit(0);

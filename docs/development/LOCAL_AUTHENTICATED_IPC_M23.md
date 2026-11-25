@@ -171,3 +171,9 @@ per-action authorization and new negative tests before any privilege is added.
 `HEALTH`. The original STATUS exchange and 64-byte request ceiling are retained;
 only HEALTH responses may reach 256 bytes. See [service health](SERVICE_HEALTH_M24.md)
 for the current contract. No administrative authority is added.
+
+## M4.7 extension
+
+The [read-only AGENTS query](DESKTOP_AGENT_MANAGEMENT_M47.md) uses the same
+peer authorization and a separate bounded response. Existing STATUS and HEALTH
+formats and administrative denial remain unchanged.

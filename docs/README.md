@@ -59,6 +59,7 @@ qualification targets, not measured results.
 - [M4.4 — Explicit endpoint enrollment](development/ENDPOINT_ENROLLMENT_M44.md)
 - [M4.5 — Credential lifecycle](development/CREDENTIAL_LIFECYCLE_M45.md)
 - [M4.6 — Agent heartbeat and health](development/AGENT_HEALTH_M46.md)
+- [M4.7 — Desktop enrollment and agent management](development/DESKTOP_AGENT_MANAGEMENT_M47.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)

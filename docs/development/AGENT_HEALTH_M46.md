@@ -104,3 +104,9 @@ connections, missing manager approval, busy registry, key rotation, buffered
 report rejection after revocation, and capped reconnect with stale tokens.
 Existing M4.5 expiry tests remain mandatory. This is partial evidence for
 I-07/I-08, TB-04, TV-06/TV-07/TV-13; not operational or release qualification.
+
+## M4.7 extension
+
+The [desktop enrollment view](DESKTOP_AGENT_MANAGEMENT_M47.md) explicitly
+reports agent health unavailable because the manager does not host live agent
+sessions. Registry approval is not a heartbeat or certificate observation.

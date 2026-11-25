@@ -35,7 +35,7 @@ using knetsentry::service::AuditLog;
 }
 
 [[nodiscard]] int run(std::string_view configuration_path, std::string_view ipc_dir = {},
-                      std::string_view audit_dir = {}) {
+                      std::string_view audit_dir = {}, std::string_view enrollment_dir = {}) {
     // A management service must never accidentally inherit root authority.
     if (geteuid() == 0) {
         std::cerr << "knetsentryd: root execution prohibited\n";
@@ -112,6 +112,11 @@ using knetsentry::service::AuditLog;
         return fail(5);
     }
 
+    if (!enrollment_dir.empty() && (ipc_dir.empty() || !ipc.set_enrollment_directory(enrollment_dir))) {
+        static_cast<void>(lifecycle.mark_failed());
+        std::cerr << "knetsentryd: enrollment directory rejected (no fallback)\n";
+        return fail(5);
+    }
     if (!ipc_dir.empty() && !audit.record(AuditEvent::IpcReady)) { return audit_failure(); }
 
     // Readiness means lifecycle operation and optional local IPC only; there
@@ -162,7 +167,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
-        std::cout << "Usage: knetsentryd [--help|--version|--config ABS_PATH|--check-config ABS_PATH|--ipc-dir ABS_DIR|--audit-dir ABS_DIR]\n"
+        std::cout << "Usage: knetsentryd [--help|--version|--config ABS_PATH|--check-config ABS_PATH|--ipc-dir ABS_DIR|--audit-dir ABS_DIR|--enrollment-dir ABS_DIR]\n"
                      "Run options may be combined once each; audit requires a fresh private directory.\n"
                      "Foreground-only, unprivileged lifecycle foundation.\n"
                      "Stop with SIGTERM or SIGINT; no monitoring or remote listeners.\n";
@@ -179,7 +184,8 @@ int main(int argc, char* argv[]) {
     std::string_view config_path;
     std::string_view ipc_dir;
     std::string_view audit_dir;
-    if (argc <= 7 && argc % 2 == 1) {
+    std::string_view enrollment_dir;
+    if (argc <= 9 && argc % 2 == 1) {
         bool valid = true;
         for (int i = 1; i < argc; i += 2) {
             const std::string_view option(argv[i]);
@@ -188,9 +194,10 @@ int main(int argc, char* argv[]) {
             if (option == "--config" && config_path.empty()) { config_path = value; }
             else if (option == "--ipc-dir" && ipc_dir.empty()) { ipc_dir = value; }
             else if (option == "--audit-dir" && audit_dir.empty()) { audit_dir = value; }
+            else if (option == "--enrollment-dir" && enrollment_dir.empty()) { enrollment_dir = value; }
             else { valid = false; break; }
         }
-        if (valid) { return run(config_path, ipc_dir, audit_dir); }
+        if (valid) { return run(config_path, ipc_dir, audit_dir, enrollment_dir); }
     }
     std::cerr << "knetsentryd: unsupported argument (see --help)\n";
     return 2;

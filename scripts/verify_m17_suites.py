@@ -24,6 +24,7 @@ CORE_TESTS = {
     "knetsentry_enrollment_contract", "knetsentry_enrollment_admin",
     "knetsentry_credential_lifecycle",
     "knetsentry_agent_health_contract",
+    "knetsentry_agent_roster_contract", "knetsentry_agent_roster_runtime",
     "knetsentry_core_boundary_contract", "knetsentry_configuration_contract",
     "knetsentry_build_hardening", "knetsentry_network_scope_policy",
     "knetsentry_network_prefix_validation", "knetsentry_network_topology_awareness",
