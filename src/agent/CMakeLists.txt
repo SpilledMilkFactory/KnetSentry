@@ -12,3 +12,9 @@ add_library(knetsentry_agent_journal STATIC journal.cpp systemd_journal.cpp auth
 add_library(KnetSentry::AgentJournal ALIAS knetsentry_agent_journal)
 target_link_libraries(knetsentry_agent_journal PUBLIC KnetSentry::AgentLifecycle PRIVATE PkgConfig::SYSTEMD)
 knetsentry_apply_project_options(knetsentry_agent_journal)
+
+# M5.5: offline delivery contract, no operational socket adapter.
+add_library(knetsentry_agent_delivery STATIC delivery.cpp receipt.cpp)
+add_library(KnetSentry::AgentDelivery ALIAS knetsentry_agent_delivery)
+target_link_libraries(knetsentry_agent_delivery PUBLIC KnetSentry::AgentJournal KnetSentry::Enrollment)
+knetsentry_apply_project_options(knetsentry_agent_delivery)

@@ -16,7 +16,11 @@ namespace knetsentry::tls {
 namespace {
 using Clock = std::chrono::steady_clock;
 using identity::Role;
-constexpr std::array<unsigned char, 9> alpn{8, 'k', 's', 'a', 'p', '/', '1', '.', '0'};
+constexpr std::array<unsigned char, 9> ksap_alpn{8, 'k', 's', 'a', 'p', '/', '1', '.', '0'};
+constexpr std::array<unsigned char, 9> telemetry_alpn{8, 'k', 's', 't', 'd', '/', '1', '.', '0'};
+const auto& alpn_for(Protocol protocol) noexcept {
+    return protocol == Protocol::Telemetry ? telemetry_alpn : ksap_alpn;
+}
 using Cert = std::unique_ptr<X509, decltype(&X509_free)>;
 Cert parse(std::span<const unsigned char> bytes) noexcept {
     if (bytes.empty() || bytes.size() > identity::max_certificate_bytes) {
@@ -32,7 +36,9 @@ bool currently_valid(const X509* cert) noexcept {
         X509_cmp_current_time(X509_get0_notAfter(cert)) == 1;
 }
 int select_alpn(SSL*, const unsigned char** out, unsigned char* out_length,
-    const unsigned char* in, unsigned int length, void*) noexcept {
+    const unsigned char* in, unsigned int length, void* argument) noexcept {
+    if (argument == nullptr) { return SSL_TLSEXT_ERR_ALERT_FATAL; }
+    const auto& alpn = alpn_for(*static_cast<const Protocol*>(argument));
     if (length != alpn.size() || !std::equal(alpn.begin(), alpn.end(), in)) {
         return SSL_TLSEXT_ERR_ALERT_FATAL;
     }
@@ -40,7 +46,8 @@ int select_alpn(SSL*, const unsigned char** out, unsigned char* out_length,
     *out_length = alpn.front();
     return SSL_TLSEXT_ERR_OK;
 }
-bool selected_alpn(SSL* ssl) noexcept {
+bool selected_alpn(SSL* ssl, Protocol protocol) noexcept {
+    const auto& alpn = alpn_for(protocol);
     const unsigned char* selected = nullptr;
     unsigned int length = 0;
     SSL_get0_alpn_selected(ssl, &selected, &length);
@@ -58,6 +65,7 @@ struct Session::Impl {
     Cert trust_anchor{nullptr, X509_free};
     identity::Fingerprint peer_pin{};
     Role peer_role{Role::Invalid};
+    Protocol protocol{Protocol::Ksap};
     State state{State::Handshake};
     Clock::time_point deadline{Clock::now() + std::chrono::seconds(10)};
     std::size_t handshake_input{};
@@ -142,7 +150,8 @@ Session::~Session() = default;
 std::unique_ptr<Session> Session::create(const Credentials& credentials) noexcept {
     ERR_clear_error();
     struct ClearErrors { ~ClearErrors() { ERR_clear_error(); } } clear_errors;
-    if (credentials.role != Role::Agent && credentials.role != Role::Manager) { return {}; }
+    if ((credentials.role != Role::Agent && credentials.role != Role::Manager) ||
+        (credentials.protocol != Protocol::Ksap && credentials.protocol != Protocol::Telemetry)) { return {}; }
     const auto own_pin = identity::fingerprint(credentials.key);
     if (!own_pin || *own_pin == credentials.peer_pin ||
         identity::validate_certificate(credentials.certificate, credentials.root, credentials.role,
@@ -155,6 +164,7 @@ std::unique_ptr<Session> Session::create(const Credentials& credentials) noexcep
     std::copy(credentials.root.begin(), credentials.root.end(), impl->root.begin());
     impl->root_size = credentials.root.size();
     impl->peer_pin = credentials.peer_pin;
+    impl->protocol = credentials.protocol;
     impl->peer_role = credentials.role == Role::Agent ? Role::Manager : Role::Agent;
     impl->context.reset(SSL_CTX_new(TLS_method()));
     auto* ctx = impl->context.get();
@@ -182,7 +192,8 @@ std::unique_ptr<Session> Session::create(const Credentials& credentials) noexcep
     SSL_CTX_set_cert_verify_callback(ctx, Impl::verify, impl.get());
     SSL_CTX_set_msg_callback(ctx, Impl::observe);
     SSL_CTX_set_msg_callback_arg(ctx, impl.get());
-    if (credentials.role == Role::Manager) { SSL_CTX_set_alpn_select_cb(ctx, select_alpn, nullptr); }
+    const auto& alpn = alpn_for(impl->protocol);
+    if (credentials.role == Role::Manager) { SSL_CTX_set_alpn_select_cb(ctx, select_alpn, &impl->protocol); }
     else if (SSL_CTX_set_alpn_protos(ctx, alpn.data(), static_cast<unsigned int>(alpn.size())) != 0) { return {}; }
     impl->ssl.reset(SSL_new(ctx));
     if (!impl->ssl) { return {}; }
@@ -203,6 +214,7 @@ State Session::state() const noexcept {
     (void)impl_->expired();
     return impl_->state;
 }
+Protocol Session::protocol() const noexcept { return impl_->protocol; }
 std::optional<identity::Fingerprint> Session::authenticated_agent() const noexcept {
     if (state() != State::Trusted || impl_->peer_role != Role::Agent || !impl_->peer_verified) { return {}; }
     return impl_->peer_pin;
@@ -224,7 +236,7 @@ Status Session::handshake() noexcept {
     if (result != 1) { return s.classify(result); }
     if (!s.peer_verified || !s.local_proof_sent || SSL_get_verify_result(s.ssl.get()) != X509_V_OK ||
         SSL_version(s.ssl.get()) != TLS1_3_VERSION || SSL_session_reused(s.ssl.get()) != 0 ||
-        SSL_get_early_data_status(s.ssl.get()) == SSL_EARLY_DATA_ACCEPTED || !selected_alpn(s.ssl.get())) {
+        SSL_get_early_data_status(s.ssl.get()) == SSL_EARLY_DATA_ACCEPTED || !selected_alpn(s.ssl.get(), s.protocol)) {
         return s.fail();
     }
     s.state = State::Trusted;

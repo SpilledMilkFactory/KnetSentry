@@ -33,34 +33,50 @@ std::unique_ptr<JournalSource> make_journal_source(std::string directory = {}, J
 [[nodiscard]] bool parse_audit_number(std::string_view value, std::uint64_t& output) noexcept;
 [[nodiscard]] bool valid_journal_unit(std::string_view unit) noexcept;
 [[nodiscard]] bool valid_journal_directory(std::string_view path) noexcept;
+[[nodiscard]] bool valid_delivery_binding(std::string_view binding) noexcept;
+class DeliverySender;
+// Canonical wire row validation shared by the local spool and receiver.
+[[nodiscard]] bool valid_delivery_row(std::string_view row, std::string_view unit, JournalMode mode);
 class JournalCollector final : public Collector {
 public:
     static constexpr std::size_t max_records = 128;
     static constexpr std::size_t batch_size = 16;
     JournalCollector(JournalSource& source, std::string unit, std::string directory,
-                     JournalMode mode = JournalMode::Metadata);
+                     JournalMode mode = JournalMode::Metadata, std::string binding = {});
     ~JournalCollector() override { stop(); }
     JournalCollector(const JournalCollector&) = delete;
     JournalCollector& operator=(const JournalCollector&) = delete;
     bool start() noexcept override;
     void stop() noexcept override;
-    // False is terminal: no automatic reset, fallback, or skipping.
+    // False stops collection: no automatic reset, fallback, or skipping.
+    // Buffered source failures leave already committed records deliverable.
     [[nodiscard]] bool pump() noexcept;
     [[nodiscard]] std::size_t count() const noexcept { return count_; }
+    [[nodiscard]] bool backpressured() const noexcept { return !binding_.empty() && count_ >= max_records; }
+    [[nodiscard]] bool collection_blocked() const noexcept { return collection_blocked_; }
     [[nodiscard]] const char* error() const noexcept { return error_; }
 private:
+    friend class DeliverySender;
+    [[nodiscard]] std::string_view front() const noexcept;
+    bool acknowledge(std::string_view expected) noexcept;
+    bool replace_state(std::string_view next);
     bool fail(const char* reason) noexcept;
+    bool block_source(const char* reason) noexcept;
     bool load();
     bool commit(const JournalRecord& record);
     JournalSource& source_;
     JournalMode mode_;
     const char* state_name_;
     const char* pending_name_;
-    std::string unit_, directory_, state_, cursor_;
+    std::string unit_, directory_, state_, cursor_, binding_;
+    std::string header_;
+    std::vector<std::string> queued_;
     int fd_{-1};
     std::size_t count_{};
     std::vector<std::string> seen_;
     bool running_{};
+    bool collection_blocked_{};
+    bool sending_{};
     bool started_{};
     const char* error_{"not started"};
 };

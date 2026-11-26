@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Chris Sutton
 // SPDX-License-Identifier: MIT
 #include <knetsentry/core/tls_transport.hpp>
+#include <knetsentry/agent/delivery.hpp>
 #include <knetsentry/core/enrollment.hpp>
 #include <knetsentry/core/agent_health.hpp>
 #include <filesystem>
@@ -91,8 +92,8 @@ struct Fixture {
         agent_pin = fingerprint(agent.get()).value(); manager_pin = fingerprint(manager.get()).value();
         other_pin = fingerprint(other.get()).value();
     }
-    Credentials a() const { return {Role::Agent, agent.get(), client_der, anchor, manager_pin}; }
-    Credentials m() const { return {Role::Manager, manager.get(), server_der, anchor, agent_pin}; }
+    Credentials a(Protocol protocol = Protocol::Ksap) const { return {Role::Agent, agent.get(), client_der, anchor, manager_pin, protocol}; }
+    Credentials m(Protocol protocol = Protocol::Ksap) const { return {Role::Manager, manager.get(), server_der, anchor, agent_pin, protocol}; }
 };
 void pump(Session& from, Session& to, std::size_t chunk = 137) {
     std::array<unsigned char, max_ciphertext_chunk> buffer{};
@@ -720,6 +721,230 @@ void authentication_transport(Fixture& fixture) {
         m->drain(output).status == Status::Failed, "M4.8 interrupted handshake not terminal");
     std::cout << "M4.8 invalid certificate validity/DER and interrupted handshake: PASS\n";
 }
+namespace telemetry = knetsentry::agent;
+using D = telemetry::DeliveryState;
+struct DeliverySource final : telemetry::JournalSource {
+    std::size_t position{}, total{129}, reads{};
+    bool available{true};
+    bool open(std::string_view unit) override { return available && unit == "fixture.service"; }
+    bool resume(std::string_view cursor) override {
+        if (!available) { return false; }
+        if (cursor.empty()) { position = 0; return true; }
+        for (std::size_t i = 1; i <= total; ++i) {
+            if (cursor == "cursor-" + std::to_string(i)) { position = i; return true; }
+        }
+        return false;
+    }
+    telemetry::JournalResult next(telemetry::JournalRecord& record) override {
+        ++reads;
+        if (position == total) { return telemetry::JournalResult::End; }
+        record = {"cursor-" + std::to_string(++position), "fixture.service", std::string(32, 'a'),
+            std::string(32, 'b'), 100, 50};
+        return telemetry::JournalResult::Record;
+    }
+    void close() noexcept override {}
+};
+// Test instrumentation wraps the real bounded durable inbox.
+struct DeliverySink final : telemetry::ReceiptSink {
+    telemetry::ReceiptInbox& inbox;
+    bool reject{};
+    std::size_t attempts{};
+    explicit DeliverySink(telemetry::ReceiptInbox& value) : inbox(value) {}
+    bool commit(const enroll::EndpointId& endpoint, std::string_view binding, std::string_view row) noexcept override {
+        ++attempts;
+        return !reject && inbox.commit(endpoint, binding, row);
+    }
+};
+void telemetry_delivery(Fixture& f) {
+    Store registry, spool, receipts;
+    enroll::EndpointId id{}; id[0] = 1;
+    require(enroll::initialize(registry.fd) == E::Ok && enroll::approve(registry.fd, id, f.agent_pin) == E::Ok, "delivery registry");
+    const auto binding = telemetry::delivery_binding(id, f.manager_pin);
+    DeliverySource source;
+    auto queue = std::make_unique<telemetry::JournalCollector>(source, "fixture.service", spool.path.data(),
+        telemetry::JournalMode::Metadata, binding);
+    require(queue->start(), "outbox startup");
+    for (int i = 0; i < 8; ++i) { require(queue->pump(), "outbox fill"); }
+    require(queue->count() == 128 && source.reads == 128 && queue->pump() && source.reads == 128, "bounded backpressure");
+    const auto fresh = [&] {
+        auto a = Session::create(f.a(Protocol::Telemetry)); auto m = Session::create(f.m(Protocol::Telemetry));
+        require(a && m && connect(*a, *m), "delivery TLS handshake");
+        return std::pair(std::move(a), std::move(m));
+    };
+    // Separate ALPN prevents protocol confusion with the existing health codec.
+    {
+        auto a = Session::create(f.a(Protocol::Telemetry)); auto m = Session::create(f.m());
+        require(a && m && !connect(*a, *m), "cross-protocol ALPN accepted");
+    }
+    {
+        auto a = Session::create(f.a()); auto m = Session::create(f.m());
+        require(a && m && connect(*a, *m), "legacy health TLS handshake");
+        telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
+        require(sender.step(f.manager_pin, true, 1) == D::Failed, "delivery over health ALPN");
+    }
+    {
+        auto [a, m] = fresh();
+        knetsentry::agent_health::Reporter reporter(*a);
+        require(reporter.send(f.manager_pin, 1, {}) == Status::Failed, "health over delivery ALPN");
+        knetsentry::agent_health::Tracker tracker(registry.fd, id);
+        require(!tracker.attach(std::move(m), 1), "health tracker accepted delivery ALPN");
+    }
+    // A trusted but incorrect ACK must never dequeue a record.
+    {
+        auto [a, m] = fresh();
+        telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
+        require(sender.step(f.manager_pin, true, 1) == D::Pending, "send before invalid ACK");
+        pump(*a, *m);
+        std::array<unsigned char, 40> bad{};
+        require(m->write(bad).status == Status::Ok, "write malformed ACK"); pump(*m, *a);
+        require(sender.step(f.manager_pin, true, 2) == D::Failed && queue->count() == 128, "invalid ACK dequeued");
+    }
+    {
+        auto [a, m] = fresh();
+        telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
+        require(sender.step(f.manager_pin, false, 1) == D::Failed && queue->count() == 128, "authorization denial");
+    }
+    auto inbox = std::make_unique<telemetry::ReceiptInbox>(id, f.manager_pin, telemetry::JournalMode::Metadata,
+        "fixture.service", receipts.path.data());
+    require(inbox->start(), "inbox startup");
+    {
+        telemetry::ReceiptInbox concurrent(id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", receipts.path.data());
+        require(!concurrent.start(), "concurrent inbox writer");
+    }
+    {
+        auto [a, m] = fresh();
+        telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
+        DeliverySink denied(*inbox); denied.reject = true;
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", denied);
+        require(sender.step(f.manager_pin, true, 1) == D::Pending, "send before receiver rejection"); pump(*a, *m);
+        require(receiver.step(true, 2) == D::Failed && denied.attempts == 1 && inbox->count() == 0 && queue->count() == 128,
+            "receiver rejection acknowledged");
+    }
+    {
+        auto [a, m] = fresh();
+        telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
+        auto [other_a, other_m] = fresh();
+        telemetry::DeliverySender other(*queue, *other_a, id, f.manager_pin);
+        require(other.step(f.manager_pin, true, 1) == D::Failed, "concurrent sender accepted");
+        require(sender.step(f.manager_pin, true, 1) == D::Pending, "send before wrong digest"); pump(*a, *m);
+        std::array<unsigned char, 40> wrong_digest{'K','S','T','D',1,2,0,32};
+        require(m->write(wrong_digest).status == Status::Ok, "wrong digest fixture"); pump(*m, *a);
+        require(sender.step(f.manager_pin, true, 2) == D::Failed && queue->count() == 128, "wrong digest acknowledged");
+    }
+    // Exercise the existing bounded monotonic reconnect scheduler, independent
+    // of any socket or network authority.
+    knetsentry::agent_health::Reconnect reconnect;
+    const auto attempt = reconnect.begin(0);
+    require(attempt && reconnect.connected(0, *attempt), "initial reconnect attempt");
+    reconnect.lost(1, *attempt);
+    require(!reconnect.begin(1000), "retry before backoff");
+    const auto retry = reconnect.begin(1001);
+    require(retry && *retry != *attempt && reconnect.connected(1001, *retry), "bounded fresh reconnect");
+    {
+        auto [a, m] = fresh();
+        telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
+        DeliverySink sink(*inbox);
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        require(sender.step(f.manager_pin, true, 1) == D::Pending, "first send"); pump(*a, *m, 17);
+        require(receiver.step(true, 2) == D::Complete && inbox->count() == 1, "durable receipt");
+        // Lose all ACK ciphertext, then restart the agent and retry.
+        require(queue->count() == 128, "dequeued without acknowledgment");
+        a->abort();
+        require(sender.step(f.manager_pin, true, 3) == D::Failed, "disconnect terminal");
+    }
+    queue.reset();
+    inbox.reset();
+    inbox = std::make_unique<telemetry::ReceiptInbox>(id, f.manager_pin, telemetry::JournalMode::Metadata,
+        "fixture.service", receipts.path.data());
+    require(inbox->start() && inbox->count() == 1, "receiver restart retained receipt");
+    {
+        telemetry::JournalCollector wrong(source, "fixture.service", spool.path.data(), telemetry::JournalMode::Metadata,
+            telemetry::delivery_binding(id, f.other_pin));
+        require(!wrong.start(), "destination substitution accepted");
+    }
+    queue = std::make_unique<telemetry::JournalCollector>(source, "fixture.service", spool.path.data(),
+        telemetry::JournalMode::Metadata, binding);
+    require(queue->start() && queue->count() == 128, "restart retains unacked queue");
+    {
+        auto [a, m] = fresh();
+        telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
+        DeliverySink sink(*inbox);
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        require(sender.step(f.manager_pin, true, 1) == D::Pending, "retry send"); pump(*a, *m, 17);
+        require(receiver.step(true, 2) == D::Complete && inbox->count() == 1 && sink.attempts == 1, "idempotent retry");
+        pump(*m, *a, 13);
+        require(sender.step(f.manager_pin, true, 3) == D::Complete && queue->count() == 127, "authenticated ACK");
+    }
+    queue.reset();
+    queue = std::make_unique<telemetry::JournalCollector>(source, "fixture.service", spool.path.data(),
+        telemetry::JournalMode::Metadata, binding);
+    require(queue->start() && queue->count() == 127 && queue->pump() && queue->count() == 128 && source.position == 129,
+        "durable ACK and collection checkpoint");
+    // Queue must remain deliverable even when its original source disappears.
+    queue.reset(); source.available = false;
+    queue = std::make_unique<telemetry::JournalCollector>(source, "fixture.service", spool.path.data(), telemetry::JournalMode::Metadata, binding);
+    require(queue->start() && queue->collection_blocked() && !queue->pump() && queue->count() == 128, "unavailable source lost queue");
+    {
+        auto [a, m] = fresh();
+        telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
+        DeliverySink sink(*inbox);
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        require(sender.step(f.manager_pin, true, 1) == D::Pending, "blocked source send"); pump(*a, *m);
+        require(receiver.step(true, 2) == D::Complete && inbox->count() == 2, "blocked source receipt"); pump(*m, *a);
+        require(sender.step(f.manager_pin, true, 3) == D::Complete && queue->count() == 127, "blocked source ACK");
+    }
+    {
+        auto [a, m] = fresh();
+        telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
+        DeliverySink sink(*inbox);
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        require(sender.step(f.manager_pin, true, 1) == D::Pending, "send before revoke"); pump(*a, *m);
+        require(enroll::revoke(registry.fd, id, f.agent_pin) == E::Ok && receiver.step(true, 2) == D::Failed && sink.attempts == 0,
+            "revoked peer reached sink");
+        require(sender.step(f.manager_pin, true, 5001) == D::Failed && queue->count() == 127, "timeout dequeued");
+    }
+    // A separate one-record stream proves that an empty queue still retains
+    // the last collected source checkpoint across a restart.
+    {
+        Store single_spool, single_receipts;
+        DeliverySource single; single.total = 1;
+        enroll::EndpointId single_id{}; single_id[0] = 3;
+        // Use a fresh registry to avoid any attempt to reuse a revoked pin.
+        Store single_registry;
+        require(enroll::initialize(single_registry.fd) == E::Ok &&
+            enroll::approve(single_registry.fd, single_id, f.agent_pin) == E::Ok, "single registry");
+        const auto single_binding = telemetry::delivery_binding(single_id, f.manager_pin);
+        telemetry::ReceiptInbox single_inbox(single_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", single_receipts.path.data());
+        require(single_inbox.start(), "single inbox");
+        {
+            telemetry::JournalCollector single_queue(single, "fixture.service", single_spool.path.data(), telemetry::JournalMode::Metadata, single_binding);
+            require(single_queue.start() && single_queue.pump() && single_queue.count() == 1, "single queue");
+            auto [a, m] = fresh();
+            telemetry::DeliverySender sender(single_queue, *a, single_id, f.manager_pin);
+            telemetry::DeliveryReceiver receiver(*m, single_registry.fd, single_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", single_inbox);
+            require(sender.step(f.manager_pin, true, 1) == D::Pending, "single send"); pump(*a, *m);
+            require(receiver.step(true, 2) == D::Complete, "single receipt"); pump(*m, *a);
+            require(sender.step(f.manager_pin, true, 3) == D::Complete && single_queue.count() == 0, "empty outbox ACK");
+        }
+        single.total = 2;
+        telemetry::JournalCollector single_queue(single, "fixture.service", single_spool.path.data(), telemetry::JournalMode::Metadata, single_binding);
+        require(single_queue.start() && single_queue.count() == 0 && single_queue.pump() && single_queue.count() == 1 && single.position == 2,
+            "empty outbox lost checkpoint or recollected acknowledged record");
+    }
+    // Verify the real inbox's capacity and idempotency with canonical synthetic rows.
+    const auto row = [](std::size_t i) {
+        return "cursor-" + std::to_string(i) + "\t100\t50\t" + std::string(32, 'a') + '\t' +
+            std::string(32, 'b') + "\tfixture.service\n";
+    };
+    for (std::size_t i = 3; i <= 128; ++i) { require(inbox->commit(id, binding, row(i)), "fill receiver inbox"); }
+    require(inbox->count() == 128 && inbox->commit(id, binding, row(1)) && !inbox->commit(id, binding, row(129)), "inbox overload / exact duplicate");
+    auto conflict = row(1); conflict.replace(conflict.find("100"), 3, "101");
+    require(!inbox->commit(id, binding, conflict), "conflicting receipt replaced");
+    auto other_id = id; other_id[0] = 2;
+    require(!inbox->commit(other_id, binding, row(1)) &&
+        !inbox->commit(id, telemetry::delivery_binding(id, f.other_pin), row(1)), "wrong endpoint or manager binding receipt");
+    std::cout << "M5.5 bounded durable queue/inbox, authenticated ACK, lost ACK retry, restart, destination binding, blocked source and revocation: PASS\n";
+}
 } // namespace
 int main(int argc, char** argv) {
     try {
@@ -730,6 +955,8 @@ int main(int argc, char** argv) {
             heartbeat(fixture);
         } else if (argc == 2 && std::string_view(argv[1]) == "--authentication-transport") {
             authentication_transport(fixture);
+        } else if (argc == 2 && std::string_view(argv[1]) == "--telemetry-delivery") {
+            telemetry_delivery(fixture);
         } else if (argc == 1) {
             storage(fixture); malformed_registry(fixture); capacity(); admission(fixture);
         } else { return 2; }

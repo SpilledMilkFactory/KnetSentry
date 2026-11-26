@@ -163,3 +163,10 @@ without raw message persistence or operational I-07/I-09 connectivity. See
 C-08/P-08 gains opt-in structured audit record collection through the already
 readable local journal. No direct audit authority or operational I-07/I-09
 connection is introduced. See [M5.4](../development/AUDIT_COLLECTION_M54.md).
+
+## M5.5 telemetry buffering and delivery
+
+C-08/P-08 gains explicit bounded persistent outbox support. A separate offline
+KSTD TLS exchange and durable bounded inbox establish the planned I-07 receipt
+contract. Neither production network authority nor manager receiver activation
+is introduced. See [M5.5](../development/TELEMETRY_DELIVERY_M55.md).

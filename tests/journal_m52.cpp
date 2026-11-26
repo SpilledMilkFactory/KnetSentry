@@ -206,7 +206,22 @@ void native(const std::string& directory, bool populated) {
     }
     JournalCollector restart(*source, unit, state.path.string());
     require(restart.start() && restart.pump() && restart.count() == (populated ? 2U : 0U), "native restart failed");
-    std::cout << "M5.2 native journal selection and restart: PASS\n";
+    Temp buffered;
+    const std::string binding(96, 'a');
+    auto buffered_source = make_journal_source(directory);
+    {
+        JournalCollector queue(*buffered_source, unit, buffered.path.string(), JournalMode::Metadata, binding);
+        require(queue.start() && queue.pump() && queue.count() == (populated ? 2U : 0U), "native buffered collection");
+    }
+    const auto buffer_file = buffered.path / "telemetry-m55.v1";
+    if (populated) {
+        const auto data = read(buffer_file);
+        require(data.starts_with("KNETSENTRY-OUTBOX-V1\t" + binding) && data.find("private-canary") == std::string::npos,
+            "native buffered format or privacy");
+        JournalCollector queue(*buffered_source, unit, buffered.path.string(), JournalMode::Metadata, binding);
+        require(queue.start() && queue.pump() && queue.count() == 2 && read(buffer_file) == data, "native buffered restart");
+    } else { require(!fs::exists(buffer_file), "empty native buffered source fabricated evidence"); }
+    std::cout << "M5.2 native journal selection and restart; M5.5 native buffered recovery: PASS\n";
 }
 } // namespace
 int main(int argc, char** argv) {
