@@ -68,6 +68,7 @@ qualification targets, not measured results.
 - [M5.5 — Secure telemetry buffering and delivery](development/TELEMETRY_DELIVERY_M55.md)
 - [M5.6 — Initial file integrity monitoring](development/FILE_INTEGRITY_M56.md)
 - [M5.7 — Privacy and data-minimization controls](development/PRIVACY_MINIMIZATION_M57.md)
+- [M5.8 — Collector verification and failure recovery](development/COLLECTOR_RECOVERY_M58.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)

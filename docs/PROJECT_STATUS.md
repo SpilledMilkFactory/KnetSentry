@@ -5,12 +5,12 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M5.6 — initial local file integrity monitoring.**
+**Accepted baseline: M5.7 — privacy and data-minimization controls.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
-M4.8 and M5.1–M5.6 are merged (M5.5 offline foundation only). M5.7 adds
-mandatory explicit active-collector privacy policy, acquisition-time redaction
-and policy-bound journal state; target qualification is pending.
+M4.8 and M5.1–M5.7 are merged (M5.5 offline foundation only). M5.8 adds
+composed collector and delivery failure-recovery regressions; target qualification
+is pending.
 Issue #46 operational network/manager integration remains outstanding.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
@@ -39,6 +39,15 @@ rules. Monitoring is unavailable, and no operational remote telemetry transport,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M5.7 maintainer acceptance (2026-11-26 UTC, applied working tree based on
+`06fb6d8`) recorded 111 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, 364 CTest
+executions, 50 structural verifiers and nine green hosted checks (`420215f`).
+Focused eight-test run and installed-manager binary comparison passed. Manual
+metadata-only and full FIM, missing/denied/conflicting policy rejection, and
+redacted restart retaining 63 unique records were demonstrated. Changed-policy
+startup returned exit 1 without mutating the outbox. Maintainer reported GUI
+verification and merge. Previously documented desktop warnings remain unresolved.
 
 M5.6 maintainer acceptance (2026-11-26 UTC, applied working tree based on
 `b4e787f`) recorded 109 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 357 CTest
@@ -179,7 +188,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
-| M5–M7 — functional SIEM foundations | M5.6 accepted; M5.7 qualification pending; operational delivery outstanding |
+| M5–M7 — functional SIEM foundations | M5.7 accepted; M5.8 qualification pending; operational delivery outstanding |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |
