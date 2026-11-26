@@ -132,6 +132,7 @@ bool JournalCollector::fail(const char* reason) noexcept {
     return false;
 }
 bool JournalCollector::block_source(const char* reason) noexcept {
+    source_failed_ = true;
     if (binding_.empty()) { return fail(reason); }
     // Source visibility may disappear while disconnected. Do not make already
     // committed evidence inaccessible; no collection resumes without restart.

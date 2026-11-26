@@ -55,6 +55,7 @@ public:
     [[nodiscard]] std::size_t count() const noexcept { return count_; }
     [[nodiscard]] bool backpressured() const noexcept { return !binding_.empty() && count_ >= max_records; }
     [[nodiscard]] bool collection_blocked() const noexcept { return collection_blocked_; }
+    [[nodiscard]] bool source_failed() const noexcept { return source_failed_; }
     [[nodiscard]] const char* error() const noexcept { return error_; }
 private:
     friend class DeliverySender;
@@ -78,6 +79,7 @@ private:
     std::vector<std::string> seen_;
     bool running_{};
     bool collection_blocked_{};
+    bool source_failed_{};
     bool sending_{};
     bool started_{};
     const char* error_{"not started"};

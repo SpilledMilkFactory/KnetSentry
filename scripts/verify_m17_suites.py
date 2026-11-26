@@ -24,6 +24,7 @@ CORE_TESTS = {
     "knetsentry_journal_collection_contract", "knetsentry_authentication_collection_contract", "knetsentry_audit_collection_contract", "knetsentry_telemetry_delivery_contract",
     "knetsentry_file_integrity_contract", "knetsentry_privacy_policy_contract",
     "knetsentry_collector_recovery_contract",
+    "knetsentry_telemetry_status_contract", "knetsentry_telemetry_status_runtime",
     "knetsentry_identity_contract", "knetsentry_tls_contract",
     "knetsentry_enrollment_contract", "knetsentry_enrollment_admin",
     "knetsentry_credential_lifecycle",
@@ -52,6 +53,7 @@ NONSAN_DESKTOP_TESTS = {
     "knetsentry_navigation_qml_diagnostics", "knetsentry_visual_system",
     "knetsentry_desktop_diagnostic_lifecycle", "knetsentry_qt_application_lifecycle",
     "knetsentry_gui_health_runtime", "knetsentry_gui_daemon_toolbar",
+    "knetsentry_gui_telemetry_runtime",
 }
 SANITIZER_TEST = "knetsentry_lsan_negative_control"
 

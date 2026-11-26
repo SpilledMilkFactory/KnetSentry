@@ -185,3 +185,11 @@ exact approved sources, exclusion precedence, sensitive permits and acquisition-
 time redaction. The journal state binds to the exact policy digest; no reuse
 under a changed policy. See [M5.7](../development/PRIVACY_MINIMIZATION_M57.md).
 This does not activate I-07 or confer monitoring/network authority.
+
+## M5.9 local aggregate status presentation
+
+C-08/P-08 optionally publishes minimized current collection aggregates through
+an explicitly inherited nonblocking pipe to the existing desktop model.
+Dashboard/Assets distinguish the local report from enrollment and manager
+health. No operational I-07 or remotely authenticated agent session is
+activated. See [M5.9](../development/DESKTOP_TELEMETRY_STATUS_M59.md).

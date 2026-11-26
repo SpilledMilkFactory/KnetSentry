@@ -5,12 +5,12 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M5.7 — privacy and data-minimization controls.**
+**Accepted baseline: M5.8 — collector verification and failure recovery.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
-M4.8 and M5.1–M5.7 are merged (M5.5 offline foundation only). M5.8 adds
-composed collector and delivery failure-recovery regressions; target qualification
-is pending.
+M4.8 and M5.1–M5.8 are merged (M5.5 offline foundation only). M5.9 adds
+explicit local aggregate agent status in Dashboard and Assets; target qualification
+is pending. Multi-endpoint authenticated status integration remains outstanding (#50).
 Issue #46 operational network/manager integration remains outstanding.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
@@ -18,7 +18,7 @@ This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 | Area | Implemented behavior |
 | --- | --- |
-| Desktop | Seven Qt 6/Kirigami sections; global health indicator and heartbeat; owned-manager Play/Stop and cleanup; Dashboard health, read-only Settings scope and Assets enrollment roster |
+| Desktop | Seven Qt 6/Kirigami sections; global health indicator and heartbeat; owned-manager Play/Stop and cleanup; Dashboard health, read-only Settings scope and Assets enrollment roster; explicit local agent status in Dashboard/Assets |
 | Manager | Non-root lifecycle, strict lifecycle-only v1 configuration, opt-in same-UID/GID authenticated Unix IPC (`STATUS`, `HEALTH`, `AGENTS`), bounded health and protected audit logging |
 | Deployment | Explicit development systemd deployment under a dedicated non-login identity with confinement; ordinary desktop IPC remains separate |
 | Network security | Default-deny preflight, strict IPv4/IPv6 prefixes and interface binding, Linux effective/FIB route checks, sticky authorization invalidation, optional dedicated-UID deny-all nftables profile |
@@ -39,6 +39,14 @@ rules. Monitoring is unavailable, and no operational remote telemetry transport,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M5.8 corrected maintainer acceptance (2026-11-26 UTC, applied working tree
+based on `743dd54`) recorded 113 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all
+371 CTest executions, 51 structural verifiers and nine green hosted checks
+(`d6677a5`). The Clazy correction passed. Direct recovery execution exited 0;
+20 repeated Release and 10 repeated sanitized recovery/delivery executions
+passed. Installed-manager binary comparison passed. Maintainer reported GUI
+verification and merge. Issues #40/#46 and prior desktop diagnostics remain open.
 
 M5.7 maintainer acceptance (2026-11-26 UTC, applied working tree based on
 `06fb6d8`) recorded 111 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, 364 CTest
@@ -188,7 +196,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
-| M5–M7 — functional SIEM foundations | M5.7 accepted; M5.8 qualification pending; operational delivery outstanding |
+| M5–M7 — functional SIEM foundations | M5.8 accepted; M5.9 local status qualification pending; operational delivery and authenticated fleet status outstanding |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |

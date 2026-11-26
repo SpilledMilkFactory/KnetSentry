@@ -122,7 +122,7 @@ void recover(const Profile& p, bool buffered) {
     {
         JournalCollector c(source, p.unit, path, p.mode, destination, fingerprint, p.redact);
         require(c.start() && !c.pump() && c.count() == 3, "source error after valid prefix");
-        require(c.collection_blocked() == buffered, "source failure profile mismatch");
+        require(c.collection_blocked() == buffered && c.source_failed(), "source failure profile mismatch");
         const auto reads = source.reads;
         require(!c.pump() && reads == source.reads, "failed source still consumed");
     }
@@ -138,7 +138,7 @@ void recover(const Profile& p, bool buffered) {
         source.records = {event(p, 1), event(p, 2), event(p, 3), bad, event(p, 5)};
         for (int retry = 0; retry < 2; ++retry) {
             JournalCollector c(source, p.unit, path, p.mode, destination, fingerprint, p.redact);
-            require(c.start() && !c.pump() && read(state) == committed && source.position == 4,
+            require(c.start() && !c.pump() && c.source_failed() && read(state) == committed && source.position == 4,
                 "invalid record advanced checkpoint or consumed later record");
         }
     }
@@ -148,13 +148,13 @@ void recover(const Profile& p, bool buffered) {
     const auto corrupt = read(state);
     {
         JournalCollector c(source, p.unit, path, p.mode, destination, fingerprint, p.redact);
-        require(!c.start() && read(state) == corrupt && source.opens == opens, "duplicate state accepted");
+        require(!c.start() && !c.source_failed() && read(state) == corrupt && source.opens == opens, "duplicate state accepted");
     }
     save(state, committed);
     require(::chmod(state.c_str(), 0644) == 0, "fixture chmod");
     {
         JournalCollector c(source, p.unit, path, p.mode, destination, fingerprint, p.redact);
-        require(!c.start() && source.opens == opens && read(state) == committed, "unsafe state permissions accepted");
+        require(!c.start() && !c.source_failed() && source.opens == opens && read(state) == committed, "unsafe state permissions accepted");
     }
     require(::chmod(state.c_str(), 0600) == 0, "restore fixture mode");
     source.records = {event(p, 1), event(p, 2), event(p, 3), event(p, 4)};
@@ -162,7 +162,7 @@ void recover(const Profile& p, bool buffered) {
         JournalCollector c(source, p.unit, path, p.mode, destination, fingerprint, p.redact);
         require(c.start(), "collision setup");
         save(pending, "synthetic incomplete transaction");
-        require(!c.pump() && read(state) == committed && read(pending) == "synthetic incomplete transaction",
+        require(!c.pump() && !c.source_failed() && read(state) == committed && read(pending) == "synthetic incomplete transaction",
             "exclusive pending collision altered evidence");
     }
     // Refuse an unsafe pending object; do not follow it or remove it.
@@ -190,14 +190,14 @@ void recover(const Profile& p, bool buffered) {
     source.seekable = false;
     {
         JournalCollector c(source, p.unit, path, p.mode, destination, fingerprint, p.redact);
-        require(c.start() == buffered && c.collection_blocked() == buffered && !c.pump() &&
+        require(c.start() == buffered && c.collection_blocked() == buffered && c.source_failed() && !c.pump() &&
             read(state) == recovered, "stale cursor changed evidence");
     }
     source.seekable = true;
     source.available = false;
     {
         JournalCollector c(source, p.unit, path, p.mode, destination, fingerprint, p.redact);
-        require(c.start() == buffered && c.collection_blocked() == buffered && !c.pump() &&
+        require(c.start() == buffered && c.collection_blocked() == buffered && c.source_failed() && !c.pump() &&
             read(state) == recovered, "unavailable source changed evidence");
     }
     source.available = true;
@@ -208,7 +208,7 @@ void recover(const Profile& p, bool buffered) {
         require(::chmod(temp.path.c_str(), 0755) == 0, "directory chmod");
         const bool rejected = !c.pump();
         require(::chmod(temp.path.c_str(), 0700) == 0, "restore directory mode");
-        require(rejected && source.reads == reads && read(state) == recovered, "unsafe directory consumed source");
+        require(rejected && !c.source_failed() && source.reads == reads && read(state) == recovered, "unsafe directory consumed source");
     }
 }
 void disconnected_crash() {

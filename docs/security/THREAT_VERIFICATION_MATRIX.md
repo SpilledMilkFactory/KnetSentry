@@ -206,3 +206,13 @@ records, permissions, pending-file collisions, abrupt process exit and queue
 backpressure, and partial TB-04/TV-06/TV-07 evidence for failed durable TLS
 receipt/ACK transactions. Synthetic-only tests preserve TV-25 privacy controls.
 No threat closure, power-loss proof or operational delivery is claimed.
+
+## M5.9 local status presentation
+
+The [M5.9 contract](../development/DESKTOP_TELEMETRY_STATUS_M59.md) adds
+representative partial TB-06/TB-07 and TV-13/TV-25 evidence for minimized
+aggregate status and bounded validation of untrusted local reports. Descriptor
+provenance is launcher-controlled, not independently authenticated. No raw
+records or private source values are published; counts/timing may be sensitive.
+No operational I-07, independently authenticated status or threat closure is
+claimed.

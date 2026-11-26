@@ -158,7 +158,7 @@ if args.build_dir:
             ERRORS.append(f"invalid compilation database: {exc}")
             commands = []
         source_names = ("build_info.cpp", "core_smoke.cpp", "lifecycle.cpp", "main.cpp",
-                        "agent_main.cpp", "privacy.cpp", "fim.cpp", "agent_lifecycle_m51.cpp", "journal.cpp", "systemd_journal.cpp", "journal_m52.cpp", "authentication.cpp", "authentication_m53.cpp", "audit_m54.cpp", "delivery.cpp", "receipt.cpp", "enrollment.cpp", "enrollment_admission.cpp", "agent_roster.cpp", "agent_roster_m47.cpp", "enrollment_admin.cpp", "enrollment_m44.cpp", "agent_health.cpp")
+                        "agent_main.cpp", "telemetry_status_m59.cpp", "privacy.cpp", "fim.cpp", "agent_lifecycle_m51.cpp", "journal.cpp", "systemd_journal.cpp", "journal_m52.cpp", "authentication.cpp", "authentication_m53.cpp", "audit_m54.cpp", "delivery.cpp", "receipt.cpp", "enrollment.cpp", "enrollment_admission.cpp", "agent_roster.cpp", "agent_roster_m47.cpp", "enrollment_admin.cpp", "enrollment_m44.cpp", "agent_health.cpp")
         for filename in source_names:
             entries = [item for item in commands if Path(item["file"]).name == filename]
             require(len(entries) >= 1, f"no actual compile command for {filename}")
@@ -191,6 +191,7 @@ if args.build_dir:
                        directory / "tests/knetsentry_agent_lifecycle_test",
                        directory / "tests/knetsentry_journal_test",
                        directory / "tests/knetsentry_collector_recovery_test",
+                       directory / "tests/knetsentry_telemetry_status_test",
                        directory / "tests/knetsentry_authentication_test",
                        directory / "tests/knetsentry_audit_test",
                        directory / "src/core/knetsentry-enrollment",

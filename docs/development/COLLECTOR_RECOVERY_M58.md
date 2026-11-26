@@ -72,8 +72,11 @@ The follow-up replaces them with constant-initialized character arrays and
 compile-time length checks, preserving the exact synthetic identifier bytes.
 No recovery assertions, compiler diagnostics, or privileged acceptance gates
 are disabled. The four dependent checks were skipped, not failed at runtime.
-Full target-host acceptance remains pending (113 PASS, 0 FAIL, 0 SKIPPED,
-0 BLOCKED; 371 configured CTest executions).
+Corrected maintainer acceptance passed (113 PASS, 0 FAIL, 0 SKIPPED,
+0 BLOCKED; 371 configured CTest executions). Direct recovery, 20 repeated
+Release and 10 repeated sanitized executions, manager binary comparison,
+reported manual GUI verification and nine hosted checks (`d6677a5`) passed;
+the maintainer reported merge.
 
 ## Boundaries
 

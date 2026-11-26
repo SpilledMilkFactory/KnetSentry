@@ -16,6 +16,13 @@ Kirigami.Page {
     readonly property string displayedHealthResources: resourceCard.description
     readonly property string displayedHealthErrors: errorCard.description
     readonly property string displayedHealthComponents: componentCard.description
+    readonly property bool telemetryVisible: telemetryPanel.visible
+    readonly property string displayedTelemetryStatus: telemetryStatusCard.description
+    readonly property string displayedTelemetryCollector: telemetryCollectorCard.description
+    readonly property string displayedTelemetryHealth: telemetryHealthCard.description
+    readonly property string displayedTelemetryRate: telemetryRateCard.description
+    readonly property string displayedTelemetryQueue: telemetryQueueCard.description
+    readonly property string displayedTelemetryFailure: telemetryFailureCard.description
     readonly property bool scopeVisible: scopePanel.visible
     readonly property bool agentRosterVisible: agentPanel.visible
     readonly property string displayedAgentRegistry: agentRegistryCard.description
@@ -48,7 +55,7 @@ Kirigami.Page {
         case "dashboard":
             return qsTr("Management daemon health is shown below. Monitoring coverage and security activity remain unavailable.")
         case "assets":
-            return qsTr("Inspect administrator-approved endpoint identities below. Live asset inventory and telemetry remain unavailable.")
+            return qsTr("Inspect administrator-approved endpoint identities below. Live asset inventory and remote telemetry remain unavailable.")
         case "events":
             return qsTr("Validated security-event records and search controls will appear here after the ingestion and storage pipeline is implemented.")
         case "detections":
@@ -102,7 +109,7 @@ Kirigami.Page {
             Kirigami.InlineMessage {
                 type: Kirigami.MessageType.Information
                 visible: true
-                text: qsTr("Not operational — no security telemetry is being collected or displayed.")
+                text: qsTr("Not operational — local aggregate collector status may be shown; remote telemetry and security events are not displayed.")
                 Layout.fillWidth: true
             }
             Controls.Label {
@@ -164,6 +171,63 @@ Kirigami.Page {
                     id: errorCard
                     heading: qsTr("Operational counters — not incidents")
                     description: page.healthModel.errors
+                }
+            }
+
+            ColumnLayout {
+                id: telemetryPanel
+                visible: page.sectionId === "assets" || page.sectionId === "dashboard"
+                Layout.fillWidth: true
+                spacing: tokens.spaceM
+                Controls.Label {
+                    text: qsTr("Local Endpoint Telemetry Status")
+                    font.pixelSize: tokens.sectionSize
+                    font.weight: Font.DemiBold
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    Accessible.role: Accessible.Heading
+                }
+                Kirigami.InlineMessage {
+                    visible: true
+                    type: Kirigami.MessageType.Information
+                    text: qsTr("One explicitly attached local agent report stream. Not tied to enrolled identities; no operational delivery or network coverage is established.")
+                    Layout.fillWidth: true
+                }
+                SurfaceCard {
+                    id: telemetryStatusCard
+                    Layout.fillWidth: true
+                    heading: qsTr("Local report stream")
+                    description: page.healthModel.telemetryStatus
+                }
+                SurfaceCard {
+                    id: telemetryCollectorCard
+                    Layout.fillWidth: true
+                    heading: qsTr("Selected collector")
+                    description: page.healthModel.telemetryCollector
+                }
+                SurfaceCard {
+                    id: telemetryHealthCard
+                    Layout.fillWidth: true
+                    heading: qsTr("Collection health")
+                    description: page.healthModel.telemetryHealth
+                }
+                SurfaceCard {
+                    id: telemetryRateCard
+                    Layout.fillWidth: true
+                    heading: qsTr("Local observation rate — not incidents")
+                    description: page.healthModel.telemetryRate
+                }
+                SurfaceCard {
+                    id: telemetryQueueCard
+                    Layout.fillWidth: true
+                    heading: qsTr("Offline telemetry buffer")
+                    description: page.healthModel.telemetryQueue
+                }
+                SurfaceCard {
+                    id: telemetryFailureCard
+                    Layout.fillWidth: true
+                    heading: qsTr("Collection failure status")
+                    description: page.healthModel.telemetryFailure
                 }
             }
 
