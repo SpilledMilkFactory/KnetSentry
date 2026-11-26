@@ -490,3 +490,10 @@ add_test(NAME knetsentry_privacy_policy_contract
     COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/tests/privacy_m57.py"
         $<TARGET_FILE:knetsentry-agent>)
 set_tests_properties(knetsentry_privacy_policy_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M5.8: composed policy-bound recovery and disconnected queue failures.
+add_executable(knetsentry_collector_recovery_test collector_recovery_m58.cpp)
+target_link_libraries(knetsentry_collector_recovery_test PRIVATE KnetSentry::AgentJournal)
+knetsentry_apply_project_options(knetsentry_collector_recovery_test)
+add_test(NAME knetsentry_collector_recovery_contract COMMAND $<TARGET_FILE:knetsentry_collector_recovery_test>)
+set_tests_properties(knetsentry_collector_recovery_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)

@@ -190,6 +190,7 @@ if args.build_dir:
                        directory / "apps/agent/knetsentry-agent",
                        directory / "tests/knetsentry_agent_lifecycle_test",
                        directory / "tests/knetsentry_journal_test",
+                       directory / "tests/knetsentry_collector_recovery_test",
                        directory / "tests/knetsentry_authentication_test",
                        directory / "tests/knetsentry_audit_test",
                        directory / "src/core/knetsentry-enrollment",

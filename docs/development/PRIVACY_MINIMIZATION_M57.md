@@ -152,3 +152,11 @@ retention, retroactive redaction, full end-to-end receiver enforcement,
 production agent confinement or comprehensive security audit is claimed.
 M4.7 #40 and M5.5 #46 operational integration remain outstanding. Do not upload
 actual policy strings, state files, credential material or private file contents.
+
+## Maintainer acceptance
+
+On 2026-11-26 UTC the maintainer recorded 111 PASS, 0 FAIL, 0 SKIPPED,
+0 BLOCKED, 364 passing CTest executions and nine successful hosted checks
+(`420215f`). Manual verification confirmed full and metadata-only FIM,
+policy rejection, 63 retained redacted records after restart, and changed-policy
+rejection without state mutation. GUI verification and merge were reported.

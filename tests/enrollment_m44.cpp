@@ -931,6 +931,59 @@ void telemetry_delivery(Fixture& f) {
         require(single_queue.start() && single_queue.count() == 0 && single_queue.pump() && single_queue.count() == 1 && single.position == 2,
             "empty outbox lost checkpoint or recollected acknowledged record");
     }
+    // M5.8: exercise actual storage rejection on both sides of a TLS receipt.
+    {
+        Store fault_registry, fault_spool, fault_receipts;
+        enroll::EndpointId fault_id{}; fault_id[0] = 4;
+        require(enroll::initialize(fault_registry.fd) == E::Ok &&
+            enroll::approve(fault_registry.fd, fault_id, f.agent_pin) == E::Ok, "fault registry");
+        const auto fault_binding = telemetry::delivery_binding(fault_id, f.manager_pin);
+        DeliverySource fault_source; fault_source.total = 1;
+        const auto collide = [](int fd, const char* name) {
+            const int pending = ::openat(fd, name, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+            require(pending >= 0, "pending collision fixture");
+            require(::close(pending) == 0, "pending collision close");
+        };
+        {
+            telemetry::JournalCollector q(fault_source, "fixture.service", fault_spool.path.data(), telemetry::JournalMode::Metadata, fault_binding);
+            telemetry::ReceiptInbox r(fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", fault_receipts.path.data());
+            require(q.start() && q.pump() && q.count() == 1 && r.start(), "fault setup");
+            collide(fault_receipts.fd, "telemetry-inbox-m55.pending");
+            auto [a, m] = fresh();
+            telemetry::DeliverySender sender(q, *a, fault_id, f.manager_pin);
+            telemetry::DeliveryReceiver receiver(*m, fault_registry.fd, fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", r);
+            require(sender.step(f.manager_pin, true, 1) == D::Pending, "fault send"); pump(*a, *m);
+            require(receiver.step(true, 2) == D::Failed && r.count() == 0, "failed receipt acknowledged");
+            require(sender.step(f.manager_pin, true, 5001) == D::Failed && q.count() == 1, "failed receipt removed sender record");
+            require(!std::filesystem::exists(std::filesystem::path(fault_receipts.path.data()) / "telemetry-inbox-m55.v1"), "failed receipt persisted");
+        }
+        {
+            telemetry::JournalCollector q(fault_source, "fixture.service", fault_spool.path.data(), telemetry::JournalMode::Metadata, fault_binding);
+            telemetry::ReceiptInbox r(fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", fault_receipts.path.data());
+            require(q.start() && q.count() == 1 && r.start() && r.count() == 0, "receipt failure restart");
+            auto [a, m] = fresh();
+            telemetry::DeliverySender sender(q, *a, fault_id, f.manager_pin);
+            telemetry::DeliveryReceiver receiver(*m, fault_registry.fd, fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", r);
+            require(sender.step(f.manager_pin, true, 1) == D::Pending, "receipt retry"); pump(*a, *m);
+            require(receiver.step(true, 2) == D::Complete && r.count() == 1, "receipt retry commit"); pump(*m, *a);
+            collide(fault_spool.fd, "telemetry-m55.pending");
+            require(sender.step(f.manager_pin, true, 3) == D::Failed && q.count() == 1, "failed sender ACK commit removed record");
+        }
+        {
+            telemetry::JournalCollector q(fault_source, "fixture.service", fault_spool.path.data(), telemetry::JournalMode::Metadata, fault_binding);
+            telemetry::ReceiptInbox r(fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", fault_receipts.path.data());
+            require(q.start() && q.count() == 1 && r.start() && r.count() == 1, "ACK failure restart");
+            auto [a, m] = fresh();
+            telemetry::DeliverySender sender(q, *a, fault_id, f.manager_pin);
+            telemetry::DeliveryReceiver receiver(*m, fault_registry.fd, fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", r);
+            require(sender.step(f.manager_pin, true, 1) == D::Pending, "ACK retry send"); pump(*a, *m);
+            require(receiver.step(true, 2) == D::Complete && r.count() == 1, "ACK retry duplicated receipt"); pump(*m, *a);
+            require(sender.step(f.manager_pin, true, 3) == D::Complete && q.count() == 0, "ACK retry commit");
+        }
+        telemetry::JournalCollector q(fault_source, "fixture.service", fault_spool.path.data(), telemetry::JournalMode::Metadata, fault_binding);
+        require(q.start() && q.count() == 0 && q.pump() && q.count() == 0, "ACK recovery lost checkpoint");
+        std::cout << "M5.8 TLS receiver and sender commit failures, durable retry and deduplication: PASS\n";
+    }
     // Verify the real inbox's capacity and idempotency with canonical synthetic rows.
     const auto row = [](std::size_t i) {
         return "cursor-" + std::to_string(i) + "\t100\t50\t" + std::string(32, 'a') + '\t' +

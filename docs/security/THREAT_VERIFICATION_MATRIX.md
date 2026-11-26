@@ -197,3 +197,12 @@ redaction and rejection of old or differently bound state. Native auth fixture
 and actual agent tests use synthetic data. No threat is closed; independent
 policy administration, receiver-side enforcement and operational consent remain
 future qualification responsibilities.
+
+## M5.8 collector failure recovery
+
+The [M5.8 contract](../development/COLLECTOR_RECOVERY_M58.md) adds partial
+TB-06/TB-07 and TV-13/TV-26 evidence for source failures, malformed and duplicate
+records, permissions, pending-file collisions, abrupt process exit and queue
+backpressure, and partial TB-04/TV-06/TV-07 evidence for failed durable TLS
+receipt/ACK transactions. Synthetic-only tests preserve TV-25 privacy controls.
+No threat closure, power-loss proof or operational delivery is claimed.

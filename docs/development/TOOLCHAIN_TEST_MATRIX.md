@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M5.6 accepted; M5.7 qualification pending; issues #40/#46 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M5.7 accepted; M5.8 qualification pending; issues #40/#46 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 56 Release/Debug/Clazy/analysis, 51 full ASan/UBSan,
-44 core-only and 45 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 57 Release/Debug/Clazy/analysis, 52 full ASan/UBSan,
+45 core-only and 46 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -357,3 +357,11 @@ All seven presets require `knetsentry_privacy_policy_contract`; see
 metadata-only file monitoring, slot redaction and policy-bound state rejection;
 existing native authentication fixture verifies acquisition-time category
 redaction and restart. No host private telemetry or new privileges.
+
+## M5.8 collector verification and failure recovery
+
+All seven presets require `knetsentry_collector_recovery_contract`; the
+existing telemetry delivery regression also covers real sender and receiver
+pending-file collision failures. See [M5.8](COLLECTOR_RECOVERY_M58.md).
+Run the synthetic fault scenarios as an ordinary user. CTest timeout is 75
+seconds. No production socket or power-loss qualification is claimed.
