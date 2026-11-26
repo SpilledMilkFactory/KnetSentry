@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **60 CTest tests**, including
+The Release desktop suite currently contains **61 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **54 CTests**, including the
+The full sanitizer suite currently contains **55 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **47 CTests**) and `linux-sanitize-core-only` for **48**.
+C++ test (currently **48 CTests**) and `linux-sanitize-core-only` for **49**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -419,3 +419,7 @@ See [M5.9](DESKTOP_TELEMETRY_STATUS_M59.md) for the opt-in descriptor routing,
 status semantics, privacy limits and synthetic manual fixture. Current
 inventories: desktop 60/54, core-only 47/48 (normal/sanitized). No operational
 agent session or new privilege is required.
+
+## M6.1 bounded authenticated event ingestion
+
+See [M6.1](EVENT_INGESTION_M61.md). Run `ctest --preset linux-release -R '^knetsentry_(event_ingestion_contract|telemetry_delivery_contract)$' --verbose --no-tests=error`. Current inventories: desktop 61/55, core-only 48/49 (normal/sanitized). No operational receiver or new privileges.

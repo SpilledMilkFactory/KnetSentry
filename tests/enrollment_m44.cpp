@@ -815,7 +815,8 @@ void telemetry_delivery(Fixture& f) {
         auto [a, m] = fresh();
         telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
         DeliverySink denied(*inbox); denied.reject = true;
-        telemetry::DeliveryReceiver receiver(*m, registry.fd, id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", denied);
+        telemetry::IngestionPipeline pipeline(id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", denied);
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, pipeline);
         require(sender.step(f.manager_pin, true, 1) == D::Pending, "send before receiver rejection"); pump(*a, *m);
         require(receiver.step(true, 2) == D::Failed && denied.attempts == 1 && inbox->count() == 0 && queue->count() == 128,
             "receiver rejection acknowledged");
@@ -844,7 +845,8 @@ void telemetry_delivery(Fixture& f) {
         auto [a, m] = fresh();
         telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
         DeliverySink sink(*inbox);
-        telemetry::DeliveryReceiver receiver(*m, registry.fd, id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        telemetry::IngestionPipeline pipeline(id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, pipeline);
         require(sender.step(f.manager_pin, true, 1) == D::Pending, "first send"); pump(*a, *m, 17);
         require(receiver.step(true, 2) == D::Complete && inbox->count() == 1, "durable receipt");
         // Lose all ACK ciphertext, then restart the agent and retry.
@@ -869,7 +871,8 @@ void telemetry_delivery(Fixture& f) {
         auto [a, m] = fresh();
         telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
         DeliverySink sink(*inbox);
-        telemetry::DeliveryReceiver receiver(*m, registry.fd, id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        telemetry::IngestionPipeline pipeline(id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, pipeline);
         require(sender.step(f.manager_pin, true, 1) == D::Pending, "retry send"); pump(*a, *m, 17);
         require(receiver.step(true, 2) == D::Complete && inbox->count() == 1 && sink.attempts == 1, "idempotent retry");
         pump(*m, *a, 13);
@@ -888,7 +891,8 @@ void telemetry_delivery(Fixture& f) {
         auto [a, m] = fresh();
         telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
         DeliverySink sink(*inbox);
-        telemetry::DeliveryReceiver receiver(*m, registry.fd, id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        telemetry::IngestionPipeline pipeline(id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, pipeline);
         require(sender.step(f.manager_pin, true, 1) == D::Pending, "blocked source send"); pump(*a, *m);
         require(receiver.step(true, 2) == D::Complete && inbox->count() == 2, "blocked source receipt"); pump(*m, *a);
         require(sender.step(f.manager_pin, true, 3) == D::Complete && queue->count() == 127, "blocked source ACK");
@@ -897,7 +901,8 @@ void telemetry_delivery(Fixture& f) {
         auto [a, m] = fresh();
         telemetry::DeliverySender sender(*queue, *a, id, f.manager_pin);
         DeliverySink sink(*inbox);
-        telemetry::DeliveryReceiver receiver(*m, registry.fd, id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        telemetry::IngestionPipeline pipeline(id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, pipeline);
         require(sender.step(f.manager_pin, true, 1) == D::Pending, "send before revoke"); pump(*a, *m);
         require(enroll::revoke(registry.fd, id, f.agent_pin) == E::Ok && receiver.step(true, 2) == D::Failed && sink.attempts == 0,
             "revoked peer reached sink");
@@ -921,7 +926,8 @@ void telemetry_delivery(Fixture& f) {
             require(single_queue.start() && single_queue.pump() && single_queue.count() == 1, "single queue");
             auto [a, m] = fresh();
             telemetry::DeliverySender sender(single_queue, *a, single_id, f.manager_pin);
-            telemetry::DeliveryReceiver receiver(*m, single_registry.fd, single_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", single_inbox);
+            telemetry::IngestionPipeline pipeline(single_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", single_inbox);
+            telemetry::DeliveryReceiver receiver(*m, single_registry.fd, pipeline);
             require(sender.step(f.manager_pin, true, 1) == D::Pending, "single send"); pump(*a, *m);
             require(receiver.step(true, 2) == D::Complete, "single receipt"); pump(*m, *a);
             require(sender.step(f.manager_pin, true, 3) == D::Complete && single_queue.count() == 0, "empty outbox ACK");
@@ -951,7 +957,8 @@ void telemetry_delivery(Fixture& f) {
             collide(fault_receipts.fd, "telemetry-inbox-m55.pending");
             auto [a, m] = fresh();
             telemetry::DeliverySender sender(q, *a, fault_id, f.manager_pin);
-            telemetry::DeliveryReceiver receiver(*m, fault_registry.fd, fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", r);
+            telemetry::IngestionPipeline pipeline(fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", r);
+            telemetry::DeliveryReceiver receiver(*m, fault_registry.fd, pipeline);
             require(sender.step(f.manager_pin, true, 1) == D::Pending, "fault send"); pump(*a, *m);
             require(receiver.step(true, 2) == D::Failed && r.count() == 0, "failed receipt acknowledged");
             require(sender.step(f.manager_pin, true, 5001) == D::Failed && q.count() == 1, "failed receipt removed sender record");
@@ -963,7 +970,8 @@ void telemetry_delivery(Fixture& f) {
             require(q.start() && q.count() == 1 && r.start() && r.count() == 0, "receipt failure restart");
             auto [a, m] = fresh();
             telemetry::DeliverySender sender(q, *a, fault_id, f.manager_pin);
-            telemetry::DeliveryReceiver receiver(*m, fault_registry.fd, fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", r);
+            telemetry::IngestionPipeline pipeline(fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", r);
+            telemetry::DeliveryReceiver receiver(*m, fault_registry.fd, pipeline);
             require(sender.step(f.manager_pin, true, 1) == D::Pending, "receipt retry"); pump(*a, *m);
             require(receiver.step(true, 2) == D::Complete && r.count() == 1, "receipt retry commit"); pump(*m, *a);
             collide(fault_spool.fd, "telemetry-m55.pending");
@@ -975,7 +983,8 @@ void telemetry_delivery(Fixture& f) {
             require(q.start() && q.count() == 1 && r.start() && r.count() == 1, "ACK failure restart");
             auto [a, m] = fresh();
             telemetry::DeliverySender sender(q, *a, fault_id, f.manager_pin);
-            telemetry::DeliveryReceiver receiver(*m, fault_registry.fd, fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", r);
+            telemetry::IngestionPipeline pipeline(fault_id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", r);
+            telemetry::DeliveryReceiver receiver(*m, fault_registry.fd, pipeline);
             require(sender.step(f.manager_pin, true, 1) == D::Pending, "ACK retry send"); pump(*a, *m);
             require(receiver.step(true, 2) == D::Complete && r.count() == 1, "ACK retry duplicated receipt"); pump(*m, *a);
             require(sender.step(f.manager_pin, true, 3) == D::Complete && q.count() == 0, "ACK retry commit");
@@ -998,6 +1007,129 @@ void telemetry_delivery(Fixture& f) {
         !inbox->commit(id, telemetry::delivery_binding(id, f.other_pin), row(1)), "wrong endpoint or manager binding receipt");
     std::cout << "M5.5 bounded durable queue/inbox, authenticated ACK, lost ACK retry, restart, destination binding, blocked source and revocation: PASS\n";
 }
+void ingestion_pipeline(Fixture& f) {
+    using O = telemetry::IngestOutcome;
+    Store registry, receipts;
+    enroll::EndpointId id{}; id[0] = 9;
+    require(enroll::initialize(registry.fd) == E::Ok && enroll::approve(registry.fd, id, f.agent_pin) == E::Ok, "ingestion registry");
+    const auto binding = telemetry::delivery_binding(id, f.manager_pin);
+    const auto row = std::string("cursor-1\t100\t50\t") + std::string(32, 'a') + '\t' + std::string(32, 'b') + "\tfixture.service\n";
+    telemetry::ReceiptInbox inbox(id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", receipts.path.data());
+    require(inbox.start(), "ingestion inbox");
+    DeliverySink sink(inbox);
+    telemetry::IngestionPipeline pipeline(id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+    const auto fresh = [&] {
+        auto a = Session::create(f.a(Protocol::Telemetry)); auto m = Session::create(f.m(Protocol::Telemetry));
+        require(a && m && connect(*a, *m), "ingestion TLS handshake");
+        return std::pair(std::move(a), std::move(m));
+    };
+    const auto send = [&](Session& a, Session& m, std::string_view payload) {
+        std::string wire{"KSTD\1\1", 6};
+        wire += static_cast<char>(payload.size() >> 8);
+        wire += static_cast<char>(payload.size() & 255);
+        wire += payload;
+        const std::span<const unsigned char> bytes(reinterpret_cast<const unsigned char*>(wire.data()), wire.size());
+        require(a.write(bytes).status == Status::Ok, "ingestion fixture write");
+        pump(a, m);
+    };
+    const auto exchange = [&](std::string_view payload, bool authorized, D expected) {
+        const auto before = pipeline.active();
+        auto [a, m] = fresh();
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, pipeline);
+        send(*a, *m, payload);
+        require(receiver.step(authorized, 1) == expected && pipeline.active() == before, "ingestion disposition/release");
+        require(receiver.step(authorized, 2) == expected, "terminal step changed disposition");
+        if (expected == D::Failed) { require(m->state() == State::Failed, "rejected exchange did not abort TLS"); }
+    };
+    exchange(binding + row, false, D::Failed);
+    exchange(telemetry::delivery_binding(id, f.other_pin) + row, true, D::Failed);
+    exchange(binding + "malformed\n", true, D::Failed);
+    exchange(binding + std::string(2049, 'x'), true, D::Failed);
+    auto wrong_source = row; wrong_source.replace(wrong_source.find("fixture.service"), 15, "other.service");
+    exchange(binding + wrong_source, true, D::Failed);
+    require(sink.attempts == 0 && inbox.count() == 0 && pipeline.count(O::Unauthorized) == 1 && pipeline.count(O::Invalid) == 4,
+        "invalid or unauthorized input reached durable sink");
+    {
+        using Peers = std::pair<std::unique_ptr<Session>, std::unique_ptr<Session>>;
+        std::vector<Peers> sessions;
+        std::vector<std::unique_ptr<telemetry::DeliveryReceiver>> receivers;
+        for (std::size_t i = 0; i < telemetry::IngestionPipeline::max_inflight; ++i) {
+            sessions.push_back(fresh());
+            receivers.push_back(std::make_unique<telemetry::DeliveryReceiver>(*sessions.back().second, registry.fd, pipeline));
+            require(receivers.back()->step(true, 10) == D::Pending, "reserve ingestion slot");
+        }
+        require(pipeline.active() == telemetry::IngestionPipeline::max_inflight, "admission capacity");
+        auto [a, m] = fresh();
+        telemetry::DeliveryReceiver excess(*m, registry.fd, pipeline);
+        send(*a, *m, binding + row);
+        require(excess.step(true, 11) == D::Failed && pipeline.count(O::Overloaded) == 1 && sink.attempts == 0,
+            "overload reached sink");
+        require(receivers.front()->step(true, 5010) == D::Failed && pipeline.count(O::TransportFailed) == 1,
+            "timeout failed to release admission");
+        exchange(binding + row, true, D::Complete);
+        require(pipeline.active() == telemetry::IngestionPipeline::max_inflight - 1, "capacity recovery");
+    }
+    require(pipeline.active() == 0 && pipeline.count(O::Abandoned) == 3 && inbox.count() == 1, "abandoned admission recovery");
+    exchange(binding + row, true, D::Complete);
+    auto conflict = row; conflict.replace(conflict.find("100"), 3, "101");
+    exchange(binding + conflict, true, D::Failed);
+    sink.reject = true;
+    exchange(binding + row, true, D::Failed);
+    require(inbox.count() == 1 && sink.attempts == 4 && pipeline.count(O::Committed) == 2 &&
+        pipeline.count(O::Acknowledged) == 2 && pipeline.count(O::StorageRejected) == 2, "commit/ack accounting");
+    {
+        auto unapproved = id; unapproved[0] = 8;
+        telemetry::IngestionPipeline wrong_identity(unapproved, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        auto [a, m] = fresh();
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, wrong_identity);
+        send(*a, *m, telemetry::delivery_binding(unapproved, f.manager_pin) + row);
+        require(receiver.step(true, 1) == D::Failed && wrong_identity.count(O::Unauthorized) == 1 && sink.attempts == 4,
+            "unenrolled endpoint reached sink");
+    }
+    // The canonical validator is selected by trusted configuration, never by
+    // a payload's claimed source or additional fields.
+    for (const auto mode : {telemetry::JournalMode::Authentication, telemetry::JournalMode::Audit}) {
+        Store profile_store;
+        const std::string unit = mode == telemetry::JournalMode::Audit ? "audit" : "ssh.service";
+        const std::string suffix = mode == telemetry::JournalMode::Audit ? "\t1100\t9\n" : "\tredacted\n";
+        auto profile_row = row.substr(0, row.find("fixture.service")) + unit + suffix;
+        telemetry::ReceiptInbox profile_inbox(id, f.manager_pin, mode, unit, profile_store.path.data());
+        require(profile_inbox.start(), "profile inbox");
+        telemetry::IngestionPipeline profile(id, f.manager_pin, mode, unit, profile_inbox);
+        {
+            auto [a, m] = fresh();
+            telemetry::DeliveryReceiver receiver(*m, registry.fd, profile);
+            send(*a, *m, binding + row);
+            require(receiver.step(true, 1) == D::Failed && profile.count(O::Invalid) == 1 && profile_inbox.count() == 0,
+                "cross-profile event accepted");
+        }
+        {
+            auto [a, m] = fresh();
+            telemetry::DeliveryReceiver receiver(*m, registry.fd, profile);
+            send(*a, *m, binding + profile_row);
+            require(receiver.step(true, 1) == D::Complete && profile.count(O::Committed) == 1 && profile_inbox.count() == 1,
+                "valid configured profile rejected");
+        }
+    }
+    {
+        telemetry::IngestionPipeline invalid(id, f.manager_pin, telemetry::JournalMode::Metadata, "*.service", sink);
+        auto [a, m] = fresh();
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, invalid);
+        send(*a, *m, binding + row);
+        require(receiver.step(true, 1) == D::Failed && invalid.active() == 0 && invalid.count(O::Invalid) == 1 && sink.attempts == 4,
+            "invalid routing configuration reached sink");
+    }
+    {
+        auto [a, m] = fresh();
+        telemetry::DeliveryReceiver receiver(*m, registry.fd, pipeline);
+        require(receiver.step(true, 1) == D::Pending, "reserve before revocation");
+        require(enroll::revoke(registry.fd, id, f.agent_pin) == E::Ok, "ingestion revocation");
+        send(*a, *m, binding + row);
+        require(receiver.step(true, 2) == D::Failed && pipeline.active() == 0 && sink.attempts == 4 &&
+            pipeline.count(O::Unauthorized) == 2, "revoked admission reached sink");
+    }
+    std::cout << "M6.1 authenticated ingestion, invalid rejection, bounded admission, timeout/release, durable retry and disposition counters: PASS\n";
+}
 } // namespace
 int main(int argc, char** argv) {
     try {
@@ -1008,6 +1140,8 @@ int main(int argc, char** argv) {
             heartbeat(fixture);
         } else if (argc == 2 && std::string_view(argv[1]) == "--authentication-transport") {
             authentication_transport(fixture);
+        } else if (argc == 2 && std::string_view(argv[1]) == "--ingestion") {
+            ingestion_pipeline(fixture);
         } else if (argc == 2 && std::string_view(argv[1]) == "--telemetry-delivery") {
             telemetry_delivery(fixture);
         } else if (argc == 1) {

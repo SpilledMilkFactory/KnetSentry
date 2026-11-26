@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M5.8 accepted; M5.9 qualification pending; issues #40/#46/#50 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M5.9 local foundation accepted; M6.1 qualification pending; issues #40/#46/#50 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
 CTest inventories are 60 Release/Debug/Clazy/analysis, 54 full ASan/UBSan,
 47 core-only and 48 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
@@ -373,3 +373,7 @@ agent runtime tests are mandatory in all seven presets. Existing Qt model and
 navigation tests exercise the read-only properties. Non-sanitized desktop
 presets also run the actual rendered synthetic-pipe status test. No new QML
 leak suppression or operational network access is introduced.
+
+## M6.1 bounded authenticated event ingestion
+
+See [M6.1](EVENT_INGESTION_M61.md). The mandatory ingestion contract runs in all seven presets using the existing enrollment test executable and project hardening policies. The existing delivery and recovery regressions traverse the new ingestion boundary.

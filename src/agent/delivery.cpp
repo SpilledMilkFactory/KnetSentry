@@ -44,21 +44,22 @@ bool time_ok(std::optional<std::uint64_t>& start, std::uint64_t& last, std::uint
     last = now;
     return true;
 }
-enum class Read { Pending, Complete, Failed };
+enum class Read { Pending, Complete, Failed, Invalid };
 Read receive(tls::Session& session, std::array<unsigned char, 4096>& accumulated,
     std::size_t& used, unsigned char kind) noexcept {
     std::array<unsigned char, tls::max_plaintext> input{};
     const auto result = session.read(input);
     if (result.status == tls::Status::WouldBlock) { return Read::Pending; }
-    if (result.status != tls::Status::Ok || result.bytes > accumulated.size() - used) { return Read::Failed; }
+    if (result.status != tls::Status::Ok) { return Read::Failed; }
+    if (result.bytes > accumulated.size() - used) { return Read::Invalid; }
     std::copy_n(input.begin(), result.bytes, accumulated.data() + used);
     used += result.bytes;
     if (used < header_size) { return Read::Pending; }
     if (std::string_view(reinterpret_cast<const char*>(accumulated.data()), 5) != std::string_view("KSTD\1", 5) ||
-        accumulated[5] != kind) { return Read::Failed; }
+        accumulated[5] != kind) { return Read::Invalid; }
     const auto length = (static_cast<std::size_t>(accumulated[6]) << 8) | accumulated[7];
     if (length == 0 || length > max_body || (kind == 2 && length != digest_size) ||
-        used > header_size + length) { return Read::Failed; }
+        used > header_size + length) { return Read::Invalid; }
     return used == header_size + length ? Read::Complete : Read::Pending;
 }
 DeliveryState fail(tls::Session& session, DeliveryState& state) noexcept {
@@ -114,41 +115,53 @@ DeliveryState DeliverySender::step(std::optional<identity::Fingerprint> manager,
         return state_ = DeliveryState::Complete;
     } catch (...) { return fail(session_, state_); }
 }
-DeliveryReceiver::DeliveryReceiver(tls::Session& session, int registry, const enrollment::EndpointId& endpoint,
-    const identity::Fingerprint& manager, JournalMode mode, std::string unit, ReceiptSink& sink)
-    : session_(session), registry_(-1), endpoint_(endpoint), mode_(mode), unit_(std::move(unit)),
-      binding_(delivery_binding(endpoint, manager)), sink_(sink) {
+DeliveryReceiver::DeliveryReceiver(tls::Session& session, int registry, IngestionPipeline& pipeline)
+    : session_(session), registry_(-1), pipeline_(pipeline) {
     if (registry >= 0) { registry_ = ::fcntl(registry, F_DUPFD_CLOEXEC, 3); }
 }
 DeliveryReceiver::~DeliveryReceiver() {
+    if (reserved_) { (void)finish(IngestOutcome::Abandoned); }
     session_.abort();
     if (registry_ >= 0) { ::close(registry_); }
+}
+DeliveryState DeliveryReceiver::finish(IngestOutcome outcome) noexcept {
+    pipeline_.record(outcome);
+    if (reserved_) { pipeline_.release(); reserved_ = false; }
+    if (outcome == IngestOutcome::Acknowledged) { return state_ = DeliveryState::Complete; }
+    return fail(session_, state_);
 }
 DeliveryState DeliveryReceiver::step(bool authorized, std::uint64_t now) noexcept {
     if (state_ != DeliveryState::Pending) { return state_; }
     try {
-        if (session_.protocol() != tls::Protocol::Telemetry || !authorized || !valid_delivery_binding(binding_) || !time_ok(start_, last_, now) ||
-            enrollment::revalidate(registry_, endpoint_, session_) != enrollment::Status::Ok) {
-            return fail(session_, state_);
+        if (session_.protocol() != tls::Protocol::Telemetry || !authorized ||
+            enrollment::revalidate(registry_, pipeline_.endpoint_, session_) != enrollment::Status::Ok) {
+            return finish(IngestOutcome::Unauthorized);
+        }
+        if (!pipeline_.configured_) { return finish(IngestOutcome::Invalid); }
+        if (!time_ok(start_, last_, now)) { return finish(IngestOutcome::TransportFailed); }
+        if (!reserved_) {
+            if (!pipeline_.reserve()) { return finish(IngestOutcome::Overloaded); }
+            reserved_ = true;
         }
         if (ack_.empty()) {
             const auto result = receive(session_, received_, used_, 1);
             if (result == Read::Pending) { return state_; }
-            if (result != Read::Complete) { return fail(session_, state_); }
+            if (result == Read::Invalid) { return finish(IngestOutcome::Invalid); }
+            if (result != Read::Complete) { return finish(IngestOutcome::TransportFailed); }
             const std::string_view payload(reinterpret_cast<const char*>(received_.data() + header_size), used_ - header_size);
-            if (!payload.starts_with(binding_) ||
-                !valid_delivery_row(payload.substr(binding_.size()), unit_, mode_)) { return fail(session_, state_); }
             ack_ = acknowledgment(payload);
-            if (ack_.empty() || !sink_.commit(endpoint_, binding_, payload.substr(binding_.size())) ||
-                enrollment::revalidate(registry_, endpoint_, session_) != enrollment::Status::Ok) {
-                return fail(session_, state_);
+            if (ack_.empty()) { return finish(IngestOutcome::TransportFailed); }
+            const auto disposition = pipeline_.process(payload);
+            if (disposition != IngestOutcome::Committed) { return finish(disposition); }
+            if (enrollment::revalidate(registry_, pipeline_.endpoint_, session_) != enrollment::Status::Ok) {
+                return finish(IngestOutcome::Unauthorized);
             }
         }
         const auto result = session_.write(bytes(ack_));
         if (result.status == tls::Status::WouldBlock) { return state_; }
-        if (result.status != tls::Status::Ok || result.bytes != ack_.size()) { return fail(session_, state_); }
+        if (result.status != tls::Status::Ok || result.bytes != ack_.size()) { return finish(IngestOutcome::TransportFailed); }
         // Caller must drain ACK ciphertext before destroying this receiver.
-        return state_ = DeliveryState::Complete;
-    } catch (...) { return fail(session_, state_); }
+        return finish(IngestOutcome::Acknowledged);
+    } catch (...) { return finish(IngestOutcome::TransportFailed); }
 }
 } // namespace knetsentry::agent

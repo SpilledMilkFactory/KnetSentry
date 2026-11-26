@@ -5,13 +5,12 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M5.8 — collector verification and failure recovery.**
+**Accepted baseline: M5.9 — local endpoint telemetry status.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
-M4.8 and M5.1–M5.8 are merged (M5.5 offline foundation only). M5.9 adds
-explicit local aggregate agent status in Dashboard and Assets; target qualification
-is pending. Multi-endpoint authenticated status integration remains outstanding (#50).
+M4.8 and M5.1–M5.8 are merged (M5.5 offline foundation only). M5.9 local aggregate agent status in Dashboard and Assets is qualified and merged. Multi-endpoint authenticated status integration remains outstanding (#50).
 Issue #46 operational network/manager integration remains outstanding.
+M6.1 adds a bounded offline authenticated event ingestion foundation; target qualification is pending.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
@@ -27,6 +26,7 @@ This is an unreleased development baseline, not a v1.0.0 security qualification.
 | TLS transport | TLS 1.3 mutual identity, explicit root and role/pin validation, bounded encrypted byte stream; no operational socket adapter |
 | Endpoint enrollment | Offline registry, TLS-backed admission, explicit rotation/revocation and live validity rechecks; explicit local read-only roster selection; no operational admission or automatic enrollment |
 | Endpoint agent | Independent foreground process, strict v1 startup configuration, bounded static collector lifecycle and non-root capability checks; opt-in selected journal metadata, authentication categories and journal-mediated audit records and explicit file integrity polling under mandatory explicit privacy policy; no operational network |
+| Event ingestion | Bounded per-source authenticated KSTD receipt pipeline, canonical validation, reject/overload disposition counters; no deployed manager ingress |
 | Telemetry delivery | Explicit protected FIFO outbox, durable bounded inbox and authenticated receipt/retry contract (offline); no running manager receiver |
 | Agent health | Offline TLS-backed KSAP reporting, current enrollment rechecks, bounded health snapshots and reconnect scheduling; no deployed agent |
 | Verification | Mandatory compiled regressions, static analysis, sanitizer configurations, strict QML diagnostics, isolated dual-stack kernel firewall and topology fixtures |
@@ -39,6 +39,16 @@ rules. Monitoring is unavailable, and no operational remote telemetry transport,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M5.9 maintainer acceptance (2026-11-26 UTC, applied working tree based on
+`d6677a5`) recorded 115 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 389 CTest
+executions, 52 structural verifiers and nine green hosted checks (`11149c3`).
+Focused seven-test Release run, strict QML lint and installed-manager comparison
+passed. Manual metadata-only FIM observed a change, suspension/resumption was
+exercised, unsafe substitution exited 1, and buffered authentication stopped
+with exit 0. Maintainer reported visual qualification and merge; no exact
+manual queue occupancy or rate was recorded. Existing desktop diagnostics and
+operational issues #40/#46/#50 remain outstanding.
 
 M5.8 corrected maintainer acceptance (2026-11-26 UTC, applied working tree
 based on `743dd54`) recorded 113 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all
@@ -196,7 +206,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
-| M5–M7 — functional SIEM foundations | M5.8 accepted; M5.9 local status qualification pending; operational delivery and authenticated fleet status outstanding |
+| M5–M7 — functional SIEM foundations | M5.9 local status accepted; operational delivery and authenticated fleet status outstanding |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |

@@ -44,6 +44,36 @@ private:
     bool started_{}, ready_{};
 };
 
+// M6.1: synchronous, single-owner ingestion boundary for one configured
+// endpoint/source/sink. No asynchronous queue or network permission. The
+// pipeline and sink must outlive all receivers; all calls are serialized.
+enum class IngestOutcome { Unauthorized, Invalid, Overloaded, StorageRejected,
+    TransportFailed, Abandoned, Committed, Acknowledged, Count };
+class IngestionPipeline final {
+public:
+    static constexpr std::size_t max_inflight = 4;
+    static constexpr std::size_t max_row = 2048;
+    IngestionPipeline(enrollment::EndpointId endpoint, identity::Fingerprint manager,
+        JournalMode mode, std::string_view unit, ReceiptSink& sink);
+    IngestionPipeline(const IngestionPipeline&) = delete;
+    IngestionPipeline& operator=(const IngestionPipeline&) = delete;
+    [[nodiscard]] std::size_t active() const noexcept { return active_; }
+    [[nodiscard]] std::uint64_t count(IngestOutcome outcome) const noexcept;
+private:
+    friend class DeliveryReceiver;
+    [[nodiscard]] bool reserve() noexcept;
+    void release() noexcept;
+    void record(IngestOutcome outcome) noexcept;
+    [[nodiscard]] IngestOutcome process(std::string_view payload);
+    enrollment::EndpointId endpoint_;
+    JournalMode mode_;
+    std::string unit_, binding_;
+    ReceiptSink& sink_;
+    std::array<std::uint64_t, static_cast<std::size_t>(IngestOutcome::Count)> counts_{};
+    std::size_t active_{};
+    bool configured_{};
+};
+
 // Exclusive use of a fresh established TLS session, one record per connection.
 // The caller drives ciphertext, network authorization, monotonic time and
 // reconnect scheduling. No socket or monitoring permission is granted here.
@@ -69,8 +99,7 @@ private:
 };
 class DeliveryReceiver final {
 public:
-    DeliveryReceiver(tls::Session& session, int registry, const enrollment::EndpointId& endpoint,
-        const identity::Fingerprint& manager, JournalMode mode, std::string unit, ReceiptSink& sink);
+    DeliveryReceiver(tls::Session& session, int registry, IngestionPipeline& pipeline);
     ~DeliveryReceiver();
     DeliveryReceiver(const DeliveryReceiver&) = delete;
     DeliveryReceiver& operator=(const DeliveryReceiver&) = delete;
@@ -78,10 +107,10 @@ public:
 private:
     tls::Session& session_;
     int registry_;
-    enrollment::EndpointId endpoint_;
-    JournalMode mode_;
-    std::string unit_, binding_, ack_;
-    ReceiptSink& sink_;
+    IngestionPipeline& pipeline_;
+    std::string ack_;
+    bool reserved_{};
+    DeliveryState finish(IngestOutcome outcome) noexcept;
     std::array<unsigned char, 4096> received_{};
     std::size_t used_{};
     std::optional<std::uint64_t> start_;
