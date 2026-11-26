@@ -14,7 +14,7 @@ enum class IntegrityChange { None, Created, Deleted, Replaced, Content, Metadata
 [[nodiscard]] std::string_view change_name(IntegrityChange change) noexcept;
 class IntegrityCollector final : public Collector {
 public:
-    explicit IntegrityCollector(std::vector<std::string> paths);
+    explicit IntegrityCollector(std::vector<std::string> paths, bool read_content = true);
     ~IntegrityCollector() override;
     IntegrityCollector(const IntegrityCollector&) = delete;
     IntegrityCollector& operator=(const IntegrityCollector&) = delete;

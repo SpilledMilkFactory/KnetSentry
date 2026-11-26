@@ -5,6 +5,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M5.2 — systemd journal collection
 
+**M5.7 compatibility update:** The historical commands and state layouts below
+precede mandatory `--privacy-policy` configuration. Use the current
+[M5.7 contract](PRIVACY_MINIMIZATION_M57.md) for active collector invocations,
+redaction and policy-bound journal state. Do not reuse legacy unbound state.
+
 Issue #43 introduces explicit local, metadata-only journal collection in C-08/P-08.
 It does not activate a privileged helper, transport, monitoring consent, a receiver,
 production evidence repository or event spool. M5.1's empty-collector mode and

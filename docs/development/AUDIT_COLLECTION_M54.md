@@ -5,6 +5,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M5.4 — Linux Audit-event integration
 
+**M5.7 compatibility update:** The historical commands and state layouts below
+precede mandatory `--privacy-policy` configuration. Use the current
+[M5.7 contract](PRIVACY_MINIMIZATION_M57.md) for active collector invocations,
+redaction and policy-bound journal state. Do not reuse legacy unbound state.
+
 Issue #45 extends C-08/P-08 with opt-in journal-mediated Linux Audit records.
 The native systemd API selects `_TRANSPORT=audit` and, in production, the local
 `_MACHINE_ID`. This is an already-readable local journal source, not a direct

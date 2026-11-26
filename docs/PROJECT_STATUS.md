@@ -5,11 +5,12 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M5.5 — local buffering and offline authenticated delivery foundation.**
+**Accepted baseline: M5.6 — initial local file integrity monitoring.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
-M4.8 and M5.1–M5.5 are merged (M5.5 offline foundation only). M5.6 introduces
-explicit local file integrity polling; target qualification is pending.
+M4.8 and M5.1–M5.6 are merged (M5.5 offline foundation only). M5.7 adds
+mandatory explicit active-collector privacy policy, acquisition-time redaction
+and policy-bound journal state; target qualification is pending.
 Issue #46 operational network/manager integration remains outstanding.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
@@ -25,7 +26,7 @@ This is an unreleased development baseline, not a v1.0.0 security qualification.
 | Cryptographic identity | Offline Ed25519 key generation, protected role-specific storage and explicit X.509 trust/role/pin validation; no issuance or enrollment |
 | TLS transport | TLS 1.3 mutual identity, explicit root and role/pin validation, bounded encrypted byte stream; no operational socket adapter |
 | Endpoint enrollment | Offline registry, TLS-backed admission, explicit rotation/revocation and live validity rechecks; explicit local read-only roster selection; no operational admission or automatic enrollment |
-| Endpoint agent | Independent foreground process, strict v1 startup configuration, bounded static collector lifecycle and non-root capability checks; opt-in selected journal metadata, authentication categories and journal-mediated audit records and explicit file integrity polling, no operational network |
+| Endpoint agent | Independent foreground process, strict v1 startup configuration, bounded static collector lifecycle and non-root capability checks; opt-in selected journal metadata, authentication categories and journal-mediated audit records and explicit file integrity polling under mandatory explicit privacy policy; no operational network |
 | Telemetry delivery | Explicit protected FIFO outbox, durable bounded inbox and authenticated receipt/retry contract (offline); no running manager receiver |
 | Agent health | Offline TLS-backed KSAP reporting, current enrollment rechecks, bounded health snapshots and reconnect scheduling; no deployed agent |
 | Verification | Mandatory compiled regressions, static analysis, sanitizer configurations, strict QML diagnostics, isolated dual-stack kernel firewall and topology fixtures |
@@ -38,6 +39,16 @@ rules. Monitoring is unavailable, and no operational remote telemetry transport,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M5.6 maintainer acceptance (2026-11-26 UTC, applied working tree based on
+`b4e787f`) recorded 109 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 357 CTest
+executions, 49 structural verifiers and nine green hosted checks (`06fb6d8`).
+Focused seven-test run and installed-manager binary comparison passed. Manual
+FIM verified content and metadata changes, replacement, deletion, creation,
+independent slots, no observation for unrelated sibling changes, startup and
+runtime symbolic-link rejection, wildcard rejection and clean shutdown. The
+maintainer reported GUI functionality and merge. The Kirigami drawer and
+portal application-ID warnings recurred; neither is marked resolved.
 
 M5.5 maintainer acceptance (2026-11-25 UTC, applied working tree based on
 `ca888d5`) recorded 107 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, 350 CTest executions,
@@ -168,7 +179,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
-| M5–M7 — functional SIEM foundations | M5.5 offline foundation accepted; M5.6 qualification pending; operational delivery outstanding |
+| M5–M7 — functional SIEM foundations | M5.6 accepted; M5.7 qualification pending; operational delivery outstanding |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |

@@ -187,3 +187,13 @@ and TV-13/TV-25 evidence for explicit file scope, bounded untrusted filesystem
 inputs, fixed diagnostics and privacy minimization. No new privileges, raw
 content persistence or operational transport; polling and race limitations
 remain documented rather than claiming complete filesystem confinement.
+
+## M5.7 privacy and data-minimization controls
+
+The [M5.7 contract](../development/PRIVACY_MINIMIZATION_M57.md) contributes
+partial TB-06/TB-07 and TV-13/TV-25/TV-26 evidence for explicit source/permit
+checks, exclusion precedence, no denied-file content access, acquisition-time
+redaction and rejection of old or differently bound state. Native auth fixture
+and actual agent tests use synthetic data. No threat is closed; independent
+policy administration, receiver-side enforcement and operational consent remain
+future qualification responsibilities.

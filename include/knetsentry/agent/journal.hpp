@@ -28,7 +28,7 @@ public:
     virtual void close() noexcept = 0;
 };
 // An empty directory argument uses the local journal. Nonempty is for isolated tests only.
-std::unique_ptr<JournalSource> make_journal_source(std::string directory = {}, JournalMode mode = JournalMode::Metadata);
+std::unique_ptr<JournalSource> make_journal_source(std::string directory = {}, JournalMode mode = JournalMode::Metadata, bool redact_auth = false);
 // Audit uses the fixed source marker "audit", not a service unit.
 [[nodiscard]] bool parse_audit_number(std::string_view value, std::uint64_t& output) noexcept;
 [[nodiscard]] bool valid_journal_unit(std::string_view unit) noexcept;
@@ -42,7 +42,8 @@ public:
     static constexpr std::size_t max_records = 128;
     static constexpr std::size_t batch_size = 16;
     JournalCollector(JournalSource& source, std::string unit, std::string directory,
-                     JournalMode mode = JournalMode::Metadata, std::string binding = {});
+                     JournalMode mode = JournalMode::Metadata, std::string binding = {},
+                     std::string privacy_fingerprint = {}, bool redact_auth = false);
     ~JournalCollector() override { stop(); }
     JournalCollector(const JournalCollector&) = delete;
     JournalCollector& operator=(const JournalCollector&) = delete;
@@ -69,7 +70,8 @@ private:
     const char* state_name_;
     const char* pending_name_;
     std::string unit_, directory_, state_, cursor_, binding_;
-    std::string header_;
+    std::string header_, privacy_fingerprint_;
+    bool redact_auth_{};
     std::vector<std::string> queued_;
     int fd_{-1};
     std::size_t count_{};

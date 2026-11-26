@@ -5,6 +5,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M5.3 — authentication and SSH event collection
 
+**M5.7 compatibility update:** The historical commands and state layouts below
+precede mandatory `--privacy-policy` configuration. Use the current
+[M5.7 contract](PRIVACY_MINIMIZATION_M57.md) for active collector invocations,
+redaction and policy-bound journal state. Do not reuse legacy unbound state.
+
 Issue #44 extends C-08/P-08 with explicitly selected local authentication
 observations, using the M5.2 native journal and checkpoint transaction. No
 new privileges, network connections, enrollment, monitoring consent, external

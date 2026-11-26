@@ -10,6 +10,7 @@
 namespace knetsentry::agent {
 namespace {
 constexpr std::array names{
+    std::pair{AuthEvent::Redacted, std::string_view("redacted")},
     std::pair{AuthEvent::Unclassified, std::string_view("unclassified")},
     std::pair{AuthEvent::SshAccepted, std::string_view("ssh-accepted")},
     std::pair{AuthEvent::SshFailed, std::string_view("ssh-failed")},
@@ -115,7 +116,7 @@ AuthEvent parse_auth_event(std::string_view name) noexcept {
 }
 bool valid_auth_event(std::string_view unit, AuthEvent event) noexcept {
     if (!valid_auth_unit(unit)) { return false; }
-    if (event == AuthEvent::Unclassified) { return true; }
+    if (event == AuthEvent::Unclassified || event == AuthEvent::Redacted) { return true; }
     if (ssh(unit)) {
         return event == AuthEvent::SshAccepted || event == AuthEvent::SshFailed || event == AuthEvent::SshInvalidUser ||
             event == AuthEvent::SessionOpened || event == AuthEvent::SessionClosed || event == AuthEvent::AuthenticationFailed;

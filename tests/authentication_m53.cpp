@@ -138,6 +138,48 @@ int main(int argc, char** argv) {
                     data.find("unclassified") == std::string::npos && !fs::exists(state.path / "auth-m53.v1"),
                     "metadata mode unexpectedly persisted classification");
         }
+        // M5.7: native redaction before MESSAGE acquisition and policy-bound state.
+        {
+            Temp state;
+            const auto file = state.path / "telemetry-m55.v1";
+            const std::string fingerprint(64, 'a'), other(64, 'b'), binding(96, 'a');
+            auto source = make_journal_source(argv[1], JournalMode::Authentication, true);
+            {
+                JournalCollector collector(*source, "ssh.service", state.path.string(), JournalMode::Authentication,
+                                           binding, fingerprint, true);
+                require(collector.start() && collector.pump() && collector.count() == 6, "redacted collection failed");
+            }
+            const auto complete = read(file);
+            require(complete.starts_with("KNETSENTRY-PRIVACY-V1\t" + fingerprint + '\n') &&
+                    complete.find("private-") == std::string::npos && complete.find("ssh-accepted") == std::string::npos,
+                    "redacted state privacy failed");
+            std::size_t redacted{};
+            for (std::size_t pos = complete.find("\tredacted\n"); pos != std::string::npos;
+                 pos = complete.find("\tredacted\n", pos + 1)) { ++redacted; }
+            require(redacted == 6, "redaction count mismatch");
+            {
+                JournalCollector changed(*source, "ssh.service", state.path.string(), JournalMode::Authentication,
+                                         binding, other, true);
+                require(!changed.start() && read(file) == complete, "changed policy accepted");
+            }
+            {
+                JournalCollector legacy(*source, "ssh.service", state.path.string(), JournalMode::Authentication, binding);
+                require(!legacy.start() && read(file) == complete, "legacy policy bypass accepted");
+            }
+            {
+                JournalCollector restart(*source, "ssh.service", state.path.string(), JournalMode::Authentication,
+                                         binding, fingerprint, true);
+                require(restart.start() && restart.pump() && read(file) == complete, "same policy restart failed");
+            }
+            // A forged non-redacted category must not be loaded under redaction.
+            auto invalid = complete;
+            invalid.replace(invalid.find("\tredacted\n") + 1, 8, "ssh-accepted");
+            save(file, invalid);
+            JournalCollector malformed(*source, "ssh.service", state.path.string(), JournalMode::Authentication,
+                                       binding, fingerprint, true);
+            require(!malformed.start() && read(file) == invalid, "nonredacted state accepted");
+            std::cout << "M5.7 native authentication redaction and policy-bound outbox: PASS\n";
+        }
         native(argv[1], "ssh.service", {"ssh-accepted", "ssh-failed", "session-opened", "unclassified", "unclassified", "unclassified"});
         native(argv[1], "sshd.service", {"ssh-invalid-user", "session-closed"});
         native(argv[1], "systemd-logind.service", {"login-session-created", "login-session-removed"});

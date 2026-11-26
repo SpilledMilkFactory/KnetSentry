@@ -90,3 +90,7 @@ and native library linkage; see the [M5.2 contract](JOURNAL_COLLECTION_M52.md).
 
 M5.6 adds explicitly selected file integrity polling and existing system
 OpenSSL Crypto linkage for SHA-256. See the [M5.6 contract](FILE_INTEGRITY_M56.md).
+
+M5.7 requires an explicit final privacy-policy argument for all active CLI
+collector configurations, without changing `none` or granting privileges.
+See [M5.7](PRIVACY_MINIMIZATION_M57.md).

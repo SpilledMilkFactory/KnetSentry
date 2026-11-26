@@ -114,12 +114,13 @@ bool valid_journal_directory(std::string_view path) noexcept {
     }
     return false;
 }
-JournalCollector::JournalCollector(JournalSource& source, std::string unit, std::string directory, JournalMode mode, std::string binding)
+JournalCollector::JournalCollector(JournalSource& source, std::string unit, std::string directory, JournalMode mode, std::string binding, std::string privacy_fingerprint, bool redact_auth)
     : source_(source), mode_(mode),
       state_name_(mode == JournalMode::Audit ? "audit-m54.v1" :
                   mode == JournalMode::Authentication ? "auth-m53.v1" : "journal-m52.v1"),
       pending_name_(mode == JournalMode::Audit ? "audit-m54.pending" :
-                    mode == JournalMode::Authentication ? "auth-m53.pending" : "journal-m52.pending"), unit_(std::move(unit)), directory_(std::move(directory)), binding_(std::move(binding)) {
+                    mode == JournalMode::Authentication ? "auth-m53.pending" : "journal-m52.pending"), unit_(std::move(unit)), directory_(std::move(directory)), binding_(std::move(binding)),
+      privacy_fingerprint_(std::move(privacy_fingerprint)), redact_auth_(redact_auth) {
     if (!binding_.empty()) {
         state_name_ = "telemetry-m55.v1";
         pending_name_ = "telemetry-m55.pending";
@@ -150,6 +151,7 @@ bool JournalCollector::load() {
     if (!binding_.empty()) {
         state_ = "KNETSENTRY-OUTBOX-V1\t" + binding_ + '\t' + state_;
     }
+    if (!privacy_fingerprint_.empty()) { state_ = "KNETSENTRY-PRIVACY-V1\t" + privacy_fingerprint_ + '\n' + state_; }
     header_ = state_;
     if (!binding_.empty()) { state_ += '\n'; }
     File file(::openat(fd_, state_name_, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK));
@@ -180,6 +182,7 @@ bool JournalCollector::load() {
         if (end == rest.npos || ++count_ > max_records) { return false; }
         JournalRecord record;
         if (!parse_row(rest.substr(0, end), record, mode_) || !record_valid(record, unit_, mode_) ||
+            (mode_ == JournalMode::Authentication && (record.auth == AuthEvent::Redacted) != redact_auth_) ||
             std::ranges::find(seen_, record.cursor) != seen_.end()) { return false; }
         if (binding_.empty()) { cursor_ = record.cursor; }
         else {
@@ -192,7 +195,10 @@ bool JournalCollector::load() {
     return binding_.empty() || queued_.empty() || seen_.back() == cursor_;
 }
 bool JournalCollector::start() noexcept {
-    if ((!binding_.empty() && !valid_delivery_binding(binding_)) ||
+    if ((!privacy_fingerprint_.empty() && (privacy_fingerprint_.size() != 64 ||
+        !std::ranges::all_of(privacy_fingerprint_, [](char c) { return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'); }))) ||
+        (redact_auth_ && (mode_ != JournalMode::Authentication || privacy_fingerprint_.empty())) ||
+        (!binding_.empty() && !valid_delivery_binding(binding_)) ||
         (mode_ != JournalMode::Metadata && mode_ != JournalMode::Authentication && mode_ != JournalMode::Audit) ||
         started_ || (mode_ == JournalMode::Audit ? unit_ != "audit" : !valid_journal_unit(unit_)) || !valid_journal_directory(directory_) ||
         (mode_ == JournalMode::Authentication && !valid_auth_unit(unit_))) { return false; }
@@ -277,6 +283,7 @@ bool JournalCollector::pump() noexcept {
             const auto result = source_.next(record);
             if (result == JournalResult::End) { return true; }
             if (result != JournalResult::Record || !record_valid(record, unit_, mode_) ||
+            (mode_ == JournalMode::Authentication && (record.auth == AuthEvent::Redacted) != redact_auth_) ||
                 (record.cursor == cursor_ || std::ranges::find(seen_, record.cursor) != seen_.end())) { return block_source("invalid journal record"); }
             if (count_ >= max_records) { return fail("journal state capacity reached"); }
             if (!commit(record)) { return fail("journal state commit failed"); }
