@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **57 CTest tests**, including
+The Release desktop suite currently contains **60 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -72,8 +72,8 @@ whether they pass.
 ```
 
 Use the Kirigami drawer or `Ctrl+1` through `Ctrl+7` to visit Dashboard,
-Assets, Events, Detections, Alerts, Investigations, and Settings. The design
-samples and status cards are **not collected telemetry**. No need for root,
+Assets, Events, Detections, Alerts, Investigations, and Settings. Default status cards are unavailable; an explicitly attached local aggregate
+status stream may report local collector activity, not operational monitoring. No need for root,
 packet capture, live LAN devices, or an Internet connection at runtime.
 
 ## 4. Security regression and policy checks
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **52 CTests**, including the
+The full sanitizer suite currently contains **54 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **45 CTests**) and `linux-sanitize-core-only` for **46**.
+C++ test (currently **47 CTests**) and `linux-sanitize-core-only` for **48**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -412,3 +412,10 @@ See [M5.8](COLLECTOR_RECOVERY_M58.md). Run the mandatory
 synthetic fixtures. Current inventories: desktop 57/52, core-only 45/46
 (normal/sanitized). No host journal, privileged setup or operational network
 connection is required for these regressions.
+
+## M5.9 local endpoint status
+
+See [M5.9](DESKTOP_TELEMETRY_STATUS_M59.md) for the opt-in descriptor routing,
+status semantics, privacy limits and synthetic manual fixture. Current
+inventories: desktop 60/54, core-only 47/48 (normal/sanitized). No operational
+agent session or new privilege is required.

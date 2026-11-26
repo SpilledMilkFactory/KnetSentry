@@ -165,4 +165,74 @@ QString roster_text(const service::HealthClient& client, bool approved) {
 } // namespace
 QString ServiceHealthModel::approvedAgents() const { return roster_text(agent_client_, true); }
 QString ServiceHealthModel::revokedAgents() const { return roster_text(agent_client_, false); }
+bool ServiceHealthModel::attachTelemetry(int fd) {
+    if (::geteuid() == 0) { return false; }
+    if (!telemetry_reader_.attach(fd)) { Q_EMIT telemetryChanged(); return false; }
+    telemetry_timer_.setInterval(250);
+    connect(&telemetry_timer_, &QTimer::timeout, this, [this] {
+        if (telemetry_reader_.poll()) { Q_EMIT telemetryChanged(); }
+        if (telemetry_reader_.link() == agent::StatusLink::Disconnected ||
+            telemetry_reader_.link() == agent::StatusLink::Invalid) { telemetry_timer_.stop(); }
+    });
+    telemetry_timer_.start();
+    Q_EMIT telemetryChanged();
+    return true;
+}
+QString ServiceHealthModel::telemetryStatus() const {
+    switch (telemetry_reader_.link()) {
+    case agent::StatusLink::Unconfigured: return tr("Unavailable — no local status stream selected");
+    case agent::StatusLink::Waiting: return tr("Waiting for local agent report");
+    case agent::StatusLink::Current: return tr("Current local report — launcher-provided, not remotely authenticated");
+    case agent::StatusLink::Stale: return tr("Unavailable — local report expired");
+    case agent::StatusLink::Disconnected: return tr("Unavailable — local status stream disconnected");
+    case agent::StatusLink::Invalid: return tr("Unavailable — invalid local status stream");
+    }
+    return tr("Unavailable");
+}
+QString ServiceHealthModel::telemetryCollector() const {
+    const auto& sample = telemetry_reader_.current();
+    if (!sample) { return tr("Unavailable"); }
+    if (sample->mode == "none") { return tr("None — lifecycle only"); }
+    if (sample->mode == "journal") { return tr("Journal metadata"); }
+    if (sample->mode == "authentication") { return tr("Authentication and SSH"); }
+    if (sample->mode == "audit") { return tr("Linux Audit (journal)"); }
+    if (sample->mode == "fim") { return tr("File integrity (content and metadata)"); }
+    if (sample->mode == "fim-metadata") { return tr("File integrity (metadata only)"); }
+    return tr("Unavailable");
+}
+QString ServiceHealthModel::telemetryHealth() const {
+    const auto& sample = telemetry_reader_.current();
+    if (!sample) { return tr("Unavailable"); }
+    if (sample->health == "idle") { return tr("No active collector"); }
+    if (sample->health == "active") { return tr("Local collection polling — coverage unknown"); }
+    if (sample->health == "paused") { return tr("Paused — offline buffer full"); }
+    if (sample->health == "blocked") { return tr("Blocked — source failure; coverage unknown"); }
+    if (sample->health == "source-failed") { return tr("Source failed — coverage unknown"); }
+    if (sample->health == "failed") { return tr("Failed — coverage unknown"); }
+    return tr("Unavailable");
+}
+QString ServiceHealthModel::telemetryRate() const {
+    const auto& sample = telemetry_reader_.current();
+    if (!sample || sample->interval_ms == 0) { return tr("Unavailable"); }
+    const double rate = static_cast<double>(sample->observations) * 1000.0 / static_cast<double>(sample->interval_ms);
+    return tr("%1 observations/s (%2 in %3 ms)")
+        .arg(QString::number(rate, 'f', 2), decimal(sample->observations), decimal(sample->interval_ms));
+}
+QString ServiceHealthModel::telemetryQueue() const {
+    const auto& sample = telemetry_reader_.current();
+    if (!sample || !sample->queued || sample->health == "failed") { return tr("Unavailable"); }
+    return tr("%1 / 128 locally queued records — delivery unavailable").arg(decimal(*sample->queued));
+}
+QString ServiceHealthModel::telemetryFailure() const {
+    const auto& sample = telemetry_reader_.current();
+    if (sample && (sample->health == "blocked" || sample->health == "source-failed")) {
+        return tr("Reported source failure — details not collected");
+    }
+    if (sample && sample->health == "failed") {
+        return tr("Reported collection failure — source observation or protected state; details not collected");
+    }
+    if (!sample && telemetry_reader_.last_failure()) { return tr("Last report indicated failure — not current"); }
+    if (sample && sample->health == "active") { return tr("No failure in current report — not a historical error counter"); }
+    return tr("Unavailable");
+}
 } // namespace knetsentry::desktop

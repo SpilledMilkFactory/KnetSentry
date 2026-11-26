@@ -38,6 +38,8 @@ void configure_parser(QCommandLineParser &parser) {
     parser.setApplicationDescription(QStringLiteral(
         "KnetSentry read-only network scope, enrollment inspection and local manager health; no SIEM monitoring is active."));
     parser.addHelpOption();
+    parser.addOption(QCommandLineOption(QStringLiteral("agent-status-stdin"),
+        QStringLiteral("Read aggregate local agent status from an explicitly inherited pipe on stdin.")));
     parser.addVersionOption();
     parser.addOption(QCommandLineOption(QStringLiteral("ipc-dir"),
         QStringLiteral("Explicit private manager IPC directory for read-only health and enrollment inspection."),
@@ -141,10 +143,17 @@ int main(int argc, char *argv[]) {
     const QCommandLineOption control_smoke_test(QStringLiteral("self-test-daemon-controls"),
         QStringLiteral("Exercise toolbar controls against a private foreground manager."));
     parser.addOption(control_smoke_test);
+    const QCommandLineOption telemetry_smoke_test(QStringLiteral("self-test-telemetry"),
+        QStringLiteral("Verify rendered local status and disconnect using a synthetic test pipe."));
+    parser.addOption(telemetry_smoke_test);
     parser.process(app);
 
     // The model outlives QML and is not a management authority.
     knetsentry::desktop::ServiceHealthModel health(parser.value(QStringLiteral("ipc-dir")));
+    if (parser.isSet(QStringLiteral("agent-status-stdin")) && !health.attachTelemetry(STDIN_FILENO)) {
+        std::cerr << "KnetSentry: local status pipe rejected.\n";
+        return 2;
+    }
     knetsentry::desktop::DaemonControl control(health, parser.isSet(QStringLiteral("ipc-dir")),
         QDir::cleanPath(QCoreApplication::applicationDirPath() + QStringLiteral("/../manager/knetsentryd")));
     QQmlApplicationEngine engine;
@@ -220,6 +229,11 @@ int main(int argc, char *argv[]) {
                      (!root->property("currentPageAgentRegistry").toString().startsWith(QStringLiteral("Unavailable")) ||
                       !root->property("currentPageApprovedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
                       !root->property("currentPageRevokedAgents").toString().startsWith(QStringLiteral("Unavailable")))) ||
+                    root->property("currentPageTelemetryVisible").toBool() !=
+                        (section == QStringLiteral("assets") || section == QStringLiteral("dashboard")) ||
+                    ((section == QStringLiteral("assets") || section == QStringLiteral("dashboard")) &&
+                     (!root->property("currentPageTelemetryStatus").toString().startsWith(QStringLiteral("Unavailable")) ||
+                      root->property("currentPageTelemetryRate").toString() != QStringLiteral("Unavailable"))) ||
                     root->property("currentPageScopeVisible").toBool() != (section == QStringLiteral("settings")) ||
                     (section == QStringLiteral("settings") && !scope_page_matches(*root, false))) {
                     std::cerr << "KnetSentry: failed navigation or unbounded page stack.\n";
@@ -243,6 +257,46 @@ int main(int argc, char *argv[]) {
         std::cout << "M3.8 Settings scope visibility and unavailable state: PASS\n";
         std::cout << "KnetSentry M1.4 primary navigation: PASS (7 sections; no telemetry)\n";
         return 0;
+    }
+    if (parser.isSet(telemetry_smoke_test)) {
+        if (!parser.isSet(QStringLiteral("agent-status-stdin"))) { return 1; }
+        QObject* root = engine.rootObjects().constFirst();
+        QEventLoop loop;
+        QTimer check;
+        QTimer deadline;
+        deadline.setSingleShot(true);
+        int stage = 0;
+        QObject::connect(&deadline, &QTimer::timeout, &loop, [&loop] { loop.exit(1); });
+        QObject::connect(&check, &QTimer::timeout, &loop, [&] {
+            if (stage < 2 && root->property("currentPageTelemetryStatus").toString().startsWith(QStringLiteral("Current local report"))) {
+                if (!root->property("currentPageTelemetryVisible").toBool() ||
+                    root->property("currentPageTelemetryCollector").toString() != QStringLiteral("Journal metadata") ||
+                    root->property("currentPageTelemetryRate").toString() != QStringLiteral("2.00 observations/s (2 in 1000 ms)") ||
+                    !root->property("currentPageTelemetryQueue").toString().startsWith(QStringLiteral("12 / 128"))) {
+                    loop.exit(1); return;
+                }
+                if (stage == 0) {
+                    if (root->property("currentPageSection").toString() != QStringLiteral("dashboard") ||
+                        !root->setProperty("navigationRequest", QStringLiteral("assets"))) { loop.exit(1); return; }
+                    stage = 1;
+                } else {
+                    if (root->property("currentPageSection").toString() != QStringLiteral("assets")) { loop.exit(1); return; }
+                    stage = 2;
+                    std::cout << "M5.9 rendered current aggregate: PASS\n" << std::flush;
+                }
+            } else if (stage == 2 && root->property("currentPageTelemetryStatus").toString().contains(QStringLiteral("disconnected"))) {
+                if (root->property("currentPageTelemetryCollector").toString() != QStringLiteral("Unavailable") ||
+                    root->property("currentPageTelemetryRate").toString() != QStringLiteral("Unavailable") ||
+                    root->property("currentPageTelemetryQueue").toString() != QStringLiteral("Unavailable")) {
+                    loop.exit(1); return;
+                }
+                std::cout << "M5.9 rendered disconnect clears measurements: PASS\n" << std::flush;
+                loop.exit(0);
+            }
+        });
+        check.start(50);
+        deadline.start(10000);
+        return loop.exec();
     }
     if (parser.isSet(control_smoke_test)) {
         if (::geteuid() == 0 || parser.isSet(QStringLiteral("ipc-dir"))) { return 1; }

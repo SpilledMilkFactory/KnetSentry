@@ -4,6 +4,7 @@
 #include "knetsentry/agent/journal.hpp"
 #include "knetsentry/agent/fim.hpp"
 #include "knetsentry/agent/privacy.hpp"
+#include "knetsentry/agent/telemetry_status.hpp"
 #include <algorithm>
 #include <utility>
 #include <cerrno>
@@ -67,7 +68,7 @@ namespace {
 }
 int run(std::string_view unit = {}, std::string_view directory = {},
         knetsentry::agent::JournalMode mode = knetsentry::agent::JournalMode::Metadata,
-        std::string_view binding = {}, std::vector<std::string> paths = {}, std::string_view policy = {}) {
+        std::string_view binding = {}, std::vector<std::string> paths = {}, std::string_view policy = {}, bool status_stream = false) {
     if (const auto* reason = restrict_privileges(); reason != nullptr) {
         std::cerr << "knetsentry-agent: privilege policy rejected: " << reason << '\n';
         return 3;
@@ -88,6 +89,12 @@ int run(std::string_view unit = {}, std::string_view directory = {},
         std::cerr << "knetsentry-agent: signal setup failed\n";
         return 1;
     }
+    knetsentry::agent::StatusWriter status;
+    if (status_stream && !status.attach(3)) {
+        std::cerr << "knetsentry-agent: status pipe rejected\n";
+        return 2;
+    }
+    const char* status_mode = !paths.empty() && privacy.redact_content ? "fim-metadata" : collector;
     auto source = unit.empty() ? nullptr : knetsentry::agent::make_journal_source({}, mode, privacy.redact_auth);
     std::unique_ptr<knetsentry::agent::JournalCollector> journal;
     if (source) {
@@ -102,6 +109,9 @@ int run(std::string_view unit = {}, std::string_view directory = {},
     const std::array<knetsentry::agent::Collector*, 1> modules{module};
     if (!lifecycle.start(module != nullptr ? std::span<knetsentry::agent::Collector* const>(modules) :
                                    std::span<knetsentry::agent::Collector* const>{})) {
+        if (status_stream && module != nullptr) {
+            status.publish(status_mode, journal && journal->source_failed() ? "source-failed" : "failed");
+        }
         if (journal) { std::cerr << "knetsentry-agent: journal rejected: " << journal->error() << '\n'; }
         if (fim) { std::cerr << "knetsentry-agent: fim rejected: unsafe or unavailable baseline\n"; }
         return 1;
@@ -128,7 +138,12 @@ int run(std::string_view unit = {}, std::string_view directory = {},
         }
         for (;;) {
             const auto previous = journal->count();
-            if (!journal->pump()) {
+            const bool pumped = journal->pump();
+            const int queued = binding.empty() ? -1 : static_cast<int>(journal->count());
+            if (!pumped) {
+                const bool blocked = journal->collection_blocked() && !binding.empty();
+                status.publish(status_mode, blocked ? "blocked" : journal->source_failed() ? "source-failed" : "failed",
+                    0, blocked ? queued : -1);
                 if (binding.empty() || !journal->collection_blocked()) {
                     std::cerr << "knetsentry-agent: journal rejected: " << journal->error() << '\n';
                     return 1;
@@ -137,7 +152,11 @@ int run(std::string_view unit = {}, std::string_view directory = {},
                     std::cout << "knetsentry-agent: buffered collection blocked; coverage=unknown\n" << std::flush;
                     buffer_status_reported = true;
                 }
-            } else if (journal->backpressured() && !buffer_status_reported) {
+            } else {
+                status.publish(status_mode, journal->backpressured() ? "paused" : "active",
+                    journal->backpressured() ? 0 : journal->count() - previous, queued);
+            }
+            if (pumped && journal->backpressured() && !buffer_status_reported) {
                 std::cout << "knetsentry-agent: telemetry buffer full; collection paused\n" << std::flush;
                 buffer_status_reported = true;
             }
@@ -159,6 +178,7 @@ int run(std::string_view unit = {}, std::string_view directory = {},
             return 1;
         }
     } else if (fim) {
+        status.publish(status_mode, "active");
         for (;;) {
             const timespec delay{1, 0};
             const int signal = ::sigtimedwait(&signals, nullptr, &delay);
@@ -167,17 +187,30 @@ int run(std::string_view unit = {}, std::string_view directory = {},
             if (errno == EINTR) { continue; }
             std::array<knetsentry::agent::IntegrityChange, knetsentry::agent::max_fim_paths> changes{};
             if (!fim->pump(changes)) {
+                status.publish(status_mode, "failed");
                 std::cerr << "knetsentry-agent: fim rejected: unsafe or unstable observation; coverage=unknown\n";
                 return 1;
             }
+            std::uint64_t observations{};
             for (std::size_t i = 0; i < changes.size(); ++i) {
                 if (changes[i] != knetsentry::agent::IntegrityChange::None) {
+                    ++observations;
                     std::cout << "knetsentry-agent: fim change; ";
                     if (!privacy.redact_slot) { std::cout << "slot=" << i + 1 << "; "; }
                     std::cout << "kind=" << knetsentry::agent::change_name(changes[i]) << '\n' << std::flush;
                 }
             }
+            status.publish(status_mode, "active", observations);
             if (!std::cout) { return 1; }
+        }
+    } else if (status_stream) {
+        for (;;) {
+            status.publish("none", "idle");
+            const timespec delay{1, 0};
+            const int signal = ::sigtimedwait(&signals, nullptr, &delay);
+            if (signal == SIGINT || signal == SIGTERM) { break; }
+            if (signal < 0 && (errno == EAGAIN || errno == EINTR)) { continue; }
+            return 1;
         }
     } else {
         int signal{};
@@ -191,9 +224,11 @@ int run(std::string_view unit = {}, std::string_view directory = {},
 
 int main(int argc, char** argv) {
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
-        std::cout << "Usage: knetsentry-agent --run --schema-version 1 --collectors none\n       knetsentry-agent --run --schema-version 1 --collectors journal --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors authentication --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors audit --state-dir /absolute/private/directory\n       Append --buffer-for ENDPOINT32_MANAGER64 to a journal, authentication or audit configuration for offline buffering only\n       knetsentry-agent --run --schema-version 1 --collectors fim --path /absolute/file [--path /absolute/file ...]\n       All active collectors require a final --privacy-policy POLICY (see M5.7)\n";
+        std::cout << "Usage: knetsentry-agent --run --schema-version 1 --collectors none\n       knetsentry-agent --run --schema-version 1 --collectors journal --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors authentication --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors audit --state-dir /absolute/private/directory\n       Append --buffer-for ENDPOINT32_MANAGER64 to a journal, authentication or audit configuration for offline buffering only\n       knetsentry-agent --run --schema-version 1 --collectors fim --path /absolute/file [--path /absolute/file ...]\n       All active collectors require a final --privacy-policy POLICY (see M5.7)\n       Optional prefix --status-stream writes aggregate status to inherited pipe fd 3 (M5.9)\n";
         return 0;
     }
+    const bool status_stream = argc > 1 && std::string_view(argv[1]) == "--status-stream";
+    if (status_stream) { --argc; ++argv; }
     std::string_view policy;
     if (argc >= 8 && std::string_view(argv[argc - 2]) == "--privacy-policy") {
         policy = argv[argc - 1];
@@ -215,7 +250,7 @@ int main(int argc, char** argv) {
                     }
                     paths.emplace_back(path);
                 }
-                if (!paths.empty()) { return run({}, {}, knetsentry::agent::JournalMode::Metadata, {}, std::move(paths), policy); }
+                if (!paths.empty()) { return run({}, {}, knetsentry::agent::JournalMode::Metadata, {}, std::move(paths), policy, status_stream); }
             }
             std::cerr << "knetsentry-agent: configuration rejected\n";
             return 2;
@@ -234,7 +269,7 @@ int main(int argc, char** argv) {
         std::string_view(argv[2]) == "--schema-version" && std::string_view(argv[3]) == "1" &&
         std::string_view(argv[4]) == "--collectors" && std::string_view(argv[5]) == "audit" &&
         std::string_view(argv[6]) == "--state-dir" && knetsentry::agent::valid_journal_directory(argv[7])) {
-        try { return run("audit", argv[7], knetsentry::agent::JournalMode::Audit, binding, {}, policy); }
+        try { return run("audit", argv[7], knetsentry::agent::JournalMode::Audit, binding, {}, policy, status_stream); }
         catch (...) { std::cerr << "knetsentry-agent: journal startup failed\n"; return 1; }
     }
     if (argc == 10 && std::string_view(argv[1]) == "--run" &&
@@ -244,7 +279,7 @@ int main(int argc, char** argv) {
         std::string_view(argv[6]) == "--unit" && std::string_view(argv[8]) == "--state-dir" &&
         knetsentry::agent::valid_journal_unit(argv[7]) && knetsentry::agent::valid_journal_directory(argv[9])) {
         try { return run(argv[7], argv[9], std::string_view(argv[5]) == "authentication" ?
-            knetsentry::agent::JournalMode::Authentication : knetsentry::agent::JournalMode::Metadata, binding, {}, policy); }
+            knetsentry::agent::JournalMode::Authentication : knetsentry::agent::JournalMode::Metadata, binding, {}, policy, status_stream); }
         catch (...) { std::cerr << "knetsentry-agent: journal startup failed\n"; return 1; }
     }
     if (!policy.empty() || !binding.empty() || argc != 6 || std::string_view(argv[1]) != "--run") {
@@ -256,5 +291,5 @@ int main(int argc, char** argv) {
         std::cerr << "knetsentry-agent: configuration rejected\n";
         return 2;
     }
-    return run();
+    return run({}, {}, knetsentry::agent::JournalMode::Metadata, {}, {}, {}, status_stream);
 }

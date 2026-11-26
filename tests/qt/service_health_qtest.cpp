@@ -8,6 +8,7 @@
 #include <QTemporaryDir>
 #include <QVariant>
 #include <initializer_list>
+#include <string>
 #include <unistd.h>
 
 using knetsentry::desktop::ServiceHealthModel;
@@ -28,7 +29,9 @@ private Q_SLOTS:
     void scopeIsReadOnly() {
         ServiceHealthModel model(QString{});
         for (const auto* name : {"scopeState", "scopeNetworks", "scopeInterfaces", "scopeDenials",
-                                 "agentRegistryStatus", "approvedAgents", "revokedAgents"}) {
+                                 "agentRegistryStatus", "approvedAgents", "revokedAgents",
+                                 "telemetryStatus", "telemetryCollector", "telemetryHealth", "telemetryRate",
+                                 "telemetryQueue", "telemetryFailure"}) {
             const int index = model.metaObject()->indexOfProperty(name);
             QVERIFY(index >= 0);
             const auto property = model.metaObject()->property(index);
@@ -50,6 +53,40 @@ private Q_SLOTS:
         QVERIFY(!model.available());
         QCOMPARE(model.scopeState(), QStringLiteral("Unavailable — no current verified daemon health"));
         QVERIFY(model.scopeDenials().endsWith(QStringLiteral("unavailable.")));
+    }
+    void localTelemetry() {
+        ServiceHealthModel model(QString{});
+        QCOMPARE(model.telemetryRate(), QStringLiteral("Unavailable"));
+        QSignalSpy spy(&model, &ServiceHealthModel::telemetryChanged);
+        std::array<int, 2> fds{};
+        QVERIFY(::pipe2(fds.data(), O_CLOEXEC) == 0);
+        if (::geteuid() == 0) {
+            QVERIFY(!model.attachTelemetry(fds[0]));
+            ::close(fds[0]);
+            ::close(fds[1]);
+            return;
+        }
+        QVERIFY(model.attachTelemetry(fds[0]));
+        ::close(fds[0]);
+        const auto frame = std::string("KSSTAT1\tjournal\tactive\t") +
+            std::to_string(knetsentry::agent::status_now()) + "\t2\t1000\t12\n";
+        QVERIFY(::write(fds[1], frame.data(), frame.size()) == static_cast<ssize_t>(frame.size()));
+        QTRY_COMPARE(model.telemetryCollector(), QStringLiteral("Journal metadata"));
+        QCOMPARE(model.telemetryRate(), QStringLiteral("2.00 observations/s (2 in 1000 ms)"));
+        QVERIFY(model.telemetryQueue().startsWith(QStringLiteral("12 / 128")));
+        QVERIFY(!model.available()); // Independent of manager health and enrollment.
+        QVERIFY(spy.count() >= 2);
+        const auto blocked = std::string("KSSTAT1\tjournal\tblocked\t") +
+            std::to_string(knetsentry::agent::status_now()) + "\t0\t0\t12\n";
+        QVERIFY(::write(fds[1], blocked.data(), blocked.size()) == static_cast<ssize_t>(blocked.size()));
+        QTRY_VERIFY(model.telemetryFailure().startsWith(QStringLiteral("Reported source failure")));
+        QCOMPARE(model.telemetryRate(), QStringLiteral("Unavailable"));
+        ::close(fds[1]);
+        QTRY_VERIFY(model.telemetryStatus().contains(QStringLiteral("disconnected")));
+        QCOMPARE(model.telemetryCollector(), QStringLiteral("Unavailable"));
+        QCOMPARE(model.telemetryQueue(), QStringLiteral("Unavailable"));
+        QCOMPARE(model.telemetryRate(), QStringLiteral("Unavailable"));
+        QVERIFY(model.telemetryFailure().contains(QStringLiteral("not current")));
     }
     void absentEndpoint() {
         QTemporaryDir dir(QStringLiteral("/tmp/ks26-qt-XXXXXX"));

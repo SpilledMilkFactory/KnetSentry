@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M5.7 accepted; M5.8 qualification pending; issues #40/#46 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M5.8 accepted; M5.9 qualification pending; issues #40/#46/#50 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 57 Release/Debug/Clazy/analysis, 52 full ASan/UBSan,
-45 core-only and 46 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 60 Release/Debug/Clazy/analysis, 54 full ASan/UBSan,
+47 core-only and 48 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -365,3 +365,11 @@ existing telemetry delivery regression also covers real sender and receiver
 pending-file collision failures. See [M5.8](COLLECTOR_RECOVERY_M58.md).
 Run the synthetic fault scenarios as an ordinary user. CTest timeout is 75
 seconds. No production socket or power-loss qualification is claimed.
+
+## M5.9 local endpoint telemetry status
+
+See [M5.9](DESKTOP_TELEMETRY_STATUS_M59.md). Both status contract and actual
+agent runtime tests are mandatory in all seven presets. Existing Qt model and
+navigation tests exercise the read-only properties. Non-sanitized desktop
+presets also run the actual rendered synthetic-pipe status test. No new QML
+leak suppression or operational network access is introduced.

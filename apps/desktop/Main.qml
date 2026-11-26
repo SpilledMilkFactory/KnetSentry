@@ -52,6 +52,13 @@ Kirigami.ApplicationWindow {
     readonly property string currentPageAgentRegistry: currentSectionPage ? currentSectionPage.displayedAgentRegistry : ""
     readonly property string currentPageApprovedAgents: currentSectionPage ? currentSectionPage.displayedApprovedAgents : ""
     readonly property string currentPageRevokedAgents: currentSectionPage ? currentSectionPage.displayedRevokedAgents : ""
+    readonly property bool currentPageTelemetryVisible: currentSectionPage ? currentSectionPage.telemetryVisible : false
+    readonly property string currentPageTelemetryStatus: currentSectionPage ? currentSectionPage.displayedTelemetryStatus : ""
+    readonly property string currentPageTelemetryCollector: currentSectionPage ? currentSectionPage.displayedTelemetryCollector : ""
+    readonly property string currentPageTelemetryHealth: currentSectionPage ? currentSectionPage.displayedTelemetryHealth : ""
+    readonly property string currentPageTelemetryRate: currentSectionPage ? currentSectionPage.displayedTelemetryRate : ""
+    readonly property string currentPageTelemetryQueue: currentSectionPage ? currentSectionPage.displayedTelemetryQueue : ""
+    readonly property string currentPageTelemetryFailure: currentSectionPage ? currentSectionPage.displayedTelemetryFailure : ""
     readonly property bool currentPageScopeVisible: currentSectionPage ? currentSectionPage.scopeVisible : false
     readonly property string currentPageScopeState: currentSectionPage ? currentSectionPage.displayedScopeState : ""
     readonly property string currentPageScopeNetworks: currentSectionPage ? currentSectionPage.displayedScopeNetworks : ""

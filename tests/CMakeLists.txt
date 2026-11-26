@@ -248,6 +248,11 @@ if(KNETSENTRY_BUILD_DESKTOP)
     # No new QML leak suppression: the model is always instrumented, and the
     # existing sanitized QML startup/navigation tests instantiate its bindings.
     if(NOT KNETSENTRY_ENABLE_SANITIZERS)
+        add_test(NAME knetsentry_gui_telemetry_runtime
+            COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/telemetry_gui_m59.py" $<TARGET_FILE:knetsentry>)
+        set_tests_properties(knetsentry_gui_telemetry_runtime PROPERTIES
+            ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+            LABELS "qt;desktop;qml;integration;security;regression;privacy" TIMEOUT 30)
         add_test(NAME knetsentry_gui_health_runtime
             COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/check_m26_gui_runtime.py"
                 --desktop $<TARGET_FILE:knetsentry> --manager $<TARGET_FILE:knetsentryd>
@@ -497,3 +502,13 @@ target_link_libraries(knetsentry_collector_recovery_test PRIVATE KnetSentry::Age
 knetsentry_apply_project_options(knetsentry_collector_recovery_test)
 add_test(NAME knetsentry_collector_recovery_contract COMMAND $<TARGET_FILE:knetsentry_collector_recovery_test>)
 set_tests_properties(knetsentry_collector_recovery_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M5.9: bounded local-only aggregate status stream and real agent producer.
+add_executable(knetsentry_telemetry_status_test telemetry_status_m59.cpp)
+target_link_libraries(knetsentry_telemetry_status_test PRIVATE KnetSentry::AgentLifecycle)
+knetsentry_apply_project_options(knetsentry_telemetry_status_test)
+add_test(NAME knetsentry_telemetry_status_contract COMMAND $<TARGET_FILE:knetsentry_telemetry_status_test>)
+set_tests_properties(knetsentry_telemetry_status_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)
+add_test(NAME knetsentry_telemetry_status_runtime COMMAND "${Python3_EXECUTABLE}"
+    "${PROJECT_SOURCE_DIR}/tests/telemetry_status_m59.py" $<TARGET_FILE:knetsentry-agent>)
+set_tests_properties(knetsentry_telemetry_status_runtime PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 40)
