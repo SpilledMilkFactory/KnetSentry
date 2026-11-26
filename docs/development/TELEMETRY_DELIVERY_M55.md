@@ -122,3 +122,13 @@ The M5.2 native fixture also checks explicitly buffered native selection and
 restart. Existing M4–M5 regressions remain mandatory. No actual host journal or
 network is accessed by the new mandatory delivery test. Operational transport,
 manager ingestion and complete release qualification remain outstanding.
+
+## Maintainer acceptance
+
+2026-11-25 UTC: 107 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED; all 350 configured
+CTest executions and nine hosted checks passed. Manual restart retained 63
+queued records, unique cursors, destination binding and checkpoint consistency.
+Invalid binding and destination substitution were rejected; the focused
+authenticated delivery regression passed. Manual GUI verification and merge
+were reported. Operational socket and manager receiver integration remain
+outstanding under issue #46.
