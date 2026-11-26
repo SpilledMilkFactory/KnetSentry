@@ -86,8 +86,13 @@ sink refusal, revocation while admitted and aggregate disposition counts.
 Existing M5.5/M5.8 regressions remain mandatory and now traverse the pipeline,
 including lost ACK and sender/receiver commit faults.
 
-Expected inventories: desktop 61/55, core-only 48/49 (normal/sanitized), 396
-CTest executions across seven lanes. Target-host and hosted qualification pending.
+Accepted M6.1 inventories: desktop 61/55, core-only 48/49 (normal/sanitized), 396
+CTest executions across seven lanes. Maintainer qualification recorded 117 PASS,
+0 FAIL, 0 SKIPPED, 0 BLOCKED; 30 repeated Release and 15 repeated sanitized
+executions, direct ingestion and delivery, agent lifecycle and reported manual
+GUI verification passed. Nine hosted checks passed on `f70966f` and merge was
+reported. See [M6.2](EVENT_NORMALIZATION_M62.md) for the subsequent typed
+normalization integration; the original receipt and ACK contract is unchanged.
 This adds partial TB-04/TB-06/TB-07 and TV-06/TV-07/TV-13/TV-25/TV-26 evidence;
 no threat is closed. Full operational C-11 integration, generic envelopes,
 normalization, storage retention, independently authorized privacy policy,

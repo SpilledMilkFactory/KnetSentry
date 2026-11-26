@@ -5,6 +5,7 @@
 #include "knetsentry/agent/authentication.hpp"
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -36,6 +37,7 @@ std::unique_ptr<JournalSource> make_journal_source(std::string directory = {}, J
 [[nodiscard]] bool valid_delivery_binding(std::string_view binding) noexcept;
 class DeliverySender;
 // Canonical wire row validation shared by the local spool and receiver.
+[[nodiscard]] std::optional<JournalRecord> parse_delivery_row(std::string_view row, std::string_view unit, JournalMode mode);
 [[nodiscard]] bool valid_delivery_row(std::string_view row, std::string_view unit, JournalMode mode);
 class JournalCollector final : public Collector {
 public:

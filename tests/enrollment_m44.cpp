@@ -820,6 +820,7 @@ void telemetry_delivery(Fixture& f) {
         require(sender.step(f.manager_pin, true, 1) == D::Pending, "send before receiver rejection"); pump(*a, *m);
         require(receiver.step(true, 2) == D::Failed && denied.attempts == 1 && inbox->count() == 0 && queue->count() == 128,
             "receiver rejection acknowledged");
+        require(!receiver.normalized_event(), "storage rejection exposed normalized evidence");
     }
     {
         auto [a, m] = fresh();
@@ -849,6 +850,7 @@ void telemetry_delivery(Fixture& f) {
         telemetry::DeliveryReceiver receiver(*m, registry.fd, pipeline);
         require(sender.step(f.manager_pin, true, 1) == D::Pending, "first send"); pump(*a, *m, 17);
         require(receiver.step(true, 2) == D::Complete && inbox->count() == 1, "durable receipt");
+        require(receiver.normalized_event().has_value(), "durable receipt lost normalized result");
         // Lose all ACK ciphertext, then restart the agent and retry.
         require(queue->count() == 128, "dequeued without acknowledgment");
         a->abort();
@@ -1038,6 +1040,14 @@ void ingestion_pipeline(Fixture& f) {
         telemetry::DeliveryReceiver receiver(*m, registry.fd, pipeline);
         send(*a, *m, payload);
         require(receiver.step(authorized, 1) == expected && pipeline.active() == before, "ingestion disposition/release");
+        const auto& normalized = receiver.normalized_event();
+        require(normalized.has_value() == (expected == D::Complete), "normalized evidence escaped before acceptance");
+        if (normalized) {
+            require(normalized->canonical_row == row && normalized->destination_binding == binding &&
+                normalized->source.cursor == "cursor-1" && normalized->source.realtime_usec == 100 &&
+                normalized->time_ms == 0 && normalized->mapping == telemetry::MappingResult::MetadataOnly,
+                "accepted normalization provenance");
+        }
         require(receiver.step(authorized, 2) == expected, "terminal step changed disposition");
         if (expected == D::Failed) { require(m->state() == State::Failed, "rejected exchange did not abort TLS"); }
     };
@@ -1064,6 +1074,7 @@ void ingestion_pipeline(Fixture& f) {
         send(*a, *m, binding + row);
         require(excess.step(true, 11) == D::Failed && pipeline.count(O::Overloaded) == 1 && sink.attempts == 0,
             "overload reached sink");
+        require(!excess.normalized_event(), "overload exposed normalized evidence");
         require(receivers.front()->step(true, 5010) == D::Failed && pipeline.count(O::TransportFailed) == 1,
             "timeout failed to release admission");
         exchange(binding + row, true, D::Complete);
@@ -1102,6 +1113,7 @@ void ingestion_pipeline(Fixture& f) {
             send(*a, *m, binding + row);
             require(receiver.step(true, 1) == D::Failed && profile.count(O::Invalid) == 1 && profile_inbox.count() == 0,
                 "cross-profile event accepted");
+            require(!receiver.normalized_event(), "cross-profile normalized evidence");
         }
         {
             auto [a, m] = fresh();
@@ -1109,6 +1121,10 @@ void ingestion_pipeline(Fixture& f) {
             send(*a, *m, binding + profile_row);
             require(receiver.step(true, 1) == D::Complete && profile.count(O::Committed) == 1 && profile_inbox.count() == 1,
                 "valid configured profile rejected");
+            const auto& normalized = receiver.normalized_event();
+            require(normalized && normalized->canonical_row == profile_row && normalized->source_mode == mode &&
+                normalized->mapping == (mode == telemetry::JournalMode::Audit ? telemetry::MappingResult::AuditTypeUnmapped : telemetry::MappingResult::Redacted),
+                "profile normalization lost provenance or redaction");
         }
     }
     {

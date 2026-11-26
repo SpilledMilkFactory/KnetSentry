@@ -14,7 +14,7 @@ target_link_libraries(knetsentry_agent_journal PUBLIC KnetSentry::AgentLifecycle
 knetsentry_apply_project_options(knetsentry_agent_journal)
 
 # M5.5: offline delivery contract, no operational socket adapter.
-add_library(knetsentry_agent_delivery STATIC delivery.cpp receipt.cpp ingestion.cpp)
+add_library(knetsentry_agent_delivery STATIC delivery.cpp receipt.cpp ingestion.cpp normalization.cpp)
 add_library(KnetSentry::AgentDelivery ALIAS knetsentry_agent_delivery)
 target_link_libraries(knetsentry_agent_delivery PUBLIC KnetSentry::AgentJournal KnetSentry::Enrollment)
 knetsentry_apply_project_options(knetsentry_agent_delivery)

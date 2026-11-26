@@ -220,3 +220,7 @@ claimed.
 ## M6.1 authenticated ingestion
 
 The [M6.1 contract](../development/EVENT_INGESTION_M61.md) adds partial TB-04/TB-06/TB-07 and TV-06/TV-07/TV-13/TV-25/TV-26 evidence for current enrollment revalidation, canonical source binding, bounded in-flight admission, reject-only invalid input handling and durable receipt retry. Counters are local library evidence, not operational health telemetry. No threat closure or generic source ingestion qualification is claimed.
+
+## M6.2 event normalization
+
+The [M6.2 contract](../development/EVENT_NORMALIZATION_M62.md) contributes partial TB-06/TB-07, TH-015 and TV-10/TV-25 evidence through shared canonical validation, bounded typed mapping, exact minimized evidence retention, explicit unknown/redacted states and durable-acceptance result gating. No independent schema export, storage, operational ingestion or threat closure is claimed.

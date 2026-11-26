@@ -516,3 +516,10 @@ set_tests_properties(knetsentry_telemetry_status_runtime PROPERTIES LABELS "inte
 # M6.1: bounded authenticated ingestion with genuine TLS and durable receipt sink.
 add_test(NAME knetsentry_event_ingestion_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --ingestion)
 set_tests_properties(knetsentry_event_ingestion_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M6.2: pinned OCSF-aligned typed normalization and provenance.
+add_executable(knetsentry_normalization_test normalization_m62.cpp)
+target_link_libraries(knetsentry_normalization_test PRIVATE KnetSentry::AgentDelivery)
+knetsentry_apply_project_options(knetsentry_normalization_test)
+add_test(NAME knetsentry_event_normalization_contract COMMAND $<TARGET_FILE:knetsentry_normalization_test>)
+set_tests_properties(knetsentry_event_normalization_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)

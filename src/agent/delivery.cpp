@@ -151,7 +151,7 @@ DeliveryState DeliveryReceiver::step(bool authorized, std::uint64_t now) noexcep
             const std::string_view payload(reinterpret_cast<const char*>(received_.data() + header_size), used_ - header_size);
             ack_ = acknowledgment(payload);
             if (ack_.empty()) { return finish(IngestOutcome::TransportFailed); }
-            const auto disposition = pipeline_.process(payload);
+            const auto disposition = pipeline_.process(payload, normalized_);
             if (disposition != IngestOutcome::Committed) { return finish(disposition); }
             if (enrollment::revalidate(registry_, pipeline_.endpoint_, session_) != enrollment::Status::Ok) {
                 return finish(IngestOutcome::Unauthorized);

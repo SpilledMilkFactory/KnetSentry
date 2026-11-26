@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M5.9 local foundation accepted; M6.1 qualification pending; issues #40/#46/#50 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.1 KSTD ingestion accepted; M6.2 qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
 CTest inventories are 60 Release/Debug/Clazy/analysis, 54 full ASan/UBSan,
 47 core-only and 48 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
@@ -377,3 +377,7 @@ leak suppression or operational network access is introduced.
 ## M6.1 bounded authenticated event ingestion
 
 See [M6.1](EVENT_INGESTION_M61.md). The mandatory ingestion contract runs in all seven presets using the existing enrollment test executable and project hardening policies. The existing delivery and recovery regressions traverse the new ingestion boundary.
+
+## M6.2 pinned OCSF-aligned normalization
+
+See [M6.2](EVENT_NORMALIZATION_M62.md). The standalone normalization contract is mandatory in all seven presets and uses existing project compiler, sanitizer and binary-hardening policies. Existing TLS ingestion and delivery regressions also verify typed-result gating and original provenance.
