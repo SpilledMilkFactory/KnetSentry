@@ -22,7 +22,7 @@ CORE_TESTS = {
     "knetsentry_agent_protocol_contract",
     "knetsentry_agent_lifecycle_contract", "knetsentry_agent_service_runtime",
     "knetsentry_journal_collection_contract", "knetsentry_authentication_collection_contract", "knetsentry_audit_collection_contract", "knetsentry_telemetry_delivery_contract",
-    "knetsentry_file_integrity_contract",
+    "knetsentry_file_integrity_contract", "knetsentry_privacy_policy_contract",
     "knetsentry_identity_contract", "knetsentry_tls_contract",
     "knetsentry_enrollment_contract", "knetsentry_enrollment_admin",
     "knetsentry_credential_lifecycle",

@@ -3,6 +3,7 @@
 #include "knetsentry/agent/lifecycle.hpp"
 #include "knetsentry/agent/journal.hpp"
 #include "knetsentry/agent/fim.hpp"
+#include "knetsentry/agent/privacy.hpp"
 #include <algorithm>
 #include <utility>
 #include <cerrno>
@@ -66,26 +67,35 @@ namespace {
 }
 int run(std::string_view unit = {}, std::string_view directory = {},
         knetsentry::agent::JournalMode mode = knetsentry::agent::JournalMode::Metadata,
-        std::string_view binding = {}, std::vector<std::string> paths = {}) {
+        std::string_view binding = {}, std::vector<std::string> paths = {}, std::string_view policy = {}) {
     if (const auto* reason = restrict_privileges(); reason != nullptr) {
         std::cerr << "knetsentry-agent: privilege policy rejected: " << reason << '\n';
         return 3;
     }
     ::umask(0077);
+    knetsentry::agent::PrivacyDecision privacy;
+    const auto collector = !paths.empty() ? "fim" : unit.empty() ? "none" :
+        mode == knetsentry::agent::JournalMode::Audit ? "audit" :
+        mode == knetsentry::agent::JournalMode::Authentication ? "authentication" : "journal";
+    if ((unit.empty() && paths.empty()) ? !policy.empty() :
+        !knetsentry::agent::authorize_privacy(policy, collector, unit, paths, !binding.empty(), privacy)) {
+        std::cerr << "knetsentry-agent: configuration rejected\n";
+        return 2;
+    }
     sigset_t signals{};
     if (::sigemptyset(&signals) != 0 || ::sigaddset(&signals, SIGTERM) != 0 ||
         ::sigaddset(&signals, SIGINT) != 0 || ::sigprocmask(SIG_BLOCK, &signals, nullptr) != 0) {
         std::cerr << "knetsentry-agent: signal setup failed\n";
         return 1;
     }
-    auto source = unit.empty() ? nullptr : knetsentry::agent::make_journal_source({}, mode);
+    auto source = unit.empty() ? nullptr : knetsentry::agent::make_journal_source({}, mode, privacy.redact_auth);
     std::unique_ptr<knetsentry::agent::JournalCollector> journal;
     if (source) {
         journal = std::make_unique<knetsentry::agent::JournalCollector>(
-            *source, std::string(unit), std::string(directory), mode, std::string(binding));
+            *source, std::string(unit), std::string(directory), mode, std::string(binding), privacy.fingerprint, privacy.redact_auth);
     }
     std::unique_ptr<knetsentry::agent::IntegrityCollector> fim;
-    if (!paths.empty()) { fim = std::make_unique<knetsentry::agent::IntegrityCollector>(std::move(paths)); }
+    if (!paths.empty()) { fim = std::make_unique<knetsentry::agent::IntegrityCollector>(std::move(paths), !privacy.redact_content); }
     knetsentry::agent::Lifecycle lifecycle;
     knetsentry::agent::Collector* module = journal.get();
     if (fim) { module = fim.get(); }
@@ -97,7 +107,9 @@ int run(std::string_view unit = {}, std::string_view directory = {},
         return 1;
     }
     if (fim) {
-        std::cout << "knetsentry-agent: ready; collectors=1; fim=local; monitoring=unavailable; network=disabled\n" << std::flush;
+        std::cout << (privacy.redact_content ?
+            "knetsentry-agent: ready; collectors=1; fim=metadata-only; monitoring=unavailable; network=disabled\n" :
+            "knetsentry-agent: ready; collectors=1; fim=local; monitoring=unavailable; network=disabled\n") << std::flush;
     } else if (journal) {
         std::cout << (mode == knetsentry::agent::JournalMode::Audit ?
             "knetsentry-agent: ready; collectors=1; journal=local-audit; monitoring=unavailable; network=disabled\n" :
@@ -160,8 +172,9 @@ int run(std::string_view unit = {}, std::string_view directory = {},
             }
             for (std::size_t i = 0; i < changes.size(); ++i) {
                 if (changes[i] != knetsentry::agent::IntegrityChange::None) {
-                    std::cout << "knetsentry-agent: fim change; slot=" << i + 1 << "; kind="
-                              << knetsentry::agent::change_name(changes[i]) << '\n' << std::flush;
+                    std::cout << "knetsentry-agent: fim change; ";
+                    if (!privacy.redact_slot) { std::cout << "slot=" << i + 1 << "; "; }
+                    std::cout << "kind=" << knetsentry::agent::change_name(changes[i]) << '\n' << std::flush;
                 }
             }
             if (!std::cout) { return 1; }
@@ -178,8 +191,14 @@ int run(std::string_view unit = {}, std::string_view directory = {},
 
 int main(int argc, char** argv) {
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
-        std::cout << "Usage: knetsentry-agent --run --schema-version 1 --collectors none\n       knetsentry-agent --run --schema-version 1 --collectors journal --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors authentication --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors audit --state-dir /absolute/private/directory\n       Append --buffer-for ENDPOINT32_MANAGER64 to a journal, authentication or audit configuration for offline buffering only\n       knetsentry-agent --run --schema-version 1 --collectors fim --path /absolute/file [--path /absolute/file ...]\n";
+        std::cout << "Usage: knetsentry-agent --run --schema-version 1 --collectors none\n       knetsentry-agent --run --schema-version 1 --collectors journal --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors authentication --unit NAME.service --state-dir /absolute/private/directory\n       knetsentry-agent --run --schema-version 1 --collectors audit --state-dir /absolute/private/directory\n       Append --buffer-for ENDPOINT32_MANAGER64 to a journal, authentication or audit configuration for offline buffering only\n       knetsentry-agent --run --schema-version 1 --collectors fim --path /absolute/file [--path /absolute/file ...]\n       All active collectors require a final --privacy-policy POLICY (see M5.7)\n";
         return 0;
+    }
+    std::string_view policy;
+    if (argc >= 8 && std::string_view(argv[argc - 2]) == "--privacy-policy") {
+        policy = argv[argc - 1];
+        if (policy.empty()) { std::cerr << "knetsentry-agent: configuration rejected\n"; return 2; }
+        argc -= 2;
     }
     if (argc >= 6 && std::string_view(argv[5]) == "fim") {
         try {
@@ -196,7 +215,7 @@ int main(int argc, char** argv) {
                     }
                     paths.emplace_back(path);
                 }
-                if (!paths.empty()) { return run({}, {}, knetsentry::agent::JournalMode::Metadata, {}, std::move(paths)); }
+                if (!paths.empty()) { return run({}, {}, knetsentry::agent::JournalMode::Metadata, {}, std::move(paths), policy); }
             }
             std::cerr << "knetsentry-agent: configuration rejected\n";
             return 2;
@@ -215,7 +234,7 @@ int main(int argc, char** argv) {
         std::string_view(argv[2]) == "--schema-version" && std::string_view(argv[3]) == "1" &&
         std::string_view(argv[4]) == "--collectors" && std::string_view(argv[5]) == "audit" &&
         std::string_view(argv[6]) == "--state-dir" && knetsentry::agent::valid_journal_directory(argv[7])) {
-        try { return run("audit", argv[7], knetsentry::agent::JournalMode::Audit, binding); }
+        try { return run("audit", argv[7], knetsentry::agent::JournalMode::Audit, binding, {}, policy); }
         catch (...) { std::cerr << "knetsentry-agent: journal startup failed\n"; return 1; }
     }
     if (argc == 10 && std::string_view(argv[1]) == "--run" &&
@@ -225,10 +244,10 @@ int main(int argc, char** argv) {
         std::string_view(argv[6]) == "--unit" && std::string_view(argv[8]) == "--state-dir" &&
         knetsentry::agent::valid_journal_unit(argv[7]) && knetsentry::agent::valid_journal_directory(argv[9])) {
         try { return run(argv[7], argv[9], std::string_view(argv[5]) == "authentication" ?
-            knetsentry::agent::JournalMode::Authentication : knetsentry::agent::JournalMode::Metadata, binding); }
+            knetsentry::agent::JournalMode::Authentication : knetsentry::agent::JournalMode::Metadata, binding, {}, policy); }
         catch (...) { std::cerr << "knetsentry-agent: journal startup failed\n"; return 1; }
     }
-    if (!binding.empty() || argc != 6 || std::string_view(argv[1]) != "--run") {
+    if (!policy.empty() || !binding.empty() || argc != 6 || std::string_view(argv[1]) != "--run") {
         std::cerr << "knetsentry-agent: configuration rejected\n";
         return 2;
     }

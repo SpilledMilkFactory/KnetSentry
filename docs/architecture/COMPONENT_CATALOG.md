@@ -177,3 +177,11 @@ C-08/P-08 gains opt-in bounded polling of explicitly approved individual
 local files. Memory-only SHA-256/metadata baselines, fixed category/slot
 diagnostics, safe path resolution and no operational network or new authority.
 See [M5.6](../development/FILE_INTEGRITY_M56.md).
+
+## M5.7 privacy and data minimization
+
+C-08/P-08 active CLI collectors require an explicit bounded startup policy with
+exact approved sources, exclusion precedence, sensitive permits and acquisition-
+time redaction. The journal state binds to the exact policy digest; no reuse
+under a changed policy. See [M5.7](../development/PRIVACY_MINIMIZATION_M57.md).
+This does not activate I-07 or confer monitoring/network authority.

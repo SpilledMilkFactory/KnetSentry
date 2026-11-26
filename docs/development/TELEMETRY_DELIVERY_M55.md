@@ -5,6 +5,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M5.5 — Secure telemetry buffering and delivery
 
+**M5.7 compatibility update:** The historical commands and state layouts below
+precede mandatory `--privacy-policy` configuration. Use the current
+[M5.7 contract](PRIVACY_MINIMIZATION_M57.md) for active collector invocations,
+redaction and policy-bound journal state. Do not reuse legacy unbound state.
+
 Issue #46, C-08/P-08 and planned I-07, TB-04/TB-06/TB-07. Explicit offline
 buffering is usable from the agent. The hardened AgentDelivery library provides
 an authenticated single-record exchange and bounded durable receiver inbox;

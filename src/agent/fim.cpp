@@ -78,7 +78,7 @@ struct Watch {
     struct stat st{};
     return fd >= 0 && ::fstat(fd, &st) == 0 && same_identity(st, watch.parent);
 }
-[[nodiscard]] bool snapshot(const Watch& watch, Snapshot& out) {
+[[nodiscard]] bool snapshot(const Watch& watch, Snapshot& out, bool read_content) {
     File parent(parent_directory(watch.path));
     if (!parent_matches(watch, parent.fd)) { return false; }
     File object(open_resolved(parent.fd, watch.leaf.c_str(), true));
@@ -91,6 +91,20 @@ struct Watch {
     }
     struct stat before{};
     if (::fstat(object.fd, &before) != 0 || !safe_file(before) || !local_filesystem(object.fd)) { return false; }
+    // Metadata-only privacy profile never reopens the inode for data access.
+    if (!read_content) {
+        File current_parent(parent_directory(watch.path));
+        if (!parent_matches(watch, current_parent.fd)) { return false; }
+        File current(open_resolved(current_parent.fd, watch.leaf.c_str(), true));
+        struct stat after{}, named{};
+        if (::fstat(object.fd, &after) != 0 || current.fd < 0 || ::fstat(current.fd, &named) != 0 ||
+            !same_identity(before, after) || !same_identity(after, named) ||
+            !same_metadata(before, after) || !same_metadata(after, named) || !safe_file(after)) { return false; }
+        out = {};
+        out.exists = true;
+        out.metadata = after;
+        return true;
+    }
     // O_PATH cannot trigger device/FIFO reads. Reopen only this already verified
     // regular inode via the kernel's own proc descriptor directory, never the leaf path.
     File proc(::open("/proc/self/fd", O_PATH | O_DIRECTORY | O_CLOEXEC));
@@ -161,12 +175,14 @@ std::string_view change_name(IntegrityChange change) noexcept {
     return "unknown";
 }
 struct IntegrityCollector::Impl {
-    explicit Impl(std::vector<std::string> values) : paths(std::move(values)) {}
+    explicit Impl(std::vector<std::string> values, bool content) : paths(std::move(values)), read_content(content) {}
     std::vector<std::string> paths;
     std::vector<Watch> watches;
+    bool read_content;
     bool running{};
 };
-IntegrityCollector::IntegrityCollector(std::vector<std::string> paths) : impl_(std::make_unique<Impl>(std::move(paths))) {}
+IntegrityCollector::IntegrityCollector(std::vector<std::string> paths, bool read_content)
+    : impl_(std::make_unique<Impl>(std::move(paths), read_content)) {}
 IntegrityCollector::~IntegrityCollector() = default;
 bool IntegrityCollector::start() noexcept {
     try {
@@ -178,7 +194,7 @@ bool IntegrityCollector::start() noexcept {
         for (const auto& path : impl_->paths) {
             Watch watch{path, path.substr(path.rfind('/') + 1), {}, {}, {}};
             watch.anchor = std::make_unique<File>(parent_directory(path));
-            if (watch.anchor->fd < 0 || ::fstat(watch.anchor->fd, &watch.parent) != 0 || !snapshot(watch, watch.baseline)) { stop(); return false; }
+            if (watch.anchor->fd < 0 || ::fstat(watch.anchor->fd, &watch.parent) != 0 || !snapshot(watch, watch.baseline, impl_->read_content)) { stop(); return false; }
             impl_->watches.push_back(std::move(watch));
         }
         impl_->running = true;
@@ -192,7 +208,7 @@ bool IntegrityCollector::pump(std::array<IntegrityChange, max_fim_paths>& change
     try {
         std::array<Snapshot, max_fim_paths> next{};
         for (std::size_t i = 0; i < impl_->watches.size(); ++i) {
-            if (!snapshot(impl_->watches[i], next[i])) { stop(); return false; }
+            if (!snapshot(impl_->watches[i], next[i], impl_->read_content)) { stop(); return false; }
         }
         for (std::size_t i = 0; i < impl_->watches.size(); ++i) {
             changes[i] = compare(impl_->watches[i].baseline, next[i]);

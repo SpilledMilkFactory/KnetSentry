@@ -28,7 +28,8 @@ def command(binary, *paths):
     args = [binary, '--run', '--schema-version', '1', '--collectors', 'fim']
     for path in paths:
         args.extend(['--path', str(path)])
-    return args
+    policy = "v1;collector=fim;permit=file-content" + "".join(f";allow-path={path}" for path in paths)
+    return args + ["--privacy-policy", policy]
 
 
 def line(proc, expected, timeout=8):

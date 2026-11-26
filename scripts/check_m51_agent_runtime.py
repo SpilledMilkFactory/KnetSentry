@@ -88,25 +88,29 @@ def main():
     with tempfile.TemporaryDirectory(prefix='ks-agent-') as directory:
         # Reject a missing directory before opening any journal.
         result = subprocess.run([binary, '--run', '--schema-version', '1', '--collectors', 'journal',
-                                 '--unit', 'fixture.service', '--state-dir', directory + '/missing'],
+                                 '--unit', 'fixture.service', '--state-dir', directory + '/missing',
+                                 '--privacy-policy', 'v1;collector=journal;allow-unit=fixture.service;permit=journal-identifiers'],
                                 capture_output=True, timeout=5)
         require(result.returncode == 1 and not result.stdout and
                 result.stderr == b'knetsentry-agent: journal rejected: unsafe or busy state directory\n',
                 'journal mode did not fail closed before source access')
         result = subprocess.run([binary, '--run', '--schema-version', '1', '--collectors', 'authentication',
-                                 '--unit', 'ssh.service', '--state-dir', directory + '/missing'],
+                                 '--unit', 'ssh.service', '--state-dir', directory + '/missing',
+                                 '--privacy-policy', 'v1;collector=authentication;allow-unit=ssh.service;permit=journal-identifiers;permit=auth-message'],
                                 capture_output=True, timeout=5)
         require(result.returncode == 1 and not result.stdout and
                 result.stderr == b'knetsentry-agent: journal rejected: unsafe or busy state directory\n',
                 'authentication mode did not fail closed before source access')
         result = subprocess.run([binary, '--run', '--schema-version', '1', '--collectors', 'audit',
-                                 '--state-dir', directory + '/missing'], capture_output=True, timeout=5)
+                                 '--state-dir', directory + '/missing', '--privacy-policy',
+                                 'v1;collector=audit;permit=journal-identifiers;permit=audit-identifiers'], capture_output=True, timeout=5)
         require(result.returncode == 1 and not result.stdout and
                 result.stderr == b'knetsentry-agent: journal rejected: unsafe or busy state directory\n',
                 'audit mode did not fail closed before source access')
         result = subprocess.run([binary, '--run', '--schema-version', '1', '--collectors', 'journal',
                                  '--unit', 'fixture.service', '--state-dir', directory + '/missing',
-                                 '--buffer-for', 'a' * 96], capture_output=True, timeout=5)
+                                 '--buffer-for', 'a' * 96, '--privacy-policy',
+                                 'v1;collector=journal;allow-unit=fixture.service;permit=journal-identifiers;permit=buffering'], capture_output=True, timeout=5)
         require(result.returncode == 1 and not result.stdout and
                 result.stderr == b'knetsentry-agent: journal rejected: unsafe or busy state directory\n',
                 'buffer mode did not reject missing private directory')

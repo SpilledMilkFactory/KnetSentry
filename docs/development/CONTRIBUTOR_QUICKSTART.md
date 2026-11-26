@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **55 CTest tests**, including
+The Release desktop suite currently contains **56 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **50 CTests**, including the
+The full sanitizer suite currently contains **51 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **43 CTests**) and `linux-sanitize-core-only` for **44**.
+C++ test (currently **44 CTests**) and `linux-sanitize-core-only` for **45**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -392,5 +392,14 @@ networking to test this foundation.
 Use [M5.6](FILE_INTEGRITY_M56.md) with explicitly approved disposable files.
 Run `knetsentry_file_integrity_contract` as an ordinary user; never run the
 agent as root or use actual private files in CI. No persistent FIM state or
-network delivery is introduced. Current inventories: desktop 55/50, core-only
+network delivery is introduced. M5.6 inventories were desktop 55/50, core-only
 43/44 (normal/sanitized).
+
+## M5.7 privacy and data-minimization controls
+
+All active collector CLI modes require the final `--privacy-policy` argument.
+See [M5.7](PRIVACY_MINIMIZATION_M57.md) for exact syntax, explicit allow and
+deny entries, sensitive permissions, acquisition-time redaction and state
+binding. Old unbound state cannot be reused; preserve it separately. The
+mandatory `knetsentry_privacy_policy_contract` is present in all seven
+presets. Current inventories: desktop 56/51, core-only 44/45 (normal/sanitized).

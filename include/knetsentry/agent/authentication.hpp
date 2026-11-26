@@ -7,7 +7,7 @@ namespace knetsentry::agent {
 // Source-reported observations, not verified authentication decisions.
 enum class AuthEvent { None, Unclassified, SshAccepted, SshFailed, SshInvalidUser,
                        SessionOpened, SessionClosed, LoginFailed, AuthenticationFailed,
-                       LoginSessionCreated, LoginSessionRemoved };
+                       LoginSessionCreated, LoginSessionRemoved, Redacted };
 [[nodiscard]] bool valid_auth_unit(std::string_view unit) noexcept;
 [[nodiscard]] AuthEvent classify_auth(std::string_view unit, std::string_view message) noexcept;
 [[nodiscard]] std::string_view auth_event_name(AuthEvent event) noexcept;

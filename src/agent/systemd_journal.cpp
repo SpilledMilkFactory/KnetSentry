@@ -11,7 +11,7 @@ namespace knetsentry::agent {
 namespace {
 class SystemJournal final : public JournalSource {
 public:
-    SystemJournal(std::string directory, JournalMode mode) : directory_(std::move(directory)), mode_(mode) {}
+    SystemJournal(std::string directory, JournalMode mode, bool redact_auth) : directory_(std::move(directory)), mode_(mode), redact_auth_(redact_auth) {}
     ~SystemJournal() override { close(); }
     bool open(std::string_view unit) override {
         if (journal_ != nullptr || (mode_ == JournalMode::Audit ? unit != "audit" : !valid_journal_unit(unit)) ||
@@ -27,7 +27,7 @@ public:
         }
         const auto match = mode_ == JournalMode::Audit ? std::string("_TRANSPORT=audit") :
             std::string("_SYSTEMD_UNIT=") + std::string(unit);
-        if (mode_ == JournalMode::Audit && !local_machine_.empty()) {
+        if (!local_machine_.empty()) {
             const auto machine_match = std::string("_MACHINE_ID=") + local_machine_;
             if (sd_journal_add_match(journal_, machine_match.data(), machine_match.size()) < 0) { return false; }
         }
@@ -75,6 +75,7 @@ public:
             record.unit = "audit";
         } else if (!field("_SYSTEMD_UNIT", record.unit, 128)) { return JournalResult::Error; }
         if (mode_ == JournalMode::Authentication) {
+            if (redact_auth_) { record.auth = AuthEvent::Redacted; return JournalResult::Record; }
             // Inspect a bounded message view only in opt-in authentication mode.
             // Never copy the message into a JournalRecord or persistent state.
             const void* data = nullptr;
@@ -107,10 +108,11 @@ private:
     }
     std::string directory_, local_machine_;
     JournalMode mode_;
+    bool redact_auth_;
     sd_journal* journal_{};
 };
 } // namespace
-std::unique_ptr<JournalSource> make_journal_source(std::string directory, JournalMode mode) {
-    return std::make_unique<SystemJournal>(std::move(directory), mode);
+std::unique_ptr<JournalSource> make_journal_source(std::string directory, JournalMode mode, bool redact_auth) {
+    return std::make_unique<SystemJournal>(std::move(directory), mode, redact_auth);
 }
 } // namespace knetsentry::agent

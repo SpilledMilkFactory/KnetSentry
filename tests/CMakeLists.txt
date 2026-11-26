@@ -484,3 +484,9 @@ add_test(NAME knetsentry_file_integrity_contract
     COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/tests/fim_m56.py"
         $<TARGET_FILE:knetsentry-agent>)
 set_tests_properties(knetsentry_file_integrity_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M5.7: actual agent policy rejection and redacted FIM output.
+add_test(NAME knetsentry_privacy_policy_contract
+    COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/tests/privacy_m57.py"
+        $<TARGET_FILE:knetsentry-agent>)
+set_tests_properties(knetsentry_privacy_policy_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)

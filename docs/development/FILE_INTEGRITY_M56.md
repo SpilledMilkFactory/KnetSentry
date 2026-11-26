@@ -5,6 +5,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M5.6 — Initial file integrity monitoring
 
+**M5.7 compatibility update:** The historical commands and state layouts below
+precede mandatory `--privacy-policy` configuration. Use the current
+[M5.7 contract](PRIVACY_MINIMIZATION_M57.md) for active collector invocations,
+redaction and policy-bound journal state. Do not reuse legacy unbound state.
+
 Issue #47 establishes an opt-in local polling collector in C-08/P-08.
 It does not grant monitoring consent, operational network authority, privileged
 file access, or a production evidence pipeline. No new dependency is required;
@@ -103,3 +108,11 @@ The regression also checks the 8-path and 1-MiB inclusive boundaries and
 unreadable-file rejection. Mandatory CI does not inspect actual
 host security files or grant privileges. The structural verifier checks
 registration, not runtime security; full Ubuntu acceptance remains required.
+
+## Maintainer acceptance (2026-11-26 UTC)
+
+109 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED; 357 CTest executions, nine hosted
+checks (`06fb6d8`) and manual synthetic FIM changes, unsafe substitutions,
+clean shutdown, installed manager comparison and reported GUI verification
+passed. Existing desktop diagnostics recurred; no production confinement or
+complete historical monitoring qualification is claimed.
