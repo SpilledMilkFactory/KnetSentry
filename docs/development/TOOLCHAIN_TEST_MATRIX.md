@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.1 KSTD ingestion accepted; M6.2 qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.2 normalization accepted; M6.3 storage abstraction qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 60 Release/Debug/Clazy/analysis, 54 full ASan/UBSan,
-47 core-only and 48 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 63 Release/Debug/Clazy/analysis, 57 full ASan/UBSan,
+50 core-only and 51 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -381,3 +381,7 @@ See [M6.1](EVENT_INGESTION_M61.md). The mandatory ingestion contract runs in all
 ## M6.2 pinned OCSF-aligned normalization
 
 See [M6.2](EVENT_NORMALIZATION_M62.md). The standalone normalization contract is mandatory in all seven presets and uses existing project compiler, sanitizer and binary-hardening policies. Existing TLS ingestion and delivery regressions also verify typed-result gating and original provenance.
+
+## M6.3 event storage abstraction
+
+See [M6.3](EVENT_STORAGE_M63.md). The standalone storage contract is mandatory in all seven presets, with existing compiler, sanitizer and ELF hardening gates. It runs through the database-independent interface without a GUI, database, filesystem fixture, network or production credentials.

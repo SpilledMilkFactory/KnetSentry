@@ -25,3 +25,9 @@ add_library(knetsentry_agent_fim STATIC fim.cpp)
 add_library(KnetSentry::AgentFIM ALIAS knetsentry_agent_fim)
 target_link_libraries(knetsentry_agent_fim PUBLIC KnetSentry::AgentLifecycle PRIVATE OpenSSL::Crypto)
 knetsentry_apply_project_options(knetsentry_agent_fim)
+
+# M6.3: database-independent storage contract and volatile reference backend.
+add_library(knetsentry_event_storage STATIC event_store.cpp)
+add_library(KnetSentry::EventStorage ALIAS knetsentry_event_storage)
+target_link_libraries(knetsentry_event_storage PUBLIC KnetSentry::AgentDelivery)
+knetsentry_apply_project_options(knetsentry_event_storage)

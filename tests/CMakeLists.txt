@@ -523,3 +523,10 @@ target_link_libraries(knetsentry_normalization_test PRIVATE KnetSentry::AgentDel
 knetsentry_apply_project_options(knetsentry_normalization_test)
 add_test(NAME knetsentry_event_normalization_contract COMMAND $<TARGET_FILE:knetsentry_normalization_test>)
 set_tests_properties(knetsentry_event_normalization_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)
+
+# M6.3: GUI-independent raw/index/search/retention storage contract.
+add_executable(knetsentry_event_storage_test event_storage_m63.cpp)
+target_link_libraries(knetsentry_event_storage_test PRIVATE KnetSentry::EventStorage)
+knetsentry_apply_project_options(knetsentry_event_storage_test)
+add_test(NAME knetsentry_event_storage_contract COMMAND $<TARGET_FILE:knetsentry_event_storage_test>)
+set_tests_properties(knetsentry_event_storage_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)

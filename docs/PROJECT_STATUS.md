@@ -5,13 +5,14 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M6.1 — bounded authenticated KSTD ingestion foundation.**
+**Accepted baseline: M6.2 — OCSF-aligned event normalization.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
 M4.8 and M5.1–M5.8 are merged (M5.5 offline foundation only). M5.9 local aggregate agent status in Dashboard and Assets is qualified and merged. Multi-endpoint authenticated status integration remains outstanding (#50).
 Issue #46 operational network/manager integration remains outstanding.
 M6.1 bounded offline authenticated event ingestion is qualified and merged; operational and generic envelope integration (#51) remain outstanding.
-M6.2 adds typed OCSF-aligned normalization of the KSTD subset; target qualification is pending.
+M6.2 typed OCSF-aligned normalization of the KSTD subset is qualified and merged.
+M6.3 introduces the GUI-independent event storage contract and volatile reference backend; target qualification is pending.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
@@ -29,6 +30,7 @@ This is an unreleased development baseline, not a v1.0.0 security qualification.
 | Endpoint agent | Independent foreground process, strict v1 startup configuration, bounded static collector lifecycle and non-root capability checks; opt-in selected journal metadata, authentication categories and journal-mediated audit records and explicit file integrity polling under mandatory explicit privacy policy; no operational network |
 | Event ingestion | Bounded per-source authenticated KSTD receipt pipeline, canonical validation, reject/overload disposition counters; no deployed manager ingress |
 | Event normalization | OCSF 1.4.0-aligned internal projection, native provenance, explicit mapping disposition and post-commit typed result; no normalized persistence or OCSF export |
+| Event storage | Database-independent raw/index/retrieval/search/retention interface and bounded volatile reference backend; no operational persistence or ACK integration |
 | Telemetry delivery | Explicit protected FIFO outbox, durable bounded inbox and authenticated receipt/retry contract (offline); no running manager receiver |
 | Agent health | Offline TLS-backed KSAP reporting, current enrollment rechecks, bounded health snapshots and reconnect scheduling; no deployed agent |
 | Verification | Mandatory compiled regressions, static analysis, sanitizer configurations, strict QML diagnostics, isolated dual-stack kernel firewall and topology fixtures |
@@ -41,6 +43,14 @@ rules. Monitoring is unavailable, and no operational remote telemetry transport,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M6.2 maintainer acceptance (2026-11-26 UTC, applied working tree based on
+`f70966f`) recorded 119 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 403 CTest
+executions, 54 structural verifiers and nine green hosted checks (`77304f7`).
+Focused seven-test verification, direct normalization/ingestion/delivery,
+40 repeated Release and 20 repeated sanitized executions, installed manager
+comparison and independent agent lifecycle passed. Maintainer reported GUI
+qualification and merge. Operational issues #40/#46/#50/#51 remain outstanding.
 
 M6.1 maintainer acceptance (2026-11-26 UTC, applied working tree based on
 `11149c3`) recorded 117 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 396 CTest
@@ -216,7 +226,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
-| M5–M7 — functional SIEM foundations | M6.1 KSTD ingestion accepted; M6.2 normalization pending qualification; operational integration outstanding |
+| M5–M7 — functional SIEM foundations | M6.2 normalization accepted; M6.3 storage abstraction pending qualification; operational integration outstanding |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |
