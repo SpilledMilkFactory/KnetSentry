@@ -18,3 +18,10 @@ add_library(knetsentry_agent_delivery STATIC delivery.cpp receipt.cpp)
 add_library(KnetSentry::AgentDelivery ALIAS knetsentry_agent_delivery)
 target_link_libraries(knetsentry_agent_delivery PUBLIC KnetSentry::AgentJournal KnetSentry::Enrollment)
 knetsentry_apply_project_options(knetsentry_agent_delivery)
+
+# M5.6: explicitly approved files, no network or persistent file contents.
+find_package(OpenSSL 3.5 REQUIRED COMPONENTS Crypto)
+add_library(knetsentry_agent_fim STATIC fim.cpp)
+add_library(KnetSentry::AgentFIM ALIAS knetsentry_agent_fim)
+target_link_libraries(knetsentry_agent_fim PUBLIC KnetSentry::AgentLifecycle PRIVATE OpenSSL::Crypto)
+knetsentry_apply_project_options(knetsentry_agent_fim)

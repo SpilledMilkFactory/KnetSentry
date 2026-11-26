@@ -478,3 +478,9 @@ set_tests_properties(knetsentry_audit_collection_contract PROPERTIES LABELS "int
 # M5.5: genuine TLS delivery and protected outbox regression, no sockets.
 add_test(NAME knetsentry_telemetry_delivery_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --telemetry-delivery)
 set_tests_properties(knetsentry_telemetry_delivery_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M5.6: actual agent, only synthetic explicitly approved filesystem paths.
+add_test(NAME knetsentry_file_integrity_contract
+    COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/tests/fim_m56.py"
+        $<TARGET_FILE:knetsentry-agent>)
+set_tests_properties(knetsentry_file_integrity_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)

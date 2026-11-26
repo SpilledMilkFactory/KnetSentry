@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Initial Dependency Candidate Register
 
-**Status:** Candidate inventory with scoped M4.2/M4.3 and M5.2 development-build decisions. No runtime bundle or distribution clearance has been approved. This is not a dependency lockfile.
+**Status:** Candidate inventory with scoped M4.2/M4.3, M5.2 and M5.6 development-build decisions. No runtime bundle or distribution clearance has been approved. This is not a dependency lockfile.
 
 | ID | Candidate / class | Planned use | License / constraint to verify | Future owner | Decision |
 |---|---|---|---|---|---|
@@ -13,7 +13,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 | `DEP-002` | KDE Frameworks 6 (selected modules) | Kirigami-compatible desktop | Module-specific SPDX/license and dependencies | M1.3 | `CANDIDATE` |
 | `DEP-003` | Kirigami / Kirigami Addons (if needed) | Qt Quick UI patterns | Exact KDE module, packaging and LGPL/other license | M1.3 | `CANDIDATE` |
 | `DEP-004` | Extra CMake Modules (ECM) | KDE-oriented build configuration | Tooling license, package origin; custom CMake files BSD-2-Clause | M1.1 | `CANDIDATE` |
-| `DEP-005` | OpenSSL 3.5.x system shared libcrypto and libssl | Offline identity and isolated mutual TLS | Apache-2.0; [identity build decision](IDENTITY_M42.md), [TLS extension](TLS_TRANSPORT_M43.md) | M4.2/M4.3 | `APPROVED_FOR_BUILD` |
+| `DEP-005` | OpenSSL 3.5.x system shared libcrypto and libssl | Offline identity, isolated mutual TLS and local file SHA-256 | Apache-2.0; [identity build decision](IDENTITY_M42.md), [TLS extension](TLS_TRANSPORT_M43.md), [FIM extension](FILE_INTEGRITY_M56.md) | M4.2/M4.3/M5.6 | `APPROVED_FOR_BUILD` |
 | `DEP-006` | SQLite | Indexed event and metadata store | Source provenance, public-domain status/attestation and bundled components | M6.4 | `CANDIDATE` |
 | `DEP-007` | Linux capture stack (e.g. libpcap) | Privileged capture broker / passive sensor | Licensing, privileges, parser security and deployment | M5.10 | `CANDIDATE` |
 | `DEP-008` | systemd / distro shared libsystemd | Host service control and local journal metadata | LGPL-2.1-or-later library; component notices and installed version review; [M5.2 build decision](JOURNAL_COLLECTION_M52.md) | M2.7/M5.2 | `APPROVED_FOR_BUILD` |

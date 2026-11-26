@@ -170,3 +170,10 @@ C-08/P-08 gains explicit bounded persistent outbox support. A separate offline
 KSTD TLS exchange and durable bounded inbox establish the planned I-07 receipt
 contract. Neither production network authority nor manager receiver activation
 is introduced. See [M5.5](../development/TELEMETRY_DELIVERY_M55.md).
+
+## M5.6 initial file integrity monitoring
+
+C-08/P-08 gains opt-in bounded polling of explicitly approved individual
+local files. Memory-only SHA-256/metadata baselines, fixed category/slot
+diagnostics, safe path resolution and no operational network or new authority.
+See [M5.6](../development/FILE_INTEGRITY_M56.md).

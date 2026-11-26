@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M5.4 accepted (automated/GUI); M5.5 qualification pending; issue #40 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M5.5 offline foundation accepted; M5.6 qualification pending; issues #40/#46 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 54 Release/Debug/Clazy/analysis, 49 full ASan/UBSan,
-42 core-only and 43 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 55 Release/Debug/Clazy/analysis, 50 full ASan/UBSan,
+43 core-only and 44 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -343,3 +343,9 @@ checks do not require host audit privileges.
 All seven presets require `knetsentry_telemetry_delivery_contract`; see the
 [M5.5 contract](TELEMETRY_DELIVERY_M55.md). Genuine encrypted in-memory TLS and
 protected synthetic outbox/inbox are exercised without operational sockets.
+
+## M5.6 initial file integrity monitoring
+
+`knetsentry_file_integrity_contract` is mandatory in all seven presets. See
+[M5.6](FILE_INTEGRITY_M56.md). Actual agent process, synthetic authorized file
+changes and unsafe substitutions, no privileged host file access.

@@ -179,3 +179,11 @@ TB-04/TB-06/TB-07, TV-06/TV-07/TV-13/TV-25/TV-26 evidence for bounded FIFO,
 current enrollment, authenticated ACK, duplicate handling, backpressure and
 protected state. No operational socket, complete ingestion or storage security
 qualification is claimed.
+
+## M5.6 initial file integrity monitoring
+
+The [M5.6 contract](../development/FILE_INTEGRITY_M56.md) adds partial TB-06
+and TV-13/TV-25 evidence for explicit file scope, bounded untrusted filesystem
+inputs, fixed diagnostics and privacy minimization. No new privileges, raw
+content persistence or operational transport; polling and race limitations
+remain documented rather than claiming complete filesystem confinement.

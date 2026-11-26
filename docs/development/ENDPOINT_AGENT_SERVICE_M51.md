@@ -87,3 +87,6 @@ helper privileges, operational networking or telemetry qualification is claimed.
 Target-host and hosted M5.1 acceptance completed on 2026-11-25; see
 [project status](../PROJECT_STATUS.md). M5.2 adds an explicit journal-only mode
 and native library linkage; see the [M5.2 contract](JOURNAL_COLLECTION_M52.md).
+
+M5.6 adds explicitly selected file integrity polling and existing system
+OpenSSL Crypto linkage for SHA-256. See the [M5.6 contract](FILE_INTEGRITY_M56.md).

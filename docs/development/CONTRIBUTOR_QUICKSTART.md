@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **54 CTest tests**, including
+The Release desktop suite currently contains **55 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **49 CTests**, including the
+The full sanitizer suite currently contains **50 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **42 CTests**) and `linux-sanitize-core-only` for **43**.
+C++ test (currently **43 CTests**) and `linux-sanitize-core-only` for **44**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -386,3 +386,11 @@ Opt in to a separate protected outbox with `--buffer-for` as described in
 [M5.5](TELEMETRY_DELIVERY_M55.md). Use the mandatory offline delivery CTest
 for synthetic authenticated receipts. Do not attach private state or enable
 networking to test this foundation.
+
+## M5.6 initial file integrity monitoring
+
+Use [M5.6](FILE_INTEGRITY_M56.md) with explicitly approved disposable files.
+Run `knetsentry_file_integrity_contract` as an ordinary user; never run the
+agent as root or use actual private files in CI. No persistent FIM state or
+network delivery is introduced. Current inventories: desktop 55/50, core-only
+43/44 (normal/sanitized).
