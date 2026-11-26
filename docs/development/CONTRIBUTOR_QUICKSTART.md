@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **62 CTest tests**, including
+The Release desktop suite currently contains **63 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **56 CTests**, including the
+The full sanitizer suite currently contains **57 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **49 CTests**) and `linux-sanitize-core-only` for **50**.
+C++ test (currently **50 CTests**) and `linux-sanitize-core-only` for **51**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -426,4 +426,8 @@ See [M6.1](EVENT_INGESTION_M61.md). Run `ctest --preset linux-release -R '^knets
 
 ## M6.2 OCSF-aligned normalization
 
-See [M6.2](EVENT_NORMALIZATION_M62.md). Run `ctest --preset linux-release -R '^knetsentry_(event_normalization_contract|event_ingestion_contract|telemetry_delivery_contract)$' --verbose --no-tests=error`. Current inventories: desktop 62/56, core-only 49/50 (normal/sanitized). Synthetic evidence only; no normalized database or operational GUI event publication.
+See [M6.2](EVENT_NORMALIZATION_M62.md). Run `ctest --preset linux-release -R '^knetsentry_(event_normalization_contract|event_ingestion_contract|telemetry_delivery_contract)$' --verbose --no-tests=error`. M6.2 accepted inventories: desktop 62/56, core-only 49/50 (normal/sanitized). Synthetic evidence only; no normalized database or operational GUI event publication.
+
+## M6.3 event storage abstraction
+
+See [M6.3](EVENT_STORAGE_M63.md). Run `ctest --preset linux-release -R '^knetsentry_(event_storage_contract|event_normalization_contract|event_ingestion_contract|telemetry_delivery_contract)$' --verbose --no-tests=error`. Current inventories: desktop 63/57, core-only 50/51 (normal/sanitized). The reference backend is volatile, synthetic-only qualification; no production persistence, raw-volume activation or GUI query authority is introduced.

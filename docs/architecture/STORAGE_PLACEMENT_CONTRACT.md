@@ -6,7 +6,8 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # KnetSentry — Storage Placement and Raw-First Event Contract
 
 **Issue:** M0.5. **Status:** architecture and future acceptance requirements;
-no actual storage selectors, record writers, or Qt configuration UI exist yet.
+M6.3 supplies a volatile reference interface; no actual durable raw-volume
+writer, storage selector, or Qt configuration UI exists yet.
 
 ## Configuration model
 
@@ -90,3 +91,12 @@ Trace to `KS-PERF-041`–`KS-PERF-054` in
 [performance requirements](../development/PERFORMANCE_REQUIREMENTS.md),
 [benchmark BT-22–BT-28](../development/BENCHMARK_PLAN.md), and
 [fault cases F-13–F-18](../development/RELIABILITY_RECOVERY_PLAN.md).
+
+## M6.3 reference boundary
+
+The [storage abstraction](../development/EVENT_STORAGE_M63.md) separates raw
+admission from index visibility and exposes explicit durability. The reference
+backend never reports RAW_DURABLE or participates in authenticated ACKs.
+KS-PERF-041/043–046, mount/device authorization, protected durable segments,
+separate index placement, replay after restart, relocation and quotas remain
+unqualified operational requirements; no fallback path is introduced.

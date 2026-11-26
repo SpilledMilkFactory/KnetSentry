@@ -224,3 +224,13 @@ The [M6.1 contract](../development/EVENT_INGESTION_M61.md) adds partial TB-04/TB
 ## M6.2 event normalization
 
 The [M6.2 contract](../development/EVENT_NORMALIZATION_M62.md) contributes partial TB-06/TB-07, TH-015 and TV-10/TV-25 evidence through shared canonical validation, bounded typed mapping, exact minimized evidence retention, explicit unknown/redacted states and durable-acceptance result gating. No independent schema export, storage, operational ingestion or threat closure is claimed.
+
+## M6.3 event storage abstraction
+
+The [M6.3 contract](../development/EVENT_STORAGE_M63.md) provides partial
+TV-10/TV-26 evidence for canonical admission, bounded capacity and query
+results, conflicting evidence rejection, explicit pending/visible separation,
+revision-checked retention, and held-evidence exclusion. TV-25 fixtures are
+synthetic. TB-07 durable storage, legal-hold authorization, mount safety,
+integrity, disk failure, persistent retention audit and threat closure remain
+unqualified. The reference backend cannot authorize a durable receipt.

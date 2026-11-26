@@ -116,7 +116,13 @@ preservation of original evidence. No host telemetry is required.
 
 Target: desktop 62/56, core-only 49/50 (normal/sanitized), 403 total CTest
 executions, 54 structural verifiers and 119 consolidated acceptance gates.
-Target-host qualification is pending. This contributes partial TB-06/TB-07,
+Maintainer qualification passed on 2026-11-26 UTC: 119 PASS, 0 FAIL,
+0 SKIPPED, 0 BLOCKED, 403 CTest executions and nine hosted checks (`77304f7`).
+Focused seven-test group, direct normalization/ingestion/delivery, 40 Release
+and 20 sanitized repeated executions, installed-manager comparison and agent
+lifecycle passed; GUI regression and merge were reported. M6.3 consumes the
+existing canonical parser and mapping in a separate volatile backend.
+ This contributes partial TB-06/TB-07,
 TH-015 and TV-10/TV-25 evidence; no threat closure is claimed. Full generic
 I-10, normalized persistence, schema export/validation, receiver-side privacy
 administration and operational manager integration remain outstanding.
