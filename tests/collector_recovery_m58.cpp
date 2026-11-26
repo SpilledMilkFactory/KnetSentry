@@ -64,8 +64,16 @@ constexpr std::array profiles{
     Profile{JournalMode::Authentication, "ssh.service", "auth-m53.v1", "auth-m53.pending", true},
     Profile{JournalMode::Audit, "audit", "audit-m54.v1", "audit-m54.pending", false},
 };
-const std::string fingerprint(64, 'a');
-const std::string binding(96, 'b');
+// Synthetic identifiers require no dynamic global initialization.
+constexpr char fingerprint[] =
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+constexpr char binding[] =
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+static_assert(sizeof(fingerprint) == 65); // Includes the terminating NUL.
+static_assert(sizeof(binding) == 97);
 JournalRecord event(const Profile& profile, std::size_t n) {
     JournalRecord r{"cursor-" + std::to_string(n), profile.unit,
         "1234567890abcdef1234567890abcdef", "abcdef1234567890abcdef1234567890",
@@ -101,7 +109,7 @@ void recover(const Profile& p, bool buffered) {
     const auto path = temp.path.string();
     const auto state = temp.path / (buffered ? "telemetry-m55.v1" : p.state);
     const auto pending = temp.path / (buffered ? "telemetry-m55.pending" : p.pending);
-    const auto destination = buffered ? binding : std::string{};
+    const auto destination = buffered ? std::string{binding} : std::string{};
     Source source;
     source.records = {event(p, 1), event(p, 2)};
     {

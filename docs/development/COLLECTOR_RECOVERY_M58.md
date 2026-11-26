@@ -63,6 +63,18 @@ created under private temporary directories and removed by the test harness.
 No real host telemetry, credentials, files, privileges or network sockets are
 needed for the new regressions.
 
+## M5.8 follow-up qualification
+
+The initial Ubuntu 26.04 acceptance run reported 108 PASS, 1 FAIL, 4 SKIPPED,
+and 0 BLOCKED. All 314 executed CTests passed; Clazy rejected two namespace-scope
+`std::string` fixture identifiers under `clazy-non-pod-global-static`.
+The follow-up replaces them with constant-initialized character arrays and
+compile-time length checks, preserving the exact synthetic identifier bytes.
+No recovery assertions, compiler diagnostics, or privileged acceptance gates
+are disabled. The four dependent checks were skipped, not failed at runtime.
+Full target-host acceptance remains pending (113 PASS, 0 FAIL, 0 SKIPPED,
+0 BLOCKED; 371 configured CTest executions).
+
 ## Boundaries
 
 These are representative deterministic fault cases, not exhaustive fault
