@@ -18,9 +18,9 @@ def main():
         raise ValueError('missing mandatory ingestion regression')
     if 'max_inflight = 4' not in header or 'max_row = 2048' not in header:
         raise ValueError('missing bounded admission contract')
-    if not receiver.index('enrollment::revalidate') < receiver.index('pipeline_.reserve()') < receiver.index('receive(session_') < receiver.index('pipeline_.process(payload)') < receiver.index('session_.write(bytes(ack_))'):
+    if not receiver.index('enrollment::revalidate') < receiver.index('pipeline_.reserve()') < receiver.index('receive(session_') < receiver.index('pipeline_.process(payload, normalized_)') < receiver.index('session_.write(bytes(ack_))'):
         raise ValueError('ingestion boundary order changed')
-    if not ingestion.index('payload.starts_with(binding_)') < ingestion.index('valid_delivery_row') < ingestion.index('sink_.commit'):
+    if not ingestion.index('payload.starts_with(binding_)') < ingestion.index('normalize_event') < ingestion.index('sink_.commit'):
         raise ValueError('validation must precede durable commitment')
     if 'ingestion.cpp' not in (ROOT / 'src/agent/CMakeLists.txt').read_text() or 'ingestion.cpp' not in (ROOT / 'scripts/verify_m12_hardening.py').read_text():
         raise ValueError('missing ingestion compilation or hardening registration')

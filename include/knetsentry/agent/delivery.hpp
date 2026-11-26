@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 #include <knetsentry/agent/journal.hpp>
+#include <knetsentry/agent/normalization.hpp>
 #include <knetsentry/core/enrollment.hpp>
 #include <array>
 #include <string>
@@ -64,7 +65,7 @@ private:
     [[nodiscard]] bool reserve() noexcept;
     void release() noexcept;
     void record(IngestOutcome outcome) noexcept;
-    [[nodiscard]] IngestOutcome process(std::string_view payload);
+    [[nodiscard]] IngestOutcome process(std::string_view payload, std::optional<NormalizedEvent>& normalized);
     enrollment::EndpointId endpoint_;
     JournalMode mode_;
     std::string unit_, binding_;
@@ -104,10 +105,14 @@ public:
     DeliveryReceiver(const DeliveryReceiver&) = delete;
     DeliveryReceiver& operator=(const DeliveryReceiver&) = delete;
     [[nodiscard]] DeliveryState step(bool authorized, std::uint64_t now) noexcept;
+    // Available only after durable sink acceptance; independent of ACK success.
+    // Borrowed view, valid until this receiver is destroyed.
+    [[nodiscard]] const std::optional<NormalizedEvent>& normalized_event() const noexcept { return normalized_; }
 private:
     tls::Session& session_;
     int registry_;
     IngestionPipeline& pipeline_;
+    std::optional<NormalizedEvent> normalized_;
     std::string ack_;
     bool reserved_{};
     DeliveryState finish(IngestOutcome outcome) noexcept;

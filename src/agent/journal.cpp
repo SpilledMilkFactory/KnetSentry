@@ -80,14 +80,18 @@ bool valid_delivery_binding(std::string_view binding) noexcept {
     }) && binding.substr(0, 32) != "00000000000000000000000000000000" &&
         binding.substr(32) != "0000000000000000000000000000000000000000000000000000000000000000";
 }
-bool valid_delivery_row(std::string_view wire, std::string_view unit, JournalMode mode) {
+std::optional<JournalRecord> parse_delivery_row(std::string_view wire, std::string_view unit, JournalMode mode) {
     if ((mode != JournalMode::Metadata && mode != JournalMode::Authentication && mode != JournalMode::Audit) ||
         (mode == JournalMode::Audit ? unit != "audit" : !valid_journal_unit(unit)) ||
         (mode == JournalMode::Authentication && !valid_auth_unit(unit)) ||
-        wire.empty() || wire.size() > 2048 || !wire.ends_with('\n')) { return false; }
+        wire.empty() || wire.size() > 2048 || !wire.ends_with('\n')) { return std::nullopt; }
     JournalRecord record;
-    return parse_row(wire.substr(0, wire.size() - 1), record, mode) &&
-        record_valid(record, unit, mode) && row(record) == wire;
+    if (!parse_row(wire.substr(0, wire.size() - 1), record, mode) ||
+        !record_valid(record, unit, mode) || row(record) != wire) { return std::nullopt; }
+    return record;
+}
+bool valid_delivery_row(std::string_view wire, std::string_view unit, JournalMode mode) {
+    return parse_delivery_row(wire, unit, mode).has_value();
 }
 bool parse_audit_number(std::string_view value, std::uint64_t& output) noexcept {
     if (value.empty() || value.size() > 20 || (value.size() > 1 && value.front() == '0') ||

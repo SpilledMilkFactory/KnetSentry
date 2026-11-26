@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT
 #include <knetsentry/agent/delivery.hpp>
 #include <limits>
+#include <type_traits>
+#include <utility>
 
 namespace knetsentry::agent {
 IngestionPipeline::IngestionPipeline(enrollment::EndpointId endpoint, identity::Fingerprint manager,
@@ -27,14 +29,18 @@ bool IngestionPipeline::reserve() noexcept {
     return true;
 }
 void IngestionPipeline::release() noexcept { --active_; }
-IngestOutcome IngestionPipeline::process(std::string_view payload) {
+IngestOutcome IngestionPipeline::process(std::string_view payload, std::optional<NormalizedEvent>& normalized) {
     if (!configured_ || payload.size() <= binding_.size() ||
         payload.size() > binding_.size() + max_row || !payload.starts_with(binding_)) {
         return IngestOutcome::Invalid;
     }
     const auto row = payload.substr(binding_.size());
-    if (!valid_delivery_row(row, unit_, mode_)) { return IngestOutcome::Invalid; }
+    auto event = normalize_event(row, binding_, unit_, mode_);
+    if (!event) { return IngestOutcome::Invalid; }
     if (!sink_.commit(endpoint_, binding_, row)) { return IngestOutcome::StorageRejected; }
+    // No allocation or throwing copy after durable acceptance.
+    static_assert(std::is_nothrow_move_assignable_v<std::optional<NormalizedEvent>>);
+    normalized = std::move(event);
     record(IngestOutcome::Committed);
     return IngestOutcome::Committed;
 }
