@@ -85,3 +85,11 @@ messages and aggregate counts; zero records is unknown visibility rather than
 an affirmative collection result. No new dependencies. Existing DEP-008 shared
 libsystemd development scope is unchanged. See systemd journal-fields(7) and
 systemd's journald-audit.c for the source field definitions.
+
+## Maintainer acceptance
+
+105 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED and all 343 configured CTests passed
+on Ubuntu 26.04; nine hosted checks and reported manual GUI/merge succeeded.
+Live audit-mode output was not supplied; no positive live audit count is claimed.
+The optional M5.5 outbox extends local-only collection without changing the
+original audit file format; see [M5.5](TELEMETRY_DELIVERY_M55.md).

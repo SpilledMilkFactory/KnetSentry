@@ -13,6 +13,7 @@ inline constexpr std::size_t max_ciphertext_chunk = 16384;
 inline constexpr std::size_t wire_buffer_bytes = 65536;
 inline constexpr std::size_t max_handshake_input = 262144;
 
+enum class Protocol { Ksap, Telemetry };
 enum class State { Handshake, Trusted, Closing, Closed, Failed };
 enum class Status { Ok, WouldBlock, NotReady, InvalidInput, Closed, Failed };
 struct Result { Status status; std::size_t bytes{}; };
@@ -25,6 +26,7 @@ struct Credentials {
     std::span<const unsigned char> certificate;
     std::span<const unsigned char> root;
     identity::Fingerprint peer_pin;
+    Protocol protocol{Protocol::Ksap};
 };
 
 // Single-threaded, single-use TLS state machine. Caller owns network policy,
@@ -37,6 +39,7 @@ public:
     Session& operator=(const Session&) = delete;
     // Observing state also checks deadlines and current certificate validity.
     [[nodiscard]] State state() const noexcept;
+    [[nodiscard]] Protocol protocol() const noexcept;
     // Verified peer pin only for a currently trusted manager-side session.
     [[nodiscard]] std::optional<identity::Fingerprint> authenticated_agent() const noexcept;
     // Trusted caller supplies the CURRENT approved peer pin; no pin means

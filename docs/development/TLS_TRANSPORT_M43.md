@@ -119,3 +119,10 @@ future work.
 See [agent heartbeat and health](AGENT_HEALTH_M46.md) for offline authenticated
 reporting, current enrollment revalidation and bounded reconnect scheduling.
 Operational network adapters remain future work.
+
+## M5.5 protocol separation
+
+KSAP 1.0 remains the default exact ALPN. The separately configured KSTD 1.0
+telemetry profile requires exact `kstd/1.0`, with no downgrade or cross-profile
+fallback. Existing TLS identity and lifetime checks apply to both. Health
+consumers reject telemetry sessions. See [M5.5](TELEMETRY_DELIVERY_M55.md).

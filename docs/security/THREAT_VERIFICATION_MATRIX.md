@@ -171,3 +171,11 @@ TB-06/TB-07, TV-13/TV-25/TV-26 evidence for structured audit provenance, minimiz
 recovery and unavailable-source handling. No direct audit control, rule mutation
 or privileged helper is introduced. Complete coverage, event assembly and
 production evidence integrity remain unqualified.
+
+## M5.5 secure telemetry buffering and delivery
+
+The [M5.5 contract](../development/TELEMETRY_DELIVERY_M55.md) adds partial
+TB-04/TB-06/TB-07, TV-06/TV-07/TV-13/TV-25/TV-26 evidence for bounded FIFO,
+current enrollment, authenticated ACK, duplicate handling, backpressure and
+protected state. No operational socket, complete ingestion or storage security
+qualification is claimed.

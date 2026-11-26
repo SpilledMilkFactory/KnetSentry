@@ -37,7 +37,7 @@ bool Tracker::check(Millis now) noexcept {
 }
 bool Tracker::attach(std::unique_ptr<tls::Session> session, Millis now) noexcept {
     if (check(now) || now < last_clock_ || !session) { return false; }
-    if (enrollment::revalidate(directory_, id_, *session) != enrollment::Status::Ok) {
+    if (session->protocol() != tls::Protocol::Ksap || enrollment::revalidate(directory_, id_, *session) != enrollment::Status::Ok) {
         invalidate(Health::Untrusted);
         return false;
     }
@@ -108,7 +108,7 @@ Snapshot Tracker::poll(Millis now) noexcept {
 tls::Status Reporter::send(std::optional<identity::Fingerprint> manager_pin,
     Millis now, Counters counters) noexcept {
     if (now < last_clock_ || sequence_ == std::numeric_limits<std::uint64_t>::max() ||
-        session_.authenticated_agent() || session_.revalidate_peer(manager_pin) != tls::Status::Ok) {
+        session_.protocol() != tls::Protocol::Ksap || session_.authenticated_agent() || session_.revalidate_peer(manager_pin) != tls::Status::Ok) {
         session_.abort();
         return tls::Status::Failed;
     }

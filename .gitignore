@@ -27,3 +27,9 @@ before-restart.snapshot
 # Private M5.4 audit observations and transactions.
 audit-m54.v1
 audit-m54.pending
+
+# Private M5.5 telemetry outbox/inbox and interrupted transactions.
+telemetry-m55.v1
+telemetry-m55.pending
+telemetry-inbox-m55.v1
+telemetry-inbox-m55.pending

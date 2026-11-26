@@ -406,7 +406,7 @@ set_tests_properties(knetsentry_tls_contract PROPERTIES LABELS "integration;secu
 
 # M4.4: persistent approvals, genuine TLS admission, and offline admin CLI.
 add_executable(knetsentry_enrollment_test enrollment_m44.cpp)
-target_link_libraries(knetsentry_enrollment_test PRIVATE KnetSentry::AgentHealth)
+target_link_libraries(knetsentry_enrollment_test PRIVATE KnetSentry::AgentHealth KnetSentry::AgentDelivery)
 knetsentry_apply_project_options(knetsentry_enrollment_test)
 add_test(NAME knetsentry_enrollment_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test>)
 set_tests_properties(knetsentry_enrollment_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)
@@ -474,3 +474,7 @@ add_test(NAME knetsentry_audit_collection_contract
     COMMAND "${Python3_EXECUTABLE}" -B "${PROJECT_SOURCE_DIR}/tests/audit_fixture_m54.py"
         $<TARGET_FILE:knetsentry_audit_test>)
 set_tests_properties(knetsentry_audit_collection_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M5.5: genuine TLS delivery and protected outbox regression, no sockets.
+add_test(NAME knetsentry_telemetry_delivery_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --telemetry-delivery)
+set_tests_properties(knetsentry_telemetry_delivery_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
