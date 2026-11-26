@@ -127,8 +127,7 @@ Dashboard/Assets bindings with a synthetic report pipe; the Qt model remains
 covered under sanitizers without new third-party QML leak suppressions.
 
 The target inventories are desktop 60/54 and core-only 47/48 (normal/sanitized),
-389 CTest executions across seven lanes. Target-host and hosted qualification
-remain pending. This contributes partial TB-06/TB-07 and TV-13/TV-25 evidence
+389 CTest executions across seven lanes. Target-host and hosted qualification passed (see [Project status](../PROJECT_STATUS.md)). This contributes partial TB-06/TB-07 and TV-13/TV-25 evidence
 for minimized status publication and bounded untrusted report handling; it does
 not close a threat or qualify operational I-07, independent authentication,
 remote endpoint status, receiver-side privacy, secure policy administration or

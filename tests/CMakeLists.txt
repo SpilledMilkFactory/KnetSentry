@@ -512,3 +512,7 @@ set_tests_properties(knetsentry_telemetry_status_contract PROPERTIES LABELS "uni
 add_test(NAME knetsentry_telemetry_status_runtime COMMAND "${Python3_EXECUTABLE}"
     "${PROJECT_SOURCE_DIR}/tests/telemetry_status_m59.py" $<TARGET_FILE:knetsentry-agent>)
 set_tests_properties(knetsentry_telemetry_status_runtime PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 40)
+
+# M6.1: bounded authenticated ingestion with genuine TLS and durable receipt sink.
+add_test(NAME knetsentry_event_ingestion_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --ingestion)
+set_tests_properties(knetsentry_event_ingestion_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)

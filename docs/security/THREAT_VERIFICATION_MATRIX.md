@@ -216,3 +216,7 @@ provenance is launcher-controlled, not independently authenticated. No raw
 records or private source values are published; counts/timing may be sensitive.
 No operational I-07, independently authenticated status or threat closure is
 claimed.
+
+## M6.1 authenticated ingestion
+
+The [M6.1 contract](../development/EVENT_INGESTION_M61.md) adds partial TB-04/TB-06/TB-07 and TV-06/TV-07/TV-13/TV-25/TV-26 evidence for current enrollment revalidation, canonical source binding, bounded in-flight admission, reject-only invalid input handling and durable receipt retry. Counters are local library evidence, not operational health telemetry. No threat closure or generic source ingestion qualification is claimed.

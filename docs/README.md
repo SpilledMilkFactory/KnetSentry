@@ -70,6 +70,7 @@ qualification targets, not measured results.
 - [M5.7 — Privacy and data-minimization controls](development/PRIVACY_MINIMIZATION_M57.md)
 - [M5.8 — Collector verification and failure recovery](development/COLLECTOR_RECOVERY_M58.md)
 - [M5.9 — Local endpoint telemetry status in the desktop](development/DESKTOP_TELEMETRY_STATUS_M59.md)
+- [M6.1 — Bounded authenticated event ingestion](development/EVENT_INGESTION_M61.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)
