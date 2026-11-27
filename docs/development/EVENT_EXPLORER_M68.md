@@ -7,7 +7,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 Issue #58. Read-only inspection of an explicitly approved existing development
 store. This is not operational ingestion, a production analyst-role service,
-or evidence that monitoring is active. Target-host qualification is pending.
+or evidence that monitoring is active. Target-host qualification was accepted on 2026-11-27 UTC; see [project status](../PROJECT_STATUS.md).
 
 ## Authority and activation
 
