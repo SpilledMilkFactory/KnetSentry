@@ -297,3 +297,7 @@ The [M7.3 contract](../development/AUTHENTICATION_PATTERNS_M73.md) contributes p
 ## M7.4 privilege and system integrity
 
 The [M7.4 contract](../development/SYSTEM_INTEGRITY_M74.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for exact native Audit predicates, bounded scope, evidence references and fail-closed snapshot refusal. Audit outcome, durable FIM evidence, caller authorization and operational alerting remain separate.
+
+## M7.5 scheduling and persistent state
+
+The [M7.5 contract](../development/RULE_SCHEDULING_M75.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for scoped bounded rule scheduling, private checkpoint persistence, corruption refusal, duplicate management and historical batch replay. A trusted caller remains responsible for authorization, state and volume identity, clock, evidence revalidation and durable consumer deduplication.

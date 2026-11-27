@@ -69,4 +69,4 @@ The mandatory `knetsentry_system_integrity_contract` covers synthetic canonical
 Audit admission, normalization, every catalog rule, unknown types, exact scope,
 trust, evidence linkage, deterministic output, capacity, malformed pages and
 pending-index refusal. Existing SQLite and split-store tests now also check
-Audit summary projection after restart. Target Ubuntu qualification pending.
+Audit summary projection after restart. Target Ubuntu qualification passed: 145 consolidated gates, 505 configured CTests, 90 repeated Release and 45 repeated sanitized executions, nine hosted checks. Installed manager equality and live systemd verification passed after an explicit binary-only refresh. Manual GUI review and merge reported successful. Remaining #63 scope open.

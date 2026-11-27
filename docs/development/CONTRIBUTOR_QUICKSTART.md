@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **77 CTest tests**, including
+The Release desktop suite currently contains **78 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **70 CTests**, including the
+The full sanitizer suite currently contains **71 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **63 CTests**) and `linux-sanitize-core-only` for **64**.
+C++ test (currently **64 CTests**) and `linux-sanitize-core-only` for **65**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -479,3 +479,7 @@ See [M7.3](AUTHENTICATION_PATTERNS_M73.md). Run `ctest --preset linux-release -R
 ### M7.4 system integrity
 
 See [M7.4](SYSTEM_INTEGRITY_M74.md). Run `ctest --preset linux-release -R '^knetsentry_system_integrity_contract$' --verbose --no-tests=error`. Target inventories: desktop 77/70, core-only 63/64 (normal/sanitized). Stored Audit record types only; remaining #63 scope stays open.
+
+### M7.5 rule scheduling
+
+See [M7.5](RULE_SCHEDULING_M75.md). Run `ctest --preset linux-release -R '^knetsentry_scheduler_contract$' --verbose --no-tests=error` as an ordinary user. Fixtures create private temporary directories and synthetic SQLite evidence; no production state initialization is required. Target inventories: desktop 78/71, core-only 64/65 (normal/sanitized). Keep #63 and #64 remaining scope open.
