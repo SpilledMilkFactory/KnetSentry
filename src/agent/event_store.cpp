@@ -59,7 +59,7 @@ bool matches_search_query(const SearchQuery& q, const RawEvidence& raw, const ag
 }
 EventSummary summarize_event(const RawEvidence& raw, const agent::NormalizedEvent& event) {
     return {raw.id, event.time_ms, raw.received_ms, event.class_uid, event.activity_id, event.status_id,
-        event.mapping, category_of(event), event.severity_id, raw.mode, raw.unit};
+        event.mapping, category_of(event), event.severity_id, raw.mode, raw.unit, event.source.audit_type};
 }
 bool valid_storage_policy(const StoragePolicy& p) noexcept {
     return p.record_limit > 0 && p.record_limit <= StoragePolicy::record_ceiling &&

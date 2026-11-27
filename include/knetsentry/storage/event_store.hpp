@@ -60,6 +60,8 @@ struct EventSummary {
     agent::OcsfSeverity severity{agent::OcsfSeverity::Unknown};
     agent::JournalMode source_mode{agent::JournalMode::Metadata};
     std::string source_unit;
+    // Internal store projection only; zero for non-Audit or IPC summaries.
+    std::uint64_t audit_type{};
 };
 struct SearchQuery {
     std::optional<agent::OcsfClass> class_uid;

@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns qualification pending; issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns accepted; M7.4 Audit detection qualification pending (#63 remains open); issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 76 Release/Debug/Clazy/analysis, 69 full ASan/UBSan,
-62 core-only and 63 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 77 Release/Debug/Clazy/analysis, 70 full ASan/UBSan,
+63 core-only and 64 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -428,4 +428,8 @@ The [M7.2 contract](RULE_SCHEMA_M72.md) adds a native test in all seven presets.
 
 ### M7.3 authentication patterns
 
-The [M7.3 contract](AUTHENTICATION_PATTERNS_M73.md) adds one mandatory native regression in all seven presets: 498 configured CTests, 65 structural verifiers and 143 consolidated gates with existing privileged fixtures. Target qualification pending.
+The [M7.3 contract](AUTHENTICATION_PATTERNS_M73.md) adds one mandatory native regression in all seven presets: 498 configured CTests, 65 structural verifiers and 143 consolidated gates with existing privileged fixtures. Target qualification passed.
+
+### M7.4 system integrity
+
+The [M7.4 contract](SYSTEM_INTEGRITY_M74.md) adds one native test across all seven presets: 505 configured CTests, 66 structural verifiers and 145 consolidated gates with existing privileged fixtures. SQLite and split-store projection regressions are extended. Target qualification pending.

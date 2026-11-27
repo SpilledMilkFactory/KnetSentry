@@ -149,7 +149,7 @@ void verify() {
         const auto native = store.normalized(a.id);
         require(native.value && native.value->source.audit_type == 1100 && native.value->source.audit_id == 9 && native.value->mapping == MappingResult::AuditTypeUnmapped, "audit provenance");
         SearchQuery q; q.binding = other; q.class_uid = OcsfClass::Base;
-        const auto page = store.search(q); require(page.events.size() == 1 && page.events[0].id == a.id, "binding and class filters");
+        const auto page = store.search(q); require(page.events.size() == 1 && page.events[0].id == a.id && page.events[0].audit_type == 1100, "binding and class filters plus Audit projection");
         q.limit = 33; require(store.search(q).status == StoreStatus::Invalid, "query bound");
         q.limit = 1; q.binding = "' OR 1=1 --"; require(store.search(q).status == StoreStatus::Invalid, "invalid query binding");
         require(store.apply_retention(*plan.plan).status == StoreStatus::Stale, "index invalidates retention plan");
@@ -166,7 +166,7 @@ void verify() {
         } catch (...) { _exit(2); }
     }
     int crashed{}; require(waitpid(crash, &crashed, 0) == crash && WIFEXITED(crashed) && WEXITSTATUS(crashed) == 0, "uncommitted fixture write");
-    { SqliteEventStore store(profiles.path); const auto raw = store.raw(1); require(raw.value && !raw.value->held, "hot rollback recovery"); }
+    { SqliteEventStore store(profiles.path); const auto raw = store.raw(1); require(raw.value && !raw.value->held, "hot rollback recovery"); SearchQuery q; q.source_unit = "audit"; const auto page = store.search(q); require(page.status == StoreStatus::Ok && page.events.size() == 1 && page.events.front().audit_type == 1100, "Audit projection after restart"); }
     { External db(profiles.db()); db.sql("PRAGMA application_id=17"); }
     require(rejects(profiles.path), "foreign application ID rejected");
     Fixture unsafe;

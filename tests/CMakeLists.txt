@@ -614,3 +614,10 @@ target_link_libraries(knetsentry_authentication_patterns_test PRIVATE KnetSentry
 knetsentry_apply_project_options(knetsentry_authentication_patterns_test)
 add_test(NAME knetsentry_authentication_patterns_contract COMMAND $<TARGET_FILE:knetsentry_authentication_patterns_test>)
 set_tests_properties(knetsentry_authentication_patterns_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)
+
+# M7.4: bounded Audit record-type detections and evidence linkage.
+add_executable(knetsentry_system_integrity_test system_integrity_m74.cpp)
+target_link_libraries(knetsentry_system_integrity_test PRIVATE KnetSentry::Detection KnetSentry::EventStorage)
+knetsentry_apply_project_options(knetsentry_system_integrity_test)
+add_test(NAME knetsentry_system_integrity_contract COMMAND $<TARGET_FILE:knetsentry_system_integrity_test>)
+set_tests_properties(knetsentry_system_integrity_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)

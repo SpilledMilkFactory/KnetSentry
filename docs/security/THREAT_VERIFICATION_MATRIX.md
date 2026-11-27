@@ -292,4 +292,8 @@ The [M7.2 contract](../development/RULE_SCHEMA_M72.md) contributes partial TB-06
 
 ## M7.3 authentication patterns
 
-The [M7.3 contract](../development/AUTHENTICATION_PATTERNS_M73.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for bounded scoped correlation, unknown barriers, evidence linkage and snapshot refusal. Caller authorization and trust, endpoint truthfulness, operational scheduling and alert persistence remain separate. Target qualification pending.
+The [M7.3 contract](../development/AUTHENTICATION_PATTERNS_M73.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for bounded scoped correlation, unknown barriers, evidence linkage and snapshot refusal. Caller authorization and trust, endpoint truthfulness, operational scheduling and alert persistence remain separate. M7.3 accepted.
+
+## M7.4 privilege and system integrity
+
+The [M7.4 contract](../development/SYSTEM_INTEGRITY_M74.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for exact native Audit predicates, bounded scope, evidence references and fail-closed snapshot refusal. Audit outcome, durable FIM evidence, caller authorization and operational alerting remain separate.

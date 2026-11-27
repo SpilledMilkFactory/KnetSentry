@@ -190,3 +190,7 @@ The [versioned rule schema](../development/RULE_SCHEMA_M72.md) requires validate
 ### M7.3 authentication pattern boundary
 
 The [authentication pattern scan](../development/AUTHENTICATION_PATTERNS_M73.md) consumes a revision-bound, exact-binding and exact-source EventStore snapshot under explicit caller-established trust. It uses schema-validated predicates, bounded receiver-time windows and store-scoped evidence IDs. It does not establish account identity, authorize access, or persist alerts.
+
+### M7.4 system integrity boundary
+
+The [Audit detection scan](../development/SYSTEM_INTEGRITY_M74.md) uses policy-approved numeric record types projected from validated stored evidence, exact endpoint scope and a revision-bound snapshot. It emits bounded evidence-linked findings without inferring operation outcome, expanding OCSF mappings, changing GUI IPC, or granting operational authority.
