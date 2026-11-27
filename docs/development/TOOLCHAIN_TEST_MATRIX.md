@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.3 storage abstraction accepted; M6.4 SQLite qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.4 SQLite accepted; M6.5 integrity qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 64 Release/Debug/Clazy/analysis, 58 full ASan/UBSan,
-51 core-only and 52 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 65 Release/Debug/Clazy/analysis, 59 full ASan/UBSan,
+52 core-only and 53 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -393,3 +393,7 @@ Distro SQLite >= 3.37 is required. Synthetic dedicated private fixtures exercise
 restart, schema migration, transactional rollback, search, retention and mode
 validation. Clang analyzer diagnostics are now fatal in the analysis preset;
 no enum diagnostic is suppressed. The target inventory is 417 CTest executions.
+
+### M6.5 evidence integrity
+
+The [M6.5 regression](EVIDENCE_INTEGRITY_M65.md) is mandatory in all seven presets. It tests digest vectors, migration origin, restart, runtime tamper rejection and retention. Target: 424 CTest executions, 57 structural verifiers and 126 consolidated gates; official Ubuntu qualification pending.

@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **64 CTest tests**, including
+The Release desktop suite currently contains **65 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **58 CTests**, including the
+The full sanitizer suite currently contains **59 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **51 CTests**) and `linux-sanitize-core-only` for **52**.
+C++ test (currently **52 CTests**) and `linux-sanitize-core-only` for **53**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -437,5 +437,9 @@ See [M6.3](EVENT_STORAGE_M63.md). Run `ctest --preset linux-release -R '^knetsen
 Install the maintained Ubuntu `libsqlite3-dev` package (with shared
 `libsqlite3-0`); no SQLite CLI or downloaded amalgamation is required. See
 [M6.4](SQLITE_STORAGE_M64.md). Run `ctest --preset linux-release -R '^knetsentry_sqlite_storage_contract$' --verbose --no-tests=error`.
-Current inventories: desktop 64/58, core-only 51/52 (normal/sanitized).
+M6.4 accepted inventories: desktop 64/58, core-only 51/52 (normal/sanitized).
 Clang analyzer warnings are errors in the analysis preset, including enum casts.
+
+### M6.5 evidence integrity
+
+Run `ctest --preset linux-release -R '^knetsentry_(evidence_integrity_contract|sqlite_storage_contract)$' --verbose --no-tests=error`. See [M6.5](EVIDENCE_INTEGRITY_M65.md). Current inventories: desktop 65/59, core-only 52/53 (normal/sanitized). No production telemetry is required. Legacy schema migration requires explicit approval.

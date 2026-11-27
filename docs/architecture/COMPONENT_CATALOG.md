@@ -35,7 +35,7 @@ components are internal to the listed owner unless revised by security review.
 | `C-10` Telemetry transport receiver | TLS peer authentication, framing, rate limits; no manager-admin APIs and no SQL | `P-07` | M4.3 |
 | `C-11` Ingestion boundary | Approval, identity-to-source binding, size/schema checks, duplicate handling, reject/quarantine disposition (offline KSTD subset implemented; operational integration pending) | `P-01` | M6.1 |
 | `C-12` Normalization | OCSF 1.4.0-aligned typed KSTD projection; original provenance and timestamp separation (internal subset implemented; persistence/export pending) | `P-01` | M6.2 |
-| `C-13` Storage and retention | Database-independent interface, volatile reference and bounded SQLite development backend implemented; production raw/index placement, durable evidence, retention audit and quotas pending | `P-01` | M6.3–M6.7 |
+| `C-13` Storage and retention | Database-independent interface, volatile reference and bounded SQLite development backend with versioned record integrity implemented; production raw/index placement, durable evidence, retention audit and quotas pending | `P-01` | M6.3–M6.7 |
 | `C-14` Deterministic detection | Rule state, alerts, suppression and traceable evidence links; no AI requirement | `P-01` | M7 |
 | `C-15` Asset/coverage intelligence | Tentative asset relationships, attribution confidence, sensor health and coverage gaps | `P-01` | M9 |
 | `C-16` Incident and response gate | Case state, human approval semantics, authorized export and narrow response requests | `P-01` | M11 |
@@ -200,3 +200,8 @@ C-13 has a GUI-independent contract for raw admission, indexing, retrieval,
 search, pending replay enumeration and explicit retention preview/application.
 The bounded memory reference backend is never a durable receipt sink. The
 manager does not activate it. See [M6.3](../development/EVENT_STORAGE_M63.md).
+
+M6.5 adds admission-time SHA-256 commitments for immutable minimized evidence,
+explicit legacy baselining, and transactional verification in the development
+SQLite backend. See [M6.5](../development/EVIDENCE_INTEGRITY_M65.md). Independent
+trust anchors and production raw/index placement remain outstanding.

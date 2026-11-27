@@ -22,12 +22,19 @@ struct RawInput {
     agent::JournalMode mode{agent::JournalMode::Metadata};
     std::uint64_t received_ms{}; // Trusted receiver clock, not source time.
 };
+enum class IntegrityOrigin { LegacyBaseline, Admission };
+struct EvidenceIntegrity {
+    // SHA-256, encoding revision 1; lowercase hexadecimal.
+    std::string sha256;
+    IntegrityOrigin origin{IntegrityOrigin::LegacyBaseline};
+};
 struct RawEvidence {
     EventId id{};
     std::string binding, unit, canonical_row;
     agent::JournalMode mode{agent::JournalMode::Metadata};
     std::uint64_t received_ms{};
     bool held{};
+    std::optional<EvidenceIntegrity> integrity{}; // Absent in volatile reference store.
 };
 struct AppendResult {
     StoreStatus status{StoreStatus::Invalid};

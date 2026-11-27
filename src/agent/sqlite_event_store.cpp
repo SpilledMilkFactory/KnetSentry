@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: MIT
 #include <knetsentry/storage/sqlite_event_store.hpp>
 #include <sqlite3.h>
+#include <openssl/evp.h>
+#include <openssl/crypto.h>
+#include <array>
 #include <fcntl.h>
 #include <linux/openat2.h>
 #include <sys/file.h>
@@ -24,6 +27,7 @@ constexpr char events_sql[] = "CREATE TABLE events(id INTEGER PRIMARY KEY CHECK(
 constexpr char index_search[] = "CREATE INDEX event_search ON events(class_uid,status_id,time_ms,id) WHERE time_ms IS NOT NULL";
 constexpr char index_binding[] = "CREATE INDEX event_binding ON events(binding,id) WHERE time_ms IS NOT NULL";
 constexpr char index_retention[] = "CREATE INDEX event_retention ON events(received,id) WHERE held=0 AND time_ms IS NOT NULL";
+constexpr char integrity_sql[] = "CREATE TABLE evidence_integrity(id INTEGER PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,origin INTEGER NOT NULL CHECK(origin IN(0,1)),sha256 TEXT NOT NULL CHECK(length(sha256)=64)) STRICT";
 constexpr char filename[] = "events-m64.sqlite3";
 constexpr char journalname[] = "events-m64.sqlite3-journal";
 struct DbError { StoreStatus status; };
@@ -117,6 +121,48 @@ int open_directory(const std::string& directory) {
     if (fd < 0) { throw DbError{StoreStatus::Unavailable}; }
     return fd;
 }
+// Revision 1: domain + fixed-width big-endian integers and length-prefixed
+// strings. Immutable evidence only; mutable hold/index state is separate.
+std::string evidence_digest(const RawEvidence& raw, IntegrityOrigin origin) {
+    std::string encoded{"KnetSentry:evidence:sha256:v1"};
+    const auto number = [&encoded](std::uint64_t value) {
+        for (unsigned shift = 64; shift != 0;) {
+            shift -= 8;
+            encoded.push_back(static_cast<char>((value >> shift) & 0xffU));
+        }
+    };
+    const auto field = [&encoded, &number](std::string_view value) {
+        number(value.size()); encoded.append(value);
+    };
+    number(origin == IntegrityOrigin::Admission ? 1U : 0U);
+    number(raw.id); number(static_cast<std::uint64_t>(raw.mode)); number(raw.received_ms);
+    field(raw.binding); field(raw.unit); field(raw.canonical_row);
+    std::array<unsigned char, 32> digest{};
+    std::size_t length{};
+    if (EVP_Q_digest(nullptr, "SHA256", nullptr, encoded.data(), encoded.size(), digest.data(), &length) != 1 || length != digest.size()) {
+        throw DbError{StoreStatus::IoError};
+    }
+    constexpr std::string_view hex{"0123456789abcdef"};
+    std::string result; result.reserve(64);
+    for (const auto byte : digest) { result.push_back(hex[byte >> 4U]); result.push_back(hex[byte & 0xfU]); }
+    return result;
+}
+void insert_integrity(sqlite3* db, const RawEvidence& raw, IntegrityOrigin origin) {
+    const auto digest = evidence_digest(raw, origin);
+    Statement s(db, "INSERT INTO evidence_integrity(id,origin,sha256) VALUES(?1,?2,?3)");
+    s.number(1, raw.id); s.number(2, origin == IntegrityOrigin::Admission ? 1U : 0U);
+    s.string(3, digest); s.done();
+}
+void verify_integrity(sqlite3* db, RawEvidence& raw) {
+    Statement s(db, "SELECT origin,sha256 FROM evidence_integrity WHERE id=?1");
+    s.number(1, raw.id); require(s.row());
+    const auto numeric = s.number(0); require(numeric <= 1);
+    const auto origin = numeric == 1 ? IntegrityOrigin::Admission : IntegrityOrigin::LegacyBaseline;
+    auto digest = s.string(1); s.done();
+    const auto expected = evidence_digest(raw, origin);
+    require(digest.size() == expected.size() && CRYPTO_memcmp(digest.data(), expected.data(), expected.size()) == 0);
+    raw.integrity = EvidenceIntegrity{std::move(digest), origin};
+}
 struct Stored {
     RawEvidence raw;
     agent::NormalizedEvent event;
@@ -124,7 +170,7 @@ struct Stored {
 };
 // The same canonical parser verifies original bytes and the pinned projection.
 // No integer retrieved from disk is cast to an enum.
-Stored decode(Statement& s) {
+Stored decode(sqlite3* db, Statement& s, bool committed = true) {
     RawEvidence raw{s.number(0), s.string(1), s.string(2), s.string(3),
         agent::decode_journal_mode(static_cast<std::int64_t>(s.number(4))), s.number(5), s.number(6) == 1};
     require(valid_id(raw.id) && valid_received(raw.received_ms) && s.number(6) <= 1);
@@ -137,25 +183,27 @@ Stored decode(Statement& s) {
             s.number(11) == static_cast<std::uint64_t>(normalized->status_id) && s.number(12) == static_cast<std::uint64_t>(normalized->activity_id) &&
             s.number(13) == static_cast<std::uint64_t>(normalized->mapping));
     } else { require(s.null(10) && s.null(11) && s.null(12) && s.null(13)); }
+    if (committed) { verify_integrity(db, raw); }
     return {std::move(raw), std::move(*normalized), indexed};
 }
 std::optional<Stored> get(sqlite3* db, EventId id) {
     if (!valid_id(id)) { return std::nullopt; }
     Statement s(db, "SELECT id,binding,unit,wire,mode,received,held,endpoint,cursor,time_ms,class_uid,status_id,activity_id,mapping FROM events WHERE id=?1");
     s.number(1, id); if (!s.row()) { return std::nullopt; }
-    auto value = decode(s); s.done(); return value;
+    auto value = decode(db, s); s.done(); return value;
 }
 void validate_schema(sqlite3* db, std::uint64_t version) {
     Statement s(db, "SELECT sql FROM sqlite_schema WHERE sql IS NOT NULL ORDER BY name");
-    if (version == 2) {
+    if (version >= 2) {
         require(s.row() && s.string(0) == index_binding);
         require(s.row() && s.string(0) == index_retention);
         require(s.row() && s.string(0) == index_search);
     }
     require(s.row() && s.string(0) == events_sql);
+    if (version == 3) { require(s.row() && s.string(0) == integrity_sql); }
     require(s.row() && s.string(0) == meta_sql); s.done();
 }
-void validate_contents(sqlite3* db) {
+void validate_evidence(sqlite3* db, bool committed) {
     { Statement pin(db, "SELECT schema_version,mapping_revision FROM meta WHERE singleton=1");
         require(pin.row() && pin.string(0) == agent::NormalizedEvent::schema_version &&
             pin.number(1) == agent::NormalizedEvent::mapping_revision); pin.done(); }
@@ -164,8 +212,19 @@ void validate_contents(sqlite3* db) {
     require(next > 0 && next > scalar(db, "SELECT coalesce(max(id),0) FROM events"));
     require(scalar(db, "SELECT count(*) FROM events") <= SqliteEventStore::max_records);
     Statement rows(db, "SELECT id,binding,unit,wire,mode,received,held,endpoint,cursor,time_ms,class_uid,status_id,activity_id,mapping FROM events ORDER BY id");
-    while (rows.row()) { static_cast<void>(decode(rows)); }
+    while (rows.row()) { static_cast<void>(decode(db, rows, committed)); }
+    if (committed) {
+        require(scalar(db, "SELECT count(*) FROM evidence_integrity") == scalar(db, "SELECT count(*) FROM events"));
+    }
+}
+void validate_contents(sqlite3* db, bool committed) {
+    validate_evidence(db, committed);
     Statement check(db, "PRAGMA integrity_check(1)"); require(check.row() && check.string(0) == "ok"); check.done();
+}
+void verify_store(sqlite3* db) {
+    require(scalar(db, "PRAGMA user_version") == 3 && scalar(db, "PRAGMA application_id") == static_cast<std::uint64_t>(application_id));
+    validate_schema(db, 3);
+    validate_evidence(db, true);
 }
 RetentionPreview preview(sqlite3* db, std::uint64_t before, std::size_t limit) {
     if (!valid_received(before) || limit == 0 || limit > EventStore::max_page) { return {}; }
@@ -202,7 +261,7 @@ struct SqliteEventStore::Impl {
         return db;
     }
     ~Impl() { if (db) { sqlite3_close(db); } if (dir >= 0) { close(dir); } }
-    void open(const std::string& directory) {
+    void open(const std::string& directory, LegacyIntegrityPolicy legacy) {
         directory_path = directory;
         dir = open_directory(directory);
         struct stat st{};
@@ -241,37 +300,48 @@ struct SqliteEventStore::Impl {
         const auto version = scalar(db, "PRAGMA user_version");
         const auto app = scalar(db, "PRAGMA application_id");
         require((version == 0 && app == 0 && scalar(db, "SELECT count(*) FROM sqlite_schema") == 0) ||
-            ((version == 1 || version == 2) && app == static_cast<std::uint64_t>(application_id)));
+            ((version == 1 || version == 2 || version == 3) && app == static_cast<std::uint64_t>(application_id)));
+        if (version == 1 || version == 2) { require(legacy == LegacyIntegrityPolicy::EstablishBaseline); }
         if (version != 0) { validate_schema(db, version); }
         require(scalar(db, "PRAGMA page_size") == 4096 && scalar(db, "PRAGMA page_count") <= 2048);
         require(scalar(db, "PRAGMA max_page_count=2048") == 2048);
         { Statement mode(db, "PRAGMA journal_mode=DELETE"); require(mode.row() && mode.string(0) == "delete"); mode.done(); }
-        exec(db, "PRAGMA synchronous=EXTRA; PRAGMA temp_store=MEMORY; PRAGMA secure_delete=ON");
+        exec(db, "PRAGMA synchronous=EXTRA; PRAGMA temp_store=MEMORY; PRAGMA secure_delete=ON; PRAGMA foreign_keys=ON");
+        require(scalar(db, "PRAGMA foreign_keys") == 1);
         require(scalar(db, "PRAGMA synchronous") == 3 && scalar(db, "PRAGMA temp_store") == 2);
         Transaction tx(db);
         if (version == 0) {
             exec(db, meta_sql); exec(db, events_sql);
             exec(db, "INSERT INTO meta VALUES(1,1,1,'1.4.0',1); PRAGMA application_id=1263751988; PRAGMA user_version=1");
         }
-        validate_contents(db);
+        validate_contents(db, version == 3);
         if (version < 2) {
             exec(db, index_search); exec(db, index_binding); exec(db, index_retention); exec(db, "PRAGMA user_version=2");
         }
-        validate_schema(db, 2);
+        if (version < 3) {
+            exec(db, integrity_sql);
+            Statement rows(db, "SELECT id,binding,unit,wire,mode,received,held,endpoint,cursor,time_ms,class_uid,status_id,activity_id,mapping FROM events ORDER BY id");
+            while (rows.row()) {
+                insert_integrity(db, decode(db, rows, false).raw, IntegrityOrigin::LegacyBaseline);
+            }
+            exec(db, "PRAGMA user_version=3");
+        }
+        validate_schema(db, 3);
+        validate_contents(db, true);
         tx.commit();
         static_cast<void>(checked_db());
         if (fsync(dir) != 0) { throw DbError{StoreStatus::IoError}; }
     }
 };
-SqliteEventStore::SqliteEventStore(const std::string& directory) : impl_(std::make_unique<Impl>()) {
-    try { impl_->open(directory); }
+SqliteEventStore::SqliteEventStore(const std::string& directory, LegacyIntegrityPolicy legacy) : impl_(std::make_unique<Impl>()) {
+    try { impl_->open(directory, legacy); }
     catch (const DbError&) { throw std::runtime_error("SQLite development store activation rejected"); }
 }
 SqliteEventStore::~SqliteEventStore() = default;
 AppendResult SqliteEventStore::append(const RawInput& input) try {
     if (!valid_received(input.received_ms) || !agent::valid_delivery_binding(input.binding)) { return {}; }
     auto parsed = agent::parse_delivery_row(input.canonical_row, input.unit, input.mode); if (!parsed) { return {}; }
-    auto* db = impl_->checked_db(); Transaction tx(db);
+    auto* db = impl_->checked_db(); Transaction tx(db); verify_store(db);
     Statement lookup(db, "SELECT id FROM events WHERE endpoint=?1 AND cursor=?2");
     lookup.string(1, input.binding.substr(0, 32)); lookup.string(2, parsed->cursor);
     if (lookup.row()) {
@@ -288,10 +358,11 @@ AppendResult SqliteEventStore::append(const RawInput& input) try {
     Statement s(db, "INSERT INTO events(id,binding,unit,wire,mode,received,endpoint,cursor) VALUES(?1,?2,?3,?4,?5,?6,?7,?8)");
     s.number(1, id); s.string(2, input.binding); s.string(3, input.unit); s.string(4, input.canonical_row);
     s.number(5, static_cast<std::uint64_t>(input.mode)); s.number(6, input.received_ms); s.string(7, input.binding.substr(0, 32)); s.string(8, parsed->cursor); s.done();
+    insert_integrity(db, RawEvidence{id, std::string(input.binding), std::string(input.unit), std::string(input.canonical_row), input.mode, input.received_ms, false}, IntegrityOrigin::Admission);
     exec(db, "UPDATE meta SET next_id=next_id+1 WHERE singleton=1"); tx.commit(); return {StoreStatus::Ok, id, Durability::Durable};
 } catch (const DbError& e) { return {e.status, 0, Durability::None}; }
 IndexResult SqliteEventStore::index(EventId id) try {
-    auto* db = impl_->checked_db(); Transaction tx(db); const auto value = get(db, id);
+    auto* db = impl_->checked_db(); Transaction tx(db); verify_store(db); const auto value = get(db, id);
     if (!value) { return {StoreStatus::NotFound, Durability::None}; }
     if (value->indexed) { tx.commit(); return {StoreStatus::ExactRetry, Durability::Durable}; }
     const auto& event = value->event; advance(db);
@@ -301,11 +372,13 @@ IndexResult SqliteEventStore::index(EventId id) try {
     tx.commit(); return {StoreStatus::Ok, Durability::Durable};
 } catch (const DbError& e) { return {e.status, Durability::None}; }
 ReadResult<RawEvidence> SqliteEventStore::raw(EventId id) const try {
-    auto value = get(impl_->checked_db(), id); if (!value) { return {}; }
+    auto* db = impl_->checked_db(); Transaction tx(db); verify_store(db);
+    auto value = get(db, id); tx.commit(); if (!value) { return {}; }
     return {StoreStatus::Ok, std::move(value->raw)};
 } catch (const DbError& e) { return {e.status, std::nullopt}; }
 ReadResult<agent::NormalizedEvent> SqliteEventStore::normalized(EventId id) const try {
-    auto value = get(impl_->checked_db(), id); if (!value) { return {}; }
+    auto* db = impl_->checked_db(); Transaction tx(db); verify_store(db);
+    auto value = get(db, id); tx.commit(); if (!value) { return {}; }
     if (!value->indexed) { return {StoreStatus::IndexPending, std::nullopt}; }
     return {StoreStatus::Ok, std::move(value->event)};
 } catch (const DbError& e) { return {e.status, std::nullopt}; }
@@ -316,7 +389,7 @@ SearchPage SqliteEventStore::search(const SearchQuery& q) const try {
         (!q.binding.empty() && !agent::valid_delivery_binding(q.binding)) ||
         (q.class_uid && *q.class_uid != C::Base && *q.class_uid != C::Authentication) ||
         (q.status_id && *q.status_id != S::Unknown && *q.status_id != S::Success && *q.status_id != S::Failure)) { return page; }
-    auto* db = impl_->checked_db(); Transaction tx(db); page.revision = revision(db);
+    auto* db = impl_->checked_db(); Transaction tx(db); verify_store(db); page.revision = revision(db);
     if (q.revision && *q.revision != page.revision) { page.status = StoreStatus::Stale; return page; }
     page.status = StoreStatus::Ok;
     if (q.after >= ceiling || q.from_ms > ceiling) { tx.commit(); return page; }
@@ -334,7 +407,7 @@ SearchPage SqliteEventStore::search(const SearchQuery& q) const try {
     if (!q.binding.empty()) { s.string(6, q.binding); }
     s.number(7, q.limit + 1);
     while (s.row()) {
-        const auto v = decode(s); require(v.indexed);
+        const auto v = decode(db, s); require(v.indexed);
         if (page.events.size() == q.limit) { page.more = true; break; }
         page.events.push_back({v.raw.id, v.event.time_ms, v.raw.received_ms, v.event.class_uid, v.event.activity_id, v.event.status_id, v.event.mapping});
     }
@@ -342,7 +415,7 @@ SearchPage SqliteEventStore::search(const SearchQuery& q) const try {
 } catch (const DbError& e) { return {e.status, 0, {}, false}; }
 PendingPage SqliteEventStore::pending(EventId after, std::optional<std::uint64_t> rev, std::size_t limit) const try {
     PendingPage page; if (limit == 0 || limit > max_page || (after != 0 && !rev)) { return page; }
-    auto* db = impl_->checked_db(); Transaction tx(db); page.revision = revision(db);
+    auto* db = impl_->checked_db(); Transaction tx(db); verify_store(db); page.revision = revision(db);
     if (rev && *rev != page.revision) { page.status = StoreStatus::Stale; return page; }
     page.status = StoreStatus::Ok;
     if (after >= ceiling) { tx.commit(); return page; }
@@ -355,17 +428,17 @@ PendingPage SqliteEventStore::pending(EventId after, std::optional<std::uint64_t
     tx.commit(); return page;
 } catch (const DbError& e) { return {e.status, 0, {}, false}; }
 StoreStatus SqliteEventStore::set_hold(EventId id, bool held) try {
-    auto* db = impl_->checked_db(); Transaction tx(db); const auto value = get(db, id);
+    auto* db = impl_->checked_db(); Transaction tx(db); verify_store(db); const auto value = get(db, id);
     if (!value) { return StoreStatus::NotFound; }
     if (value->raw.held == held) { tx.commit(); return StoreStatus::ExactRetry; }
     advance(db); Statement s(db, "UPDATE events SET held=?1 WHERE id=?2"); s.number(1, held ? 1U : 0U); s.number(2, id); s.done(); tx.commit(); return StoreStatus::Ok;
 } catch (const DbError& e) { return e.status; }
 RetentionPreview SqliteEventStore::preview_retention(std::uint64_t before, std::size_t limit) const try {
-    auto* db = impl_->checked_db(); Transaction tx(db); auto result = preview(db, before, limit); tx.commit(); return result;
+    auto* db = impl_->checked_db(); Transaction tx(db); verify_store(db); auto result = preview(db, before, limit); tx.commit(); return result;
 } catch (const DbError& e) { return {e.status, std::nullopt}; }
 RetentionResult SqliteEventStore::apply_retention(const RetentionPlan& plan) try {
     if (plan.ids.size() > max_page) { return {}; }
-    auto* db = impl_->checked_db(); Transaction tx(db);
+    auto* db = impl_->checked_db(); Transaction tx(db); verify_store(db);
     if (plan.revision != revision(db)) { return {StoreStatus::Stale, 0}; }
     const auto expected = preview(db, plan.before_received_ms, plan.limit);
     if (!expected.plan || expected.plan->ids != plan.ids) { return {}; }

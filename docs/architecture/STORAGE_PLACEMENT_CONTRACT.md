@@ -108,3 +108,7 @@ KSTD rows and their indexed projection in one dedicated development database.
 Separate transactions exercise raw-before-index visibility and restart; this
 is not the approved independent raw-segment/index-volume deployment. The
 backend is not a ReceiptSink. No production volume configuration is activated.
+
+M6.5 adds record-level integrity metadata to the existing development SQLite
+store; it does not replace independently authorized production raw/index volumes.
+See [integrity model](../development/EVIDENCE_INTEGRITY_M65.md).
