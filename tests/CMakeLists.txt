@@ -593,3 +593,10 @@ target_link_libraries(knetsentry_split_storage_test PRIVATE KnetSentry::SplitSto
 knetsentry_apply_project_options(knetsentry_split_storage_test)
 add_test(NAME knetsentry_split_storage_contract COMMAND $<TARGET_FILE:knetsentry_split_storage_test>)
 set_tests_properties(knetsentry_split_storage_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M7.1: deterministic typed rule evaluation and normalized storage composition.
+add_executable(knetsentry_detection_test detection_m71.cpp)
+target_link_libraries(knetsentry_detection_test PRIVATE KnetSentry::Detection KnetSentry::EventStorage)
+knetsentry_apply_project_options(knetsentry_detection_test)
+add_test(NAME knetsentry_detection_contract COMMAND $<TARGET_FILE:knetsentry_detection_test>)
+set_tests_properties(knetsentry_detection_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)

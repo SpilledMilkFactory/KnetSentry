@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.9 ingestion and storage recovery accepted; M6.10 split storage qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection qualification pending; issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 73 Release/Debug/Clazy/analysis, 66 full ASan/UBSan,
-59 core-only and 60 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 74 Release/Debug/Clazy/analysis, 67 full ASan/UBSan,
+60 core-only and 61 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -416,4 +416,8 @@ The [M6.9 regressions](STORAGE_RECOVERY_M69.md) add two mandatory native tests t
 
 ### M6.10 split storage
 
-The [M6.10 contract](SPLIT_STORAGE_M610.md) adds one mandatory native test across all seven presets. Target inventories: 477 CTest executions, 62 structural verifiers and 137 consolidated gates with explicit private mount fixture. Actual distinct-volume testing and production integration remain separate.
+The [M6.10 contract](SPLIT_STORAGE_M610.md) adds one mandatory native test across all seven presets. Target inventories: 477 CTest executions, 62 structural verifiers and 137 consolidated gates with explicit private mount fixture. Actual mount and distinct-volume tests passed on the maintainer host; production integration remains separate.
+
+### M7.1 deterministic detection
+
+The [M7.1 contract](DETECTION_ENGINE_M71.md) adds a native test in all seven configurations. Target inventory: 484 configured CTests, 63 structural verifiers, 139 consolidated gates with all previous privileged fixtures requested.

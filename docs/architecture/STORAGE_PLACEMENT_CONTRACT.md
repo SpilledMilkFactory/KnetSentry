@@ -126,4 +126,4 @@ M6.8 permits explicitly selected existing schema-v4 development stores to be que
 
 ## M6.10 split-storage foundation
 
-See [M6.10](../development/SPLIT_STORAGE_M610.md). Separate approved directories, descriptor-relative immutable raw segments and a paired bounded SQLite projection implement an opt-in library foundation. Current approvals are boot/mount scoped; persistent UUID validation, actual distinct-volume qualification, operational integration, retention and relocation remain outstanding.
+See [M6.10](../development/SPLIT_STORAGE_M610.md). Separate approved directories, descriptor-relative immutable raw segments and a paired bounded SQLite projection implement an opt-in library foundation. Current approvals are boot/mount scoped; actual private mount detachment and distinct-filesystem persistence/restart qualification passed. Persistent UUID validation, operational integration, retention and relocation remain outstanding.

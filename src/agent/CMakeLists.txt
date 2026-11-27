@@ -44,3 +44,9 @@ add_library(knetsentry_split_storage STATIC split_event_store.cpp)
 add_library(KnetSentry::SplitStorage ALIAS knetsentry_split_storage)
 target_link_libraries(knetsentry_split_storage PUBLIC KnetSentry::EventStorage PRIVATE SQLite::SQLite3 OpenSSL::Crypto)
 knetsentry_apply_project_options(knetsentry_split_storage)
+
+# M7.1: pure bounded rule evaluation; no manager, Qt or AI linkage.
+add_library(knetsentry_detection STATIC detection_engine.cpp)
+add_library(KnetSentry::Detection ALIAS knetsentry_detection)
+target_link_libraries(knetsentry_detection PUBLIC KnetSentry::AgentJournal)
+knetsentry_apply_project_options(knetsentry_detection)
