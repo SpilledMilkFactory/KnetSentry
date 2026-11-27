@@ -76,6 +76,7 @@ struct SearchQuery {
     std::optional<agent::OcsfSeverity> severity;
     std::optional<agent::OcsfActivity> activity;
     std::optional<agent::MappingResult> mapping;
+    bool descending{}; // Storage ID order; after=0 starts either direction.
 };
 // Shared query contract for both backends; not an authorization boundary.
 [[nodiscard]] bool valid_search_query(const SearchQuery& query) noexcept;

@@ -6,6 +6,8 @@
 #include "knetsentry/service/configuration.hpp"
 #include "knetsentry/service/local_ipc.hpp"
 #include "knetsentry/service/audit.hpp"
+#include <knetsentry/storage/sqlite_event_store.hpp>
+#include <memory>
 
 #include <csignal>
 #include <iostream>
@@ -35,11 +37,15 @@ using knetsentry::service::AuditLog;
 }
 
 [[nodiscard]] int run(std::string_view configuration_path, std::string_view ipc_dir = {},
-                      std::string_view audit_dir = {}, std::string_view enrollment_dir = {}) {
+                      std::string_view audit_dir = {}, std::string_view enrollment_dir = {},
+                      std::string_view event_dir = {}) {
     // A management service must never accidentally inherit root authority.
     if (geteuid() == 0) {
         std::cerr << "knetsentryd: root execution prohibited\n";
         return 3;
+    }
+    if (!event_dir.empty() && (ipc_dir.empty() || audit_dir.empty() || event_dir == ipc_dir || event_dir == audit_dir || event_dir == enrollment_dir)) {
+        std::cerr << "knetsentryd: event inspection requires separate private storage, IPC and persistent audit directories\n"; return 2;
     }
     DiagnosticLogger logger(std::cerr);
     Lifecycle lifecycle;
@@ -102,7 +108,15 @@ using knetsentry::service::AuditLog;
 
     // M2.3: local socket is strictly opt-in; bind and validate BEFORE ready.
     // Invalid directories, existing socket entries, and bind errors deny startup.
+    std::unique_ptr<knetsentry::storage::SqliteEventStore> event_store;
     knetsentry::service::LocalIpcServer ipc;
+    if (!event_dir.empty()) {
+        try {
+            using namespace knetsentry::storage;
+            event_store = std::make_unique<SqliteEventStore>(std::string(event_dir), LegacyIntegrityPolicy::Reject, StoragePolicy{}, StorageOpenMode::ExistingV4);
+            if (!ipc.set_event_store(*event_store)) { return fail(1); }
+        } catch (...) { std::cerr << "knetsentryd: event store unavailable (no fallback)\n"; return fail(1); }
+    }
     if (!ipc_dir.empty() && !ipc.open(ipc_dir, stop_signals)) {
         static_cast<void>(lifecycle.mark_failed());
         static_cast<void>(publish(logger, DiagnosticLevel::Error,
@@ -167,7 +181,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     if (argc == 2 && std::string_view(argv[1]) == "--help") {
-        std::cout << "Usage: knetsentryd [--help|--version|--config ABS_PATH|--check-config ABS_PATH|--ipc-dir ABS_DIR|--audit-dir ABS_DIR|--enrollment-dir ABS_DIR]\n"
+        std::cout << "Usage: knetsentryd [--help|--version|--config ABS_PATH|--check-config ABS_PATH|--ipc-dir ABS_DIR|--audit-dir ABS_DIR|--enrollment-dir ABS_DIR|--event-store-dir ABS_DIR]\n"
                      "Run options may be combined once each; audit requires a fresh private directory.\n"
                      "Foreground-only, unprivileged lifecycle foundation.\n"
                      "Stop with SIGTERM or SIGINT; no monitoring or remote listeners.\n";
@@ -185,7 +199,8 @@ int main(int argc, char* argv[]) {
     std::string_view ipc_dir;
     std::string_view audit_dir;
     std::string_view enrollment_dir;
-    if (argc <= 9 && argc % 2 == 1) {
+    std::string_view event_dir;
+    if (argc <= 11 && argc % 2 == 1) {
         bool valid = true;
         for (int i = 1; i < argc; i += 2) {
             const std::string_view option(argv[i]);
@@ -195,9 +210,10 @@ int main(int argc, char* argv[]) {
             else if (option == "--ipc-dir" && ipc_dir.empty()) { ipc_dir = value; }
             else if (option == "--audit-dir" && audit_dir.empty()) { audit_dir = value; }
             else if (option == "--enrollment-dir" && enrollment_dir.empty()) { enrollment_dir = value; }
+            else if (option == "--event-store-dir" && event_dir.empty()) { event_dir = value; }
             else { valid = false; break; }
         }
-        if (valid) { return run(config_path, ipc_dir, audit_dir, enrollment_dir); }
+        if (valid) { return run(config_path, ipc_dir, audit_dir, enrollment_dir, event_dir); }
     }
     std::cerr << "knetsentryd: unsupported argument (see --help)\n";
     return 2;

@@ -5,22 +5,22 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M6.6 — Event search and filtering.**
+**Accepted baseline: M6.7 — Retention, storage quotas and cleanup.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
 M4.8 and M5.1–M5.8 are merged (M5.5 offline foundation only). M5.9 local aggregate agent status in Dashboard and Assets is qualified and merged. Multi-endpoint authenticated status integration remains outstanding (#50).
 Issue #46 operational network/manager integration remains outstanding.
 M6.1 bounded offline authenticated event ingestion is qualified and merged; operational and generic envelope integration (#51) remain outstanding.
 M6.2 typed OCSF-aligned normalization of the KSTD subset is qualified and merged.
-M6.3–M6.6 storage, integrity and search foundations are qualified and merged. M6.7 adds configured development storage quotas, aggregate warnings and explicit age-based cleanup; target qualification is pending.
+M6.3–M6.7 storage, integrity, search, quotas and explicit cleanup foundations are qualified and merged. M6.8 adds opt-in manager-mediated stored event exploration; target qualification is pending.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
 
 | Area | Implemented behavior |
 | --- | --- |
-| Desktop | Seven Qt 6/Kirigami sections; global health indicator and heartbeat; owned-manager Play/Stop and cleanup; Dashboard health, read-only Settings scope and Assets enrollment roster; explicit local agent status in Dashboard/Assets |
-| Manager | Non-root lifecycle, strict lifecycle-only v1 configuration, opt-in same-UID/GID authenticated Unix IPC (`STATUS`, `HEALTH`, `AGENTS`), bounded health and protected audit logging |
+| Desktop | Seven Qt 6/Kirigami sections; global health indicator and heartbeat; owned-manager Play/Stop and cleanup; Dashboard health, read-only Settings scope and Assets enrollment roster; explicit local agent status in Dashboard/Assets; bounded stored event exploration through an explicitly selected foreground manager |
+| Manager | Non-root lifecycle, strict lifecycle-only v1 configuration, opt-in same-UID/GID authenticated Unix IPC (`STATUS`, `HEALTH`, `AGENTS`, opt-in audited `EVENTS`), bounded health and protected audit logging |
 | Deployment | Explicit development systemd deployment under a dedicated non-login identity with confinement; ordinary desktop IPC remains separate |
 | Network security | Default-deny preflight, strict IPv4/IPv6 prefixes and interface binding, Linux effective/FIB route checks, sticky authorization invalidation, optional dedicated-UID deny-all nftables profile |
 | Agent protocol | KSAP 1.0 bounded HELLO/HEARTBEAT codec and separate KSTD 1.0 bounded offline telemetry/ACK exchange; no operational transport |
@@ -30,7 +30,7 @@ This is an unreleased development baseline, not a v1.0.0 security qualification.
 | Endpoint agent | Independent foreground process, strict v1 startup configuration, bounded static collector lifecycle and non-root capability checks; opt-in selected journal metadata, authentication categories and journal-mediated audit records and explicit file integrity polling under mandatory explicit privacy policy; no operational network |
 | Event ingestion | Bounded per-source authenticated KSTD receipt pipeline, canonical validation, reject/overload disposition counters; no deployed manager ingress |
 | Event normalization | OCSF 1.4.0-aligned internal projection, native provenance, explicit mapping disposition and post-commit typed result; no normalized persistence or OCSF export |
-| Event storage | Database-independent storage interface, volatile reference and transactional SQLite development backend with record integrity commitments and typed bounded search; no operational persistence or ACK integration |
+| Event storage | Database-independent storage interface, volatile reference and transactional SQLite development backend with record integrity commitments and typed bounded search; opt-in read-only inspection of existing development stores; no operational persistence or ACK integration |
 | Telemetry delivery | Explicit protected FIFO outbox, durable bounded inbox and authenticated receipt/retry contract (offline); no running manager receiver |
 | Agent health | Offline TLS-backed KSAP reporting, current enrollment rechecks, bounded health snapshots and reconnect scheduling; no deployed agent |
 | Verification | Mandatory compiled regressions, static analysis, sanitizer configurations, strict QML diagnostics, isolated dual-stack kernel firewall and topology fixtures |
@@ -39,10 +39,20 @@ The policy engine does not grant operational transport authority. The manager
 does not publish active network approvals or network denial events. Local IPC
 rejection counters are not network incidents. The production firewall profile
 is not installed automatically; test-only positive permissions are not deployment
-rules. Monitoring is unavailable, and no operational remote telemetry transport, sensor, event database, detection,
+rules. Monitoring is unavailable, and no operational remote telemetry transport, sensor, production event database, detection,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M6.7 maintainer acceptance (2026-11-27 UTC, applied working tree based on
+`265058e`) recorded 130 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 438 configured
+CTest executions, 59 structural verifiers and nine green hosted checks
+(`10359f9`). Focused Release 12/12, analysis 6/6, 90 repeated Release and 45
+repeated sanitized executions passed; a further captured sanitized rerun
+also passed 45/45. Direct storage, integrity, normalization and receipt
+regressions passed. Analysis diagnostics, installed manager byte comparison,
+independent agent lifecycle and reported GUI review and merge passed.
+Production volume quotas and retention authorization remain open.
 
 M6.6 maintainer acceptance (2026-11-27 UTC, applied working tree based on
 `ad603ef`) recorded 128 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 431 configured
@@ -264,7 +274,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
-| M5–M7 — functional SIEM foundations | M6.6 search accepted; M6.7 retention and quota qualification pending; operational integration outstanding |
+| M5–M7 — functional SIEM foundations | M6.7 retention accepted; M6.8 stored event explorer qualification pending; operational integration outstanding |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |

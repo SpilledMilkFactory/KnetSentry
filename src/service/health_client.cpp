@@ -72,9 +72,14 @@ HealthClient::~HealthClient() noexcept { cancel(); }
 void HealthClient::finish(HealthQueryState state) noexcept {
     if (fd_ >= 0) { static_cast<void>(::close(fd_)); fd_ = -1; }
     state_ = state;
-    if (state != HealthQueryState::Available) { snapshot_.reset(); roster_.reset(); }
+    if (state != HealthQueryState::Available) { snapshot_.reset(); roster_.reset(); events_.reset(); }
 }
-void HealthClient::cancel() noexcept { finish(HealthQueryState::Idle); }
+void HealthClient::cancel() noexcept {
+    finish(HealthQueryState::Idle);
+    event_query_ = {};
+    request_.fill(0);
+    response_.fill(0);
+}
 
 void HealthClient::begin(std::string_view directory, std::string_view request_id) noexcept {
     begin_query(directory, request_id, false);
@@ -82,9 +87,13 @@ void HealthClient::begin(std::string_view directory, std::string_view request_id
 void HealthClient::begin_agents(std::string_view directory, std::string_view request_id) noexcept {
     begin_query(directory, request_id, true);
 }
-void HealthClient::begin_query(std::string_view directory, std::string_view request_id, bool agents) noexcept {
+void HealthClient::begin_events(std::string_view directory, std::string_view request_id, const EventQuery& query) noexcept {
+    begin_query(directory, request_id, false, &query);
+}
+void HealthClient::begin_query(std::string_view directory, std::string_view request_id, bool agents, const EventQuery* query) noexcept {
     cancel();
     agents_ = agents;
+    event_request_ = query != nullptr;
     state_ = HealthQueryState::Unavailable;
     constexpr std::string_view suffix = "/manager.sock";
     sockaddr_un address{};
@@ -114,14 +123,28 @@ void HealthClient::begin_query(std::string_view directory, std::string_view requ
     const auto connected = ::connect(fd_, reinterpret_cast<const sockaddr*>(&address), sizeof(address));
     if (connected != 0 && errno != EINPROGRESS) { finish(HealthQueryState::Unavailable); return; }
     std::ranges::copy(request_id, request_id_.begin());
-    const std::string_view prefix = agents_ ? "KSIPC/1 AGENTS " : "KSIPC/1 HEALTH ";
-    const auto size = prefix.size() + 16U + 1U;
-    request_[0] = request_[1] = request_[2] = 0;
-    request_[3] = static_cast<char>(size);
-    std::ranges::copy(prefix, request_.begin() + 4);
-    std::ranges::copy(request_id_, request_.begin() + 4 + static_cast<std::ptrdiff_t>(prefix.size()));
-    request_[size + 3U] = '\n';
-    request_size_ = size + 4U;
+    if (query) {
+        try {
+            event_query_ = *query;
+            const auto payload = encode_event_request(event_query_, request_id);
+            if (payload.empty() || payload.size() > max_event_request) { finish(HealthQueryState::Invalid); return; }
+            const auto size = payload.size();
+            request_[0] = request_[1] = 0;
+            request_[2] = static_cast<char>((size >> 8U) & 255U);
+            request_[3] = static_cast<char>(size & 255U);
+            std::ranges::copy(payload, request_.begin() + 4);
+            request_size_ = size + 4;
+        } catch (...) { finish(HealthQueryState::Invalid); return; }
+    } else {
+        const std::string_view prefix = agents_ ? "KSIPC/1 AGENTS " : "KSIPC/1 HEALTH ";
+        const auto size = prefix.size() + 16U + 1U;
+        request_[0] = request_[1] = request_[2] = 0;
+        request_[3] = static_cast<char>(size);
+        std::ranges::copy(prefix, request_.begin() + 4);
+        std::ranges::copy(request_id_, request_.begin() + 4 + static_cast<std::ptrdiff_t>(prefix.size()));
+        request_[size + 3U] = '\n';
+        request_size_ = size + 4U;
+    }
     sent_ = received_ = 0;
     phase_ = Phase::Connect;
     state_ = HealthQueryState::Pending;
@@ -164,15 +187,18 @@ void HealthClient::advance() noexcept {
     received_ += static_cast<std::size_t>(count);
     if (received_ >= 4) {
         const auto size = frame_size(response_.data());
-        if (size == 0 || size > (agents_ ? max_roster_response_size : max_health_response_size) || received_ > size + 4) {
+        if (size == 0 || size > (event_request_ ? max_event_response : (agents_ ? max_roster_response_size : max_health_response_size)) || received_ > size + 4) {
             finish(HealthQueryState::Invalid); return;
         }
         if (count == 0 && received_ == size + 4) {
             const std::string_view payload(response_.data() + 4, size);
             const std::string_view id(request_id_.data(), request_id_.size());
-            if (agents_) { roster_ = decode_roster(payload, id); }
+            if (event_request_) {
+                try { events_ = decode_event_page(payload, id, event_query_); }
+                catch (...) { finish(HealthQueryState::Invalid); return; }
+            } else if (agents_) { roster_ = decode_roster(payload, id); }
             else { snapshot_ = decode_health(payload, id); }
-            finish((snapshot_ || roster_) ? HealthQueryState::Available : HealthQueryState::Invalid);
+            finish((snapshot_ || roster_ || events_) ? HealthQueryState::Available : HealthQueryState::Invalid);
             return;
         }
     }

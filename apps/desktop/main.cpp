@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #include "knetsentry/core/build_info.hpp"
 #include "service_health_model.hpp"
+#include "event_explorer_model.hpp"
 #include "daemon_control.hpp"
 #include "knetsentry/core/diagnostics.hpp"
 
@@ -36,13 +37,13 @@ void set_application_metadata() {
 
 void configure_parser(QCommandLineParser &parser) {
     parser.setApplicationDescription(QStringLiteral(
-        "KnetSentry read-only network scope, enrollment inspection and local manager health; no SIEM monitoring is active."));
+        "KnetSentry read-only network scope, enrollment, stored event inspection and local manager health; no SIEM monitoring is active."));
     parser.addHelpOption();
     parser.addOption(QCommandLineOption(QStringLiteral("agent-status-stdin"),
         QStringLiteral("Read aggregate local agent status from an explicitly inherited pipe on stdin.")));
     parser.addVersionOption();
     parser.addOption(QCommandLineOption(QStringLiteral("ipc-dir"),
-        QStringLiteral("Explicit private manager IPC directory for read-only health and enrollment inspection."),
+        QStringLiteral("Explicit private manager IPC directory for read-only health, enrollment and opted-in event inspection."),
         QStringLiteral("absolute-directory")));
 }
 
@@ -146,6 +147,9 @@ int main(int argc, char *argv[]) {
     const QCommandLineOption telemetry_smoke_test(QStringLiteral("self-test-telemetry"),
         QStringLiteral("Verify rendered local status and disconnect using a synthetic test pipe."));
     parser.addOption(telemetry_smoke_test);
+    const QCommandLineOption events_smoke_test(QStringLiteral("self-test-events"),
+        QStringLiteral("Verify rendered event explorer against the private M6.8 synthetic store."));
+    parser.addOption(events_smoke_test);
     parser.process(app);
 
     // The model outlives QML and is not a management authority.
@@ -156,10 +160,13 @@ int main(int argc, char *argv[]) {
     }
     knetsentry::desktop::DaemonControl control(health, parser.isSet(QStringLiteral("ipc-dir")),
         QDir::cleanPath(QCoreApplication::applicationDirPath() + QStringLiteral("/../manager/knetsentryd")));
+    knetsentry::desktop::EventExplorerModel events(parser.value(QStringLiteral("ipc-dir")));
     QQmlApplicationEngine engine;
+    QQmlEngine::setObjectOwnership(&events, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&health, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&control, QQmlEngine::CppOwnership);
-    engine.setInitialProperties({{QStringLiteral("healthModel"), QVariant::fromValue(&health)},
+    engine.setInitialProperties({{QStringLiteral("eventModel"), QVariant::fromValue(&events)},
+                                 {QStringLiteral("healthModel"), QVariant::fromValue(&health)},
                                  {QStringLiteral("daemonControl"), QVariant::fromValue(&control)}});
     engine.loadFromModule("io.github.spilledmilkfactory.KnetSentry", "Main");
     if (engine.rootObjects().size() != 1) {
@@ -257,6 +264,49 @@ int main(int argc, char *argv[]) {
         std::cout << "M3.8 Settings scope visibility and unavailable state: PASS\n";
         std::cout << "KnetSentry M1.4 primary navigation: PASS (7 sections; no telemetry)\n";
         return 0;
+    }
+    if (parser.isSet(events_smoke_test)) {
+        if (!parser.isSet(QStringLiteral("ipc-dir"))) { return 1; }
+        QObject* root = engine.rootObjects().constFirst();
+        if (!root->setProperty("navigationRequest", QStringLiteral("events"))) { return 1; }
+        QCoreApplication::processEvents();
+        QObject* search_button = root->property("currentEventSearchButton").value<QObject*>();
+        QObject* next_button = root->property("currentEventNextButton").value<QObject*>();
+        if (!search_button || !next_button || !QMetaObject::invokeMethod(search_button, "clicked")) { return 1; }
+        QEventLoop loop;
+        QTimer check;
+        QTimer deadline;
+        deadline.setSingleShot(true);
+        int stage = 0;
+        QObject::connect(&deadline, &QTimer::timeout, &loop, [&loop] { loop.exit(1); });
+        QObject::connect(&check, &QTimer::timeout, &loop, [&] {
+            if (events.busy()) { return; }
+            const auto count = root->property("currentEventCount").toInt();
+            if (stage == 0) {
+                if (count != 8 || !events.more() || !events.data(events.index(0, 0), Qt::DisplayRole).toString().startsWith(QStringLiteral("#1 ·"))) { loop.exit(1); return; }
+                events.select(0);
+                if (!root->property("currentEventDetail").toString().startsWith(QStringLiteral("Event ID: 1\n")) ||
+                    !root->property("currentEventStatus").toString().contains(QStringLiteral("stored snapshot")) ||
+                    !QMetaObject::invokeMethod(next_button, "clicked")) { loop.exit(1); return; }
+                ++stage;
+            } else if (stage == 1) {
+                if (count != 8 || !events.more() || !events.detail().isEmpty() ||
+                    !events.data(events.index(0, 0), Qt::DisplayRole).toString().startsWith(QStringLiteral("#9 ·"))) { loop.exit(1); return; }
+                events.search(QStringLiteral("ssh.service"), 1, 2, true);
+                ++stage;
+            } else if (stage == 2) {
+                if (count != 8 || !events.more() || !events.data(events.index(0, 0), Qt::DisplayRole).toString().startsWith(QStringLiteral("#20 ·"))) { loop.exit(1); return; }
+                events.search(QStringLiteral("fixture.service"), -1, -1, false);
+                ++stage;
+            } else {
+                if (count != 0 || events.more() || !root->property("currentEventStatus").toString().startsWith(QStringLiteral("No matching stored events")) ||
+                    !root->setProperty("navigationRequest", QStringLiteral("dashboard")) || events.rowCount() != 0 || !events.detail().isEmpty()) { loop.exit(1); return; }
+                std::cout << "M6.8 rendered event explorer: PASS\n";
+                loop.exit(0);
+            }
+        });
+        check.start(50); deadline.start(10000);
+        return loop.exec();
     }
     if (parser.isSet(telemetry_smoke_test)) {
         if (!parser.isSet(QStringLiteral("agent-status-stdin"))) { return 1; }

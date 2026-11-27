@@ -46,7 +46,7 @@ bool valid_search_query(const SearchQuery& q) noexcept {
         (q.after == 0 || q.revision.has_value());
 }
 bool matches_search_query(const SearchQuery& q, const RawEvidence& raw, const agent::NormalizedEvent& event) noexcept {
-    return raw.id > q.after && event.time_ms >= q.from_ms && event.time_ms <= q.through_ms &&
+    return (q.descending ? (q.after == 0 || raw.id < q.after) : raw.id > q.after) && event.time_ms >= q.from_ms && event.time_ms <= q.through_ms &&
         (q.binding.empty() || q.binding == raw.binding) &&
         (q.source_unit.empty() || q.source_unit == raw.unit) &&
         (!q.source_mode || *q.source_mode == raw.mode) &&
@@ -161,8 +161,9 @@ SearchPage MemoryEventStore::search(const SearchQuery& query) const {
     page.revision = revision_;
     if (query.revision && *query.revision != revision_) { page.status = StoreStatus::Stale; return page; }
     page.status = StoreStatus::Ok;
-    for (const auto& entry : entries_) {
-        if (!entry.normalized || entry.raw.id <= query.after) { continue; }
+    for (std::size_t i = 0; i < entries_.size(); ++i) {
+        const auto& entry = entries_[query.descending ? entries_.size() - 1 - i : i];
+        if (!entry.normalized) { continue; }
         const auto& event = *entry.normalized;
         if (!matches_search_query(query, entry.raw, event)) { continue; }
         if (page.events.size() == query.limit) { page.more = true; break; }

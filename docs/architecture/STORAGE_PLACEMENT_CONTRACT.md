@@ -122,3 +122,5 @@ caller-supplied limits, exposes warnings and reusable pages, and preserves
 explicit retention/holds. This does not establish a total per-volume disk quota
 or independent production placement and reserve enforcement.
 See [retention contract](../development/STORAGE_RETENTION_M67.md).
+
+M6.8 permits explicitly selected existing schema-v4 development stores to be queried through the foreground manager. The desktop never opens SQLite. This read-only query interface does not approve production raw/index placement or implement independent filesystem-enforced read-only storage access. See [M6.8](../development/EVENT_EXPLORER_M68.md).

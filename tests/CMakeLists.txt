@@ -559,3 +559,21 @@ target_link_libraries(knetsentry_storage_retention_test PRIVATE KnetSentry::Sqli
 knetsentry_apply_project_options(knetsentry_storage_retention_test)
 add_test(NAME knetsentry_storage_retention_contract COMMAND $<TARGET_FILE:knetsentry_storage_retention_test>)
 set_tests_properties(knetsentry_storage_retention_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M6.8: real bounded search IPC and persisted synthetic fixture.
+add_executable(knetsentry_event_explorer_test event_explorer_m68.cpp)
+target_link_libraries(knetsentry_event_explorer_test PRIVATE KnetSentry::Service KnetSentry::SqliteStorage Threads::Threads)
+knetsentry_apply_project_options(knetsentry_event_explorer_test)
+add_test(NAME knetsentry_event_explorer_contract COMMAND $<TARGET_FILE:knetsentry_event_explorer_test>)
+set_tests_properties(knetsentry_event_explorer_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)
+add_test(NAME knetsentry_event_explorer_runtime COMMAND "${Python3_EXECUTABLE}" -B
+    "${PROJECT_SOURCE_DIR}/tests/event_explorer_runtime_m68.py" $<TARGET_FILE:knetsentryd> $<TARGET_FILE:knetsentry_event_explorer_test>)
+set_tests_properties(knetsentry_event_explorer_runtime PROPERTIES LABELS "integration;ipc;security;regression;privacy" TIMEOUT 75)
+if(KNETSENTRY_BUILD_DESKTOP AND NOT KNETSENTRY_ENABLE_SANITIZERS)
+    add_test(NAME knetsentry_gui_event_explorer_runtime COMMAND "${Python3_EXECUTABLE}" -B
+        "${PROJECT_SOURCE_DIR}/tests/event_explorer_runtime_m68.py" $<TARGET_FILE:knetsentryd>
+        $<TARGET_FILE:knetsentry_event_explorer_test> $<TARGET_FILE:knetsentry>)
+    set_tests_properties(knetsentry_gui_event_explorer_runtime PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+        LABELS "qt;desktop;qml;integration;ipc;security;regression;privacy" TIMEOUT 75)
+endif()

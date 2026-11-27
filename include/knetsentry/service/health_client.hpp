@@ -4,6 +4,7 @@
 
 #include "knetsentry/service/health.hpp"
 #include "knetsentry/service/agent_roster.hpp"
+#include "knetsentry/service/event_query.hpp"
 
 #include <array>
 #include <chrono>
@@ -28,13 +29,15 @@ public:
     HealthClient& operator=(const HealthClient&) = delete;
     void begin(std::string_view directory, std::string_view request_id) noexcept;
     void begin_agents(std::string_view directory, std::string_view request_id) noexcept;
+    void begin_events(std::string_view directory, std::string_view request_id, const EventQuery& query) noexcept;
+    [[nodiscard]] const std::optional<EventPage>& events() const noexcept { return events_; }
     void advance() noexcept;
     void cancel() noexcept;
     [[nodiscard]] HealthQueryState state() const noexcept { return state_; }
     [[nodiscard]] const std::optional<HealthSnapshot>& snapshot() const noexcept { return snapshot_; }
     [[nodiscard]] const std::optional<enrollment::Roster>& roster() const noexcept { return roster_; }
 private:
-    void begin_query(std::string_view directory, std::string_view request_id, bool agents) noexcept;
+    void begin_query(std::string_view directory, std::string_view request_id, bool agents, const EventQuery* query = nullptr) noexcept;
     void finish(HealthQueryState state) noexcept;
     [[nodiscard]] bool verify_peer() const noexcept;
     enum class Phase { Connect, Send, Receive };
@@ -43,7 +46,7 @@ private:
     HealthQueryState state_{HealthQueryState::Idle};
     std::chrono::steady_clock::time_point deadline_{};
     std::array<char, 16> request_id_{};
-    std::array<char, 64> request_{};
+    std::array<char, max_event_request + 4> request_{};
     std::size_t request_size_{0};
     std::size_t sent_{0};
     // One extra byte detects oversized/trailing data without allocating.
@@ -52,6 +55,9 @@ private:
     std::optional<HealthSnapshot> snapshot_{};
     std::optional<enrollment::Roster> roster_{};
     bool agents_{};
+    bool event_request_{};
+    EventQuery event_query_;
+    std::optional<EventPage> events_;
 };
 
 } // namespace knetsentry::service
