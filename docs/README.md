@@ -76,6 +76,7 @@ qualification targets, not measured results.
 - [M6.4 — SQLite metadata and indexed event storage](development/SQLITE_STORAGE_M64.md)
 - [M6.5 — Original-event preservation and integrity metadata](development/EVIDENCE_INTEGRITY_M65.md)
 - [M6.6 — Event search and filtering](development/EVENT_SEARCH_M66.md)
+- [M6.7 — Retention, storage quotas and cleanup](development/STORAGE_RETENTION_M67.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)

@@ -271,7 +271,7 @@ struct SqliteEventStore::Impl {
         return db;
     }
     ~Impl() { if (db) { sqlite3_close(db); } if (dir >= 0) { close(dir); } }
-    void open(const std::string& directory, LegacyIntegrityPolicy legacy) {
+    void open(const std::string& directory, LegacyIntegrityPolicy legacy, const StoragePolicy& policy) {
         directory_path = directory;
         dir = open_directory(directory);
         struct stat st{};
@@ -313,8 +313,11 @@ struct SqliteEventStore::Impl {
             ((version == 1 || version == 2 || version == 3 || version == 4) && app == static_cast<std::uint64_t>(application_id)));
         if (version == 1 || version == 2) { require(legacy == LegacyIntegrityPolicy::EstablishBaseline); }
         if (version != 0) { validate_schema(db, version); }
-        require(scalar(db, "PRAGMA page_size") == 4096 && scalar(db, "PRAGMA page_count") <= 2048);
-        require(scalar(db, "PRAGMA max_page_count=2048") == 2048);
+        require(scalar(db, "PRAGMA page_size") == StoragePolicy::page_bytes &&
+            scalar(db, "PRAGMA page_count") <= policy.database_page_limit);
+        // Only validated bounded numeric policy input; PRAGMA does not accept bind parameters.
+        const auto page_cap = "PRAGMA max_page_count=" + std::to_string(policy.database_page_limit);
+        require(scalar(db, page_cap.c_str()) == policy.database_page_limit);
         { Statement mode(db, "PRAGMA journal_mode=DELETE"); require(mode.row() && mode.string(0) == "delete"); mode.done(); }
         exec(db, "PRAGMA synchronous=EXTRA; PRAGMA temp_store=MEMORY; PRAGMA secure_delete=ON; PRAGMA foreign_keys=ON");
         require(scalar(db, "PRAGMA foreign_keys") == 1);
@@ -350,11 +353,28 @@ struct SqliteEventStore::Impl {
         if (fsync(dir) != 0) { throw DbError{StoreStatus::IoError}; }
     }
 };
-SqliteEventStore::SqliteEventStore(const std::string& directory, LegacyIntegrityPolicy legacy) : impl_(std::make_unique<Impl>()) {
-    try { impl_->open(directory, legacy); }
+SqliteEventStore::SqliteEventStore(const std::string& directory, LegacyIntegrityPolicy legacy, StoragePolicy policy)
+    : EventStore(policy), impl_(std::make_unique<Impl>()) {
+    try { impl_->open(directory, legacy, policy); }
     catch (const DbError&) { throw std::runtime_error("SQLite development store activation rejected"); }
 }
 SqliteEventStore::~SqliteEventStore() = default;
+ReadResult<StorageUsage> SqliteEventStore::usage() const try {
+    auto* db = impl_->checked_db(); Transaction tx(db); verify_store(db);
+    StorageUsage result;
+    result.records = static_cast<std::size_t>(scalar(db, "SELECT count(*) FROM events"));
+    result.wire_bytes = static_cast<std::size_t>(scalar(db, "SELECT coalesce(sum(length(CAST(wire AS BLOB))),0) FROM events"));
+    result.held = static_cast<std::size_t>(scalar(db, "SELECT count(*) FROM events WHERE held=1"));
+    result.pending = static_cast<std::size_t>(scalar(db, "SELECT count(*) FROM events WHERE time_ms IS NULL"));
+    const auto pages = scalar(db, "PRAGMA page_count");
+    const auto free = scalar(db, "PRAGMA freelist_count");
+    require(pages <= policy().database_page_limit && free <= pages);
+    result.disk = DiskUsage{static_cast<std::size_t>(pages), static_cast<std::size_t>(free),
+        quota_warning(static_cast<std::size_t>(pages), policy().database_page_limit, policy().warning_percent)};
+    result.record_warning = quota_warning(result.records, policy().record_limit, policy().warning_percent);
+    result.wire_warning = quota_warning(result.wire_bytes, policy().wire_byte_limit, policy().warning_percent);
+    tx.commit(); return {StoreStatus::Ok, result};
+} catch (const DbError& e) { return {e.status, std::nullopt}; }
 AppendResult SqliteEventStore::append(const RawInput& input) try {
     if (!valid_received(input.received_ms) || !agent::valid_delivery_binding(input.binding)) { return {}; }
     auto parsed = agent::parse_delivery_row(input.canonical_row, input.unit, input.mode); if (!parsed) { return {}; }
@@ -367,7 +387,9 @@ AppendResult SqliteEventStore::append(const RawInput& input) try {
         if (raw.binding != input.binding || raw.unit != input.unit || raw.mode != input.mode || raw.canonical_row != input.canonical_row) { return {StoreStatus::Conflict, 0, Durability::None}; }
         tx.commit(); return {StoreStatus::ExactRetry, id, Durability::Durable};
     }
-    if (scalar(db, "SELECT count(*) FROM events") >= max_records) { return {StoreStatus::Capacity, 0, Durability::None}; }
+    const auto used = scalar(db, "SELECT coalesce(sum(length(CAST(wire AS BLOB))),0) FROM events");
+    if (scalar(db, "SELECT count(*) FROM events") >= policy().record_limit || used >= policy().wire_byte_limit ||
+        input.canonical_row.size() > policy().wire_byte_limit - used) { return {StoreStatus::Capacity, 0, Durability::None}; }
     const auto id = scalar(db, "SELECT next_id FROM meta WHERE singleton=1");
     if (id == ceiling) { return {StoreStatus::Exhausted, 0, Durability::None}; }
     require(valid_id(id));

@@ -26,7 +26,7 @@ CORE_TESTS = {
     "knetsentry_collector_recovery_contract",
     "knetsentry_telemetry_status_contract", "knetsentry_telemetry_status_runtime",
     "knetsentry_event_ingestion_contract", "knetsentry_event_normalization_contract",
-    "knetsentry_event_storage_contract", "knetsentry_sqlite_storage_contract", "knetsentry_evidence_integrity_contract", "knetsentry_event_search_contract",
+    "knetsentry_event_storage_contract", "knetsentry_sqlite_storage_contract", "knetsentry_evidence_integrity_contract", "knetsentry_event_search_contract", "knetsentry_storage_retention_contract",
     "knetsentry_identity_contract", "knetsentry_tls_contract",
     "knetsentry_enrollment_contract", "knetsentry_enrollment_admin",
     "knetsentry_credential_lifecycle",
