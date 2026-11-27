@@ -10,10 +10,12 @@ namespace knetsentry::storage {
 // selector or ReceiptSink. Serialized owner only. Opening failures throw a
 // generic runtime_error; operation failures return typed storage outcomes.
 enum class LegacyIntegrityPolicy { Reject, EstablishBaseline };
+enum class StorageOpenMode { Initialize, ExistingV4 };
 class SqliteEventStore final : public EventStore {
 public:
     explicit SqliteEventStore(const std::string& directory,
-        LegacyIntegrityPolicy legacy = LegacyIntegrityPolicy::Reject, StoragePolicy policy = {});
+        LegacyIntegrityPolicy legacy = LegacyIntegrityPolicy::Reject, StoragePolicy policy = {},
+        StorageOpenMode mode = StorageOpenMode::Initialize);
     ~SqliteEventStore() override;
     SqliteEventStore(const SqliteEventStore&) = delete;
     SqliteEventStore& operator=(const SqliteEventStore&) = delete;

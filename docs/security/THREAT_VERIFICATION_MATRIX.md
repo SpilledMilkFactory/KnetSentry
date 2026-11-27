@@ -265,3 +265,5 @@ TB-07, TV-10/TV-25/TV-26/TV-30 evidence: quota refusal without eviction,
 receiver-time cleanup, holds/pending protection, revision checking, real SQLite
 page-limit and failed-cleanup-commit rollback, and integrity refusal. No threat
 closure or production volume/reserve qualification is claimed.
+
+The [M6.8 contract](../development/EVENT_EXPLORER_M68.md) contributes partial TB-05/TB-07 and TV-10/TV-25 evidence for authenticated same-UID/GID, explicitly opted-in audited query access, bounded response validation, snapshot invalidation and integrity refusal. This is not independent analyst authorization, raw-volume isolation or operational ingestion qualification.

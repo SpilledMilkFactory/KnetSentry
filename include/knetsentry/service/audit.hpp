@@ -14,7 +14,7 @@ enum class AuditEvent : std::uint8_t {
     Starting, Ready, Stopping, Stopped, Failed, ConfigDefault, ConfigValidated,
     ConfigRejected, IpcReady, IpcRejected, AuthenticationFailed, RequestRejected,
     AdministrativeDenied, StatusAuthorized, HealthAuthorized, TransportFailed,
-    SamplingFailed, AgentsAuthorized
+    SamplingFailed, AgentsAuthorized, EventsAuthorized
 };
 
 struct AuditActor final {
@@ -37,6 +37,7 @@ public:
     [[nodiscard]] bool record(AuditEvent event,
         std::optional<AuditActor> actor = std::nullopt) noexcept;
     [[nodiscard]] bool ok() const noexcept { return !failed_; }
+    [[nodiscard]] bool persistent() const noexcept { return fd_ >= 0 && !failed_; }
 private:
     int fd_{-1};
     bool failed_{false};

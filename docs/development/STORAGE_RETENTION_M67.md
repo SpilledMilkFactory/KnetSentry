@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M6.7 — Retention, storage quotas and cleanup
 
-Issue #57. Development storage policy; target-host qualification pending.
+Issue #57. Development storage policy; maintainer qualification and merge reported successful (130 PASS, all 438 configured CTest executions, nine hosted checks). See [project status](../PROJECT_STATUS.md) for the accepted evidence.
 
 ## Configuration and limits
 

@@ -271,7 +271,7 @@ struct SqliteEventStore::Impl {
         return db;
     }
     ~Impl() { if (db) { sqlite3_close(db); } if (dir >= 0) { close(dir); } }
-    void open(const std::string& directory, LegacyIntegrityPolicy legacy, const StoragePolicy& policy) {
+    void open(const std::string& directory, LegacyIntegrityPolicy legacy, const StoragePolicy& policy, StorageOpenMode mode) {
         directory_path = directory;
         dir = open_directory(directory);
         struct stat st{};
@@ -290,8 +290,10 @@ struct SqliteEventStore::Impl {
             struct stat side{};
             if (fstatat(dir, name, &side, AT_SYMLINK_NOFOLLOW) == 0 || errno != ENOENT) { throw DbError{StoreStatus::Unavailable}; }
         }
-        const int file = openat(dir, filename, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600);
-        if (file >= 0) { close(file); } else if (errno != EEXIST) { throw DbError{StoreStatus::Unavailable}; }
+        if (mode == StorageOpenMode::Initialize) {
+            const int file = openat(dir, filename, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600);
+            if (file >= 0) { close(file); } else if (errno != EEXIST) { throw DbError{StoreStatus::Unavailable}; }
+        }
         verify_file(dir, filename, false);
         require(fstatat(dir, filename, &original_file, AT_SYMLINK_NOFOLLOW) == 0);
         // SQLite NOFOLLOW rejects even /proc/self/fd links. Keep the checked
@@ -309,6 +311,7 @@ struct SqliteEventStore::Impl {
         sqlite3_limit(db, SQLITE_LIMIT_ATTACHED, 0);
         const auto version = scalar(db, "PRAGMA user_version");
         const auto app = scalar(db, "PRAGMA application_id");
+        if (mode == StorageOpenMode::ExistingV4) { require(version == 4); }
         require((version == 0 && app == 0 && scalar(db, "SELECT count(*) FROM sqlite_schema") == 0) ||
             ((version == 1 || version == 2 || version == 3 || version == 4) && app == static_cast<std::uint64_t>(application_id)));
         if (version == 1 || version == 2) { require(legacy == LegacyIntegrityPolicy::EstablishBaseline); }
@@ -318,7 +321,7 @@ struct SqliteEventStore::Impl {
         // Only validated bounded numeric policy input; PRAGMA does not accept bind parameters.
         const auto page_cap = "PRAGMA max_page_count=" + std::to_string(policy.database_page_limit);
         require(scalar(db, page_cap.c_str()) == policy.database_page_limit);
-        { Statement mode(db, "PRAGMA journal_mode=DELETE"); require(mode.row() && mode.string(0) == "delete"); mode.done(); }
+        { Statement journal_mode(db, "PRAGMA journal_mode=DELETE"); require(journal_mode.row() && journal_mode.string(0) == "delete"); journal_mode.done(); }
         exec(db, "PRAGMA synchronous=EXTRA; PRAGMA temp_store=MEMORY; PRAGMA secure_delete=ON; PRAGMA foreign_keys=ON");
         require(scalar(db, "PRAGMA foreign_keys") == 1);
         require(scalar(db, "PRAGMA synchronous") == 3 && scalar(db, "PRAGMA temp_store") == 2);
@@ -353,9 +356,9 @@ struct SqliteEventStore::Impl {
         if (fsync(dir) != 0) { throw DbError{StoreStatus::IoError}; }
     }
 };
-SqliteEventStore::SqliteEventStore(const std::string& directory, LegacyIntegrityPolicy legacy, StoragePolicy policy)
+SqliteEventStore::SqliteEventStore(const std::string& directory, LegacyIntegrityPolicy legacy, StoragePolicy policy, StorageOpenMode mode)
     : EventStore(policy), impl_(std::make_unique<Impl>()) {
-    try { impl_->open(directory, legacy, policy); }
+    try { impl_->open(directory, legacy, policy, mode); }
     catch (const DbError&) { throw std::runtime_error("SQLite development store activation rejected"); }
 }
 SqliteEventStore::~SqliteEventStore() = default;
@@ -429,12 +432,13 @@ SearchPage SqliteEventStore::search(const SearchQuery& q) const try {
     page.status = StoreStatus::Ok;
     // Mapping revision 1 emits only Unknown severity. Verify the store even
     // for an impossible severity predicate; never manufacture a severity.
-    if (q.after >= ceiling || q.from_ms > ceiling || (q.severity && *q.severity != agent::OcsfSeverity::Unknown)) {
+    if ((!q.descending && q.after >= ceiling) || q.from_ms > ceiling || (q.severity && *q.severity != agent::OcsfSeverity::Unknown)) {
         tx.commit(); return page;
     }
     // Compose only fixed clauses; user values are always bound parameters.
     // Avoid optional-filter OR expressions that prevent useful index lookups.
-    std::string sql = "SELECT id,binding,unit,wire,mode,received,held,endpoint,cursor,time_ms,class_uid,status_id,activity_id,mapping FROM events WHERE time_ms IS NOT NULL AND id>?1 AND time_ms BETWEEN ?2 AND ?3";
+    std::string sql = "SELECT id,binding,unit,wire,mode,received,held,endpoint,cursor,time_ms,class_uid,status_id,activity_id,mapping FROM events WHERE time_ms IS NOT NULL AND time_ms BETWEEN ?2 AND ?3";
+    sql += q.descending ? " AND id<?1" : " AND id>?1";
     if (q.class_uid) { sql += " AND class_uid=?4"; }
     if (q.status_id) { sql += " AND status_id=?5"; }
     if (!q.binding.empty()) { sql += " AND binding=?6"; }
@@ -443,9 +447,9 @@ SearchPage SqliteEventStore::search(const SearchQuery& q) const try {
     if (q.category) { sql += " AND class_uid=?10"; }
     if (q.activity) { sql += " AND activity_id=?11"; }
     if (q.mapping) { sql += " AND mapping=?12"; }
-    sql += " ORDER BY id LIMIT ?7";
+    sql += q.descending ? " ORDER BY id DESC LIMIT ?7" : " ORDER BY id LIMIT ?7";
     Statement s(db, sql.c_str());
-    s.number(1, q.after); s.number(2, q.from_ms); s.number(3, q.through_ms > ceiling ? ceiling : q.through_ms);
+    s.number(1, q.descending && (q.after == 0 || q.after > ceiling) ? ceiling : q.after); s.number(2, q.from_ms); s.number(3, q.through_ms > ceiling ? ceiling : q.through_ms);
     if (q.class_uid) { s.number(4, static_cast<std::uint64_t>(*q.class_uid)); }
     if (q.status_id) { s.number(5, static_cast<std::uint64_t>(*q.status_id)); }
     if (!q.binding.empty()) { s.string(6, q.binding); }

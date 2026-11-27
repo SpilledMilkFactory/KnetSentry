@@ -11,6 +11,7 @@ import io.github.spilledmilkfactory.KnetSentry
 Kirigami.ApplicationWindow {
     id: window
     required property ServiceHealthModel healthModel
+    required property EventExplorerModel eventModel
     required property DaemonControl daemonControl
     readonly property alias toolbarStartButton: startButton
     readonly property alias toolbarStopButton: stopButton
@@ -39,6 +40,10 @@ Kirigami.ApplicationWindow {
     // Public, non-privileged navigation state. Used by the headless C++
     // integration test to exercise exactly the same routing as drawer actions.
     property string activeSection: "dashboard"
+    onActiveSectionChanged: {
+        if (window.eventModel && activeSection !== "events")
+            window.eventModel.clear()
+    }
     property string navigationRequest: ""
     readonly property string currentPageHealthStatus: currentSectionPage
         ? currentSectionPage.displayedHealthStatus : ""
@@ -64,6 +69,11 @@ Kirigami.ApplicationWindow {
     readonly property string currentPageScopeNetworks: currentSectionPage ? currentSectionPage.displayedScopeNetworks : ""
     readonly property string currentPageScopeInterfaces: currentSectionPage ? currentSectionPage.displayedScopeInterfaces : ""
     readonly property string currentPageScopeDenials: currentSectionPage ? currentSectionPage.displayedScopeDenials : ""
+    readonly property int currentEventCount: currentSectionPage ? currentSectionPage.eventCount : 0
+    readonly property string currentEventStatus: currentSectionPage ? currentSectionPage.eventStatus : ""
+    readonly property string currentEventDetail: currentSectionPage ? currentSectionPage.eventDetail : ""
+    readonly property Controls.Button currentEventSearchButton: currentSectionPage ? currentSectionPage.eventSearchButton : null
+    readonly property Controls.Button currentEventNextButton: currentSectionPage ? currentSectionPage.eventNextButton : null
     readonly property string currentPageSection: currentSectionPage
                                                  ? currentSectionPage.sectionId : ""
     readonly property int navigationDepth: pageStack.depth
@@ -172,12 +182,13 @@ Kirigami.ApplicationWindow {
 
     Component {
         id: sectionPageComponent
-        SectionPage { healthModel: window.healthModel }
+        SectionPage { healthModel: window.healthModel; eventModel: window.eventModel }
     }
 
     pageStack.initialPage: SectionPage {
         sectionId: "dashboard"
         healthModel: window.healthModel
+        eventModel: window.eventModel
     }
 
     header: Controls.ToolBar {

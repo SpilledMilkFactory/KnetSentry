@@ -1,17 +1,24 @@
 // SPDX-FileCopyrightText: 2026 Chris Sutton
 // SPDX-License-Identifier: MIT
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import io.github.spilledmilkfactory.KnetSentry
 
-// M1.5: presentation-only visual language. No device, event or alert models.
+// Presentation-only visual language; stored event summaries require an explicitly enabled manager.
 Kirigami.Page {
     id: page
     objectName: "knetSentrySectionPage"
     required property string sectionId
     required property ServiceHealthModel healthModel
+    required property EventExplorerModel eventModel
+    readonly property int eventCount: eventList.count
+    readonly property string eventStatus: eventStatusLabel.text
+    readonly property string eventDetail: eventDetailLabel.text
+    readonly property alias eventSearchButton: searchEventsButton
+    readonly property alias eventNextButton: nextEventsButton
     readonly property string displayedHealthStatus: managerCard.description
     readonly property string displayedHealthResources: resourceCard.description
     readonly property string displayedHealthErrors: errorCard.description
@@ -57,7 +64,7 @@ Kirigami.Page {
         case "assets":
             return qsTr("Inspect administrator-approved endpoint identities below. Live asset inventory and remote telemetry remain unavailable.")
         case "events":
-            return qsTr("Validated security-event records and search controls will appear here after the ingestion and storage pipeline is implemented.")
+            return qsTr("Search explicitly approved stored event summaries. Results are snapshots, not live monitoring.")
         case "detections":
             return qsTr("Deterministic detection rules and their evidence will appear here after the detection engine is implemented.")
         case "alerts":
@@ -109,7 +116,7 @@ Kirigami.Page {
             Kirigami.InlineMessage {
                 type: Kirigami.MessageType.Information
                 visible: true
-                text: qsTr("Not operational — local aggregate collector status may be shown; remote telemetry and security events are not displayed.")
+                text: qsTr("Not operational — local aggregate status and approved stored event snapshots may be shown; live remote telemetry is unavailable.")
                 Layout.fillWidth: true
             }
             Controls.Label {
@@ -125,6 +132,108 @@ Kirigami.Page {
                 color: Kirigami.Theme.textColor
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
+            }
+
+            ColumnLayout {
+                visible: page.sectionId === "events"
+                Layout.fillWidth: true
+                spacing: tokens.spaceS
+                Controls.Label {
+                    text: qsTr("Event Explorer — read-only stored evidence")
+                    font.pixelSize: tokens.sectionSize
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                }
+                Controls.TextField {
+                    id: eventSource
+                    Layout.fillWidth: true
+                    maximumLength: 128
+                    placeholderText: qsTr("Exact source (e.g. ssh.service), or empty for all")
+                    Accessible.name: qsTr("Exact event source")
+                    onTextEdited: page.eventModel.clear()
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Controls.ComboBox {
+                        id: eventMode
+                        Layout.fillWidth: true
+                        model: [qsTr("All collectors"), qsTr("Journal"), qsTr("Authentication"), qsTr("Audit")]
+                        Accessible.name: qsTr("Collector filter")
+                        onActivated: page.eventModel.clear()
+                    }
+                    Controls.ComboBox {
+                        id: eventOutcome
+                        Layout.fillWidth: true
+                        model: [qsTr("All outcomes"), qsTr("Unknown"), qsTr("Success"), qsTr("Failure")]
+                        Accessible.name: qsTr("Outcome filter")
+                        onActivated: page.eventModel.clear()
+                    }
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Controls.ComboBox {
+                        id: eventOrder
+                        Layout.fillWidth: true
+                        model: [qsTr("ID ascending"), qsTr("ID descending")]
+                        Accessible.name: qsTr("Storage identifier sort order")
+                        onActivated: page.eventModel.clear()
+                    }
+                    Controls.Button {
+                        id: searchEventsButton
+                        text: qsTr("Search / first page")
+                        enabled: !page.eventModel.busy
+                        onClicked: page.eventModel.search(eventSource.text, eventMode.currentIndex - 1,
+                                                          eventOutcome.currentIndex - 1, eventOrder.currentIndex === 1)
+                    }
+                    Controls.Button {
+                        id: nextEventsButton
+                        text: qsTr("Next page")
+                        enabled: page.eventModel.more && !page.eventModel.busy
+                        onClicked: page.eventModel.next()
+                    }
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    textFormat: Text.PlainText
+                    id: eventStatusLabel
+                    text: page.eventModel.status
+                }
+                ListView {
+                    id: eventList
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 220
+                    clip: true
+                    reuseItems: true
+                    model: page.eventModel
+                    Controls.ScrollBar.vertical: Controls.ScrollBar {}
+                    delegate: Controls.ItemDelegate {
+                        id: eventRow
+                        required property int index
+                        required property string eventLabel
+                        width: eventList.width
+                        text: eventRow.eventLabel
+                        contentItem: Controls.Label {
+                            text: eventRow.eventLabel
+                            textFormat: Text.PlainText
+                            elide: Text.ElideRight
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        onClicked: page.eventModel.select(eventRow.index)
+                    }
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    id: eventDetailLabel
+                    text: page.eventModel.detail.length > 0 ? page.eventModel.detail : qsTr("Select a record to inspect its normalized metadata. No raw messages are exposed.")
+                    textFormat: Text.PlainText
+                    wrapMode: Text.WrapAnywhere
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Pages hold at most eight summaries and expire after 30 seconds. IDs are admission order, not chronological order.")
+                }
             }
 
             ColumnLayout {
@@ -364,7 +473,7 @@ Kirigami.Page {
                     width: cards.width > tokens.compactBreakpoint
                            ? (cards.width - cards.spacing) / 2 : cards.width
                     heading: qsTr("Implementation status")
-                    description: qsTr("Collectors, event storage and detection are not implemented. Manager health is available through explicitly configured local IPC.")
+                    description: qsTr("Development collectors and storage are implemented. Live ingestion and detection remain unavailable. Manager health is available through local IPC.")
                     iconName: "dialog-information"
                 }
                 SurfaceCard {

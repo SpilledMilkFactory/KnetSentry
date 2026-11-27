@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.6 search accepted; M6.7 storage quota qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.7 storage quota accepted; M6.8 event explorer qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 67 Release/Debug/Clazy/analysis, 61 full ASan/UBSan,
-54 core-only and 55 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 70 Release/Debug/Clazy/analysis, 63 full ASan/UBSan,
+56 core-only and 57 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -404,4 +404,8 @@ The [M6.6 regression](EVENT_SEARCH_M66.md) is mandatory in all seven presets. Ac
 
 ### M6.7 retention and storage quotas
 
-The [M6.7 regression](STORAGE_RETENTION_M67.md) is mandatory in all seven presets. Target: 438 configured CTest executions, 59 structural verifiers and 130 consolidated gates. Official Ubuntu qualification pending.
+The [M6.7 regression](STORAGE_RETENTION_M67.md) is mandatory in all seven presets. Accepted: 438 configured CTest executions, 59 structural verifiers and 130 consolidated gates.
+
+### M6.8 event explorer
+
+The [M6.8 contract](EVENT_EXPLORER_M68.md) registers two mandatory core tests and one nonsanitized desktop runtime test. Target inventories: 456 CTest executions, 60 structural verifiers and 132 consolidated gates. Official Ubuntu qualification is pending.

@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **67 CTest tests**, including
+The Release desktop suite currently contains **70 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **61 CTests**, including the
+The full sanitizer suite currently contains **63 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **54 CTests**) and `linux-sanitize-core-only` for **55**.
+C++ test (currently **56 CTests**) and `linux-sanitize-core-only` for **57**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -450,4 +450,8 @@ Run `ctest --preset linux-release -R '^knetsentry_(event_search_contract|evidenc
 
 ### M6.7 retention and quotas
 
-Run `ctest --preset linux-release -R '^knetsentry_storage_retention_contract$' --verbose --no-tests=error`. See [M6.7](STORAGE_RETENTION_M67.md). Current inventories: desktop 67/61, core-only 54/55 (normal/sanitized). Synthetic disposable stores only.
+Run `ctest --preset linux-release -R '^knetsentry_storage_retention_contract$' --verbose --no-tests=error`. See [M6.7](STORAGE_RETENTION_M67.md). Accepted inventories: desktop 67/61, core-only 54/55 (normal/sanitized). Synthetic disposable stores only.
+
+### M6.8 event explorer
+
+See [M6.8](EVENT_EXPLORER_M68.md). Run `ctest --preset linux-release -R '^knetsentry_(event_explorer_contract|event_explorer_runtime|gui_event_explorer_runtime)$' --verbose --no-tests=error`. The installed manager needs a binary-only refresh using the existing [systemd guide](SYSTEMD_SERVICE_M27.md) before installed-runtime qualification. No event store is enabled in the installed unit. Current inventories: desktop 70/63, core-only 56/57 (normal/sanitized).

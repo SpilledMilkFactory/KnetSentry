@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <sys/signalfd.h>
+#include <sys/random.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
@@ -111,7 +112,7 @@ constexpr std::string_view agents_prefix = "KSIPC/1 AGENTS ";
 bool authorize_local_peer(uid_t peer_uid, gid_t peer_gid,
     uid_t service_uid, gid_t service_gid, IpcAction action) noexcept {
     return peer_uid == service_uid && peer_gid == service_gid &&
-        (action == IpcAction::Status || action == IpcAction::Health || action == IpcAction::Agents);
+        (action == IpcAction::Status || action == IpcAction::Health || action == IpcAction::Agents || action == IpcAction::Events);
 }
 
 LocalIpcServer::~LocalIpcServer() noexcept { close_all(); }
@@ -199,6 +200,18 @@ bool LocalIpcServer::set_enrollment_directory(std::string_view directory) noexce
     return true;
 }
 
+bool LocalIpcServer::set_event_store(const storage::EventStore& store) noexcept {
+    if (event_store_) { return false; }
+    std::array<unsigned char, 16> bytes{};
+    if (::getrandom(bytes.data(), bytes.size(), GRND_NONBLOCK) != static_cast<ssize_t>(bytes.size())) { return false; }
+    constexpr std::string_view digits = "0123456789abcdef";
+    for (std::size_t i = 0; i < bytes.size(); ++i) {
+        event_session_[2 * i] = digits[bytes[i] >> 4U];
+        event_session_[2 * i + 1] = digits[bytes[i] & 15U];
+    }
+    event_store_ = &store; return true;
+}
+
 void LocalIpcServer::handle_client(int client, const Lifecycle& lifecycle,
     HealthTracker& health, AuditLog& audit) noexcept {
     // Authenticate before reading untrusted bytes; operation authorization
@@ -228,16 +241,36 @@ void LocalIpcServer::handle_client(int client, const Lifecycle& lifecycle,
         (static_cast<std::uint32_t>(static_cast<unsigned char>(header[1])) << 16U) |
         (static_cast<std::uint32_t>(static_cast<unsigned char>(header[2])) << 8U) |
         static_cast<std::uint32_t>(static_cast<unsigned char>(header[3]));
-    if (size == 0 || size > max_frame_size) {
+    if (size == 0 || size > max_event_request) {
         report(HealthError::Rejected, AuditEvent::RequestRejected);
         return;
     }
-    std::array<char, max_frame_size> request{};
+    std::array<char, max_event_request> request{};
+    if (size > max_frame_size) {
+        // Extended frames are exclusively EVENTS, and only on an opted-in server.
+        // Old lifecycle-only servers keep the original immediate 64-byte rejection.
+        if (!event_store_) { report(HealthError::Rejected, AuditEvent::RequestRejected); return; }
+    }
     if (!read_exact(client, request.data(), size)) {
         report(HealthError::Transport, AuditEvent::TransportFailed);
         return;
     }
     const std::string_view payload(request.data(), size);
+    constexpr std::string_view events_prefix = "KSIPC/1 EVENTS ";
+    if (payload.starts_with(events_prefix)) {
+        const auto id = payload.substr(events_prefix.size(), 16);
+        try {
+            const auto query = decode_event_request(payload, id);
+            if (!query || !event_store_ || !audit.persistent() || !authorize_local_peer(peer.uid, peer.gid, ::geteuid(), ::getegid(), IpcAction::Events)) {
+                report(HealthError::Rejected, AuditEvent::RequestRejected); return;
+            }
+            if (!audit.record(AuditEvent::EventsAuthorized, actor)) { return; }
+            const auto response = query_events(event_store_, std::string_view(event_session_.data(), event_session_.size()), *query, id);
+            if (!send_frame(client, response, max_event_response)) { report(HealthError::Transport, AuditEvent::TransportFailed); }
+        } catch (...) { report(HealthError::Sampling, AuditEvent::SamplingFailed); }
+        return;
+    }
+    if (size > max_frame_size) { report(HealthError::Rejected, AuditEvent::RequestRejected); return; }
     const bool is_health = payload.starts_with(health_prefix);
     const bool is_agents = payload.starts_with(agents_prefix);
     const auto operation_prefix = is_health ? health_prefix : (is_agents ? agents_prefix : prefix);

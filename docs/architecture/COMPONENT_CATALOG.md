@@ -213,3 +213,5 @@ indexes. No new manager or GUI query authority. See [M6.6](../development/EVENT_
 M6.7 extends C-13 with immutable development storage policy, quota admission,
 aggregate pressure warnings and explicitly reviewed age-based cleanup.
 See [M6.7](../development/STORAGE_RETENTION_M67.md). No operational deletion authority is added.
+
+M6.8 adds an opt-in C-01/I-01 manager search adapter to C-13 and a bounded Qt event model. Only explicitly approved existing schema-v4 development stores are selected by the manager; the desktop does not receive database paths, arbitrary SQL, raw records or deletion authority. See [M6.8](../development/EVENT_EXPLORER_M68.md).
