@@ -305,3 +305,7 @@ The [M7.5 contract](../development/RULE_SCHEDULING_M75.md) contributes partial T
 ## M7.6 alert lifecycle
 
 The [M7.6 contract](../development/ALERT_LIFECYCLE_M76.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for private alert state, evidence revalidation, generation deduplication and bounded lifecycle updates. Caller authorization, note privacy, evidence holds and production volume identity remain outstanding.
+
+## M7.7 alert interface
+
+The [M7.7 contract](../development/ALERT_INTERFACE_M77.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for bounded same-user IPC, persistent audit, revision-checked acknowledgement and exact evidence linkage. Production RBAC, stable mount identity and operational integration remain outstanding.

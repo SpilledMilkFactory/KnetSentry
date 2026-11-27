@@ -5,6 +5,7 @@
 #include "knetsentry/service/health.hpp"
 #include "knetsentry/service/agent_roster.hpp"
 #include "knetsentry/service/event_query.hpp"
+#include "knetsentry/service/alert_query.hpp"
 
 #include <array>
 #include <chrono>
@@ -20,7 +21,7 @@ namespace knetsentry::service {
 enum class HealthQueryState { Idle, Pending, Available, Unavailable, Invalid };
 
 // One nonblocking Unix-domain exchange. No worker threads, network sockets,
-// daemon discovery or administrative operations. Call advance from an event loop.
+// daemon discovery or general administrative operations. Call advance from an event loop.
 class HealthClient final {
 public:
     HealthClient() = default;
@@ -31,13 +32,15 @@ public:
     void begin_agents(std::string_view directory, std::string_view request_id) noexcept;
     void begin_events(std::string_view directory, std::string_view request_id, const EventQuery& query) noexcept;
     [[nodiscard]] const std::optional<EventPage>& events() const noexcept { return events_; }
+    void begin_alerts(std::string_view directory, std::string_view request_id, const AlertQuery& query) noexcept;
+    [[nodiscard]] const std::optional<AlertPage>& alerts() const noexcept { return alerts_; }
     void advance() noexcept;
     void cancel() noexcept;
     [[nodiscard]] HealthQueryState state() const noexcept { return state_; }
     [[nodiscard]] const std::optional<HealthSnapshot>& snapshot() const noexcept { return snapshot_; }
     [[nodiscard]] const std::optional<enrollment::Roster>& roster() const noexcept { return roster_; }
 private:
-    void begin_query(std::string_view directory, std::string_view request_id, bool agents, const EventQuery* query = nullptr) noexcept;
+    void begin_query(std::string_view directory, std::string_view request_id, bool agents, const EventQuery* query = nullptr, const AlertQuery* alert = nullptr) noexcept;
     void finish(HealthQueryState state) noexcept;
     [[nodiscard]] bool verify_peer() const noexcept;
     enum class Phase { Connect, Send, Receive };
@@ -56,6 +59,9 @@ private:
     std::optional<enrollment::Roster> roster_{};
     bool agents_{};
     bool event_request_{};
+    bool alert_request_{};
+    AlertQuery alert_query_;
+    std::optional<AlertPage> alerts_;
     EventQuery event_query_;
     std::optional<EventPage> events_;
 };

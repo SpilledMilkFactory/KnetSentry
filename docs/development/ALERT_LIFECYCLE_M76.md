@@ -80,7 +80,6 @@ optimistic lifecycle revisions, bounded notes, scope and permission refusal,
 unsafe pending object, hard-link, lock and corruption refusal, actual child-local
 file-write failure and retry, missing evidence and original-evidence invariance.
 Multi-candidate atomic publication and later evidence failure refusal are also tested.
-No actual host telemetry or privileged changes are needed. Target qualification
-pending. Issue #65 remains open for production authorization, retention/holds,
+No actual host telemetry or privileged changes are needed. Target qualification passed. M7.7 adds the separately documented [development alert interface](ALERT_INTERFACE_M77.md). Issue #65 remains open for production authorization, retention/holds,
 multi-scope alert service, and integration of remaining detection families.
 Issues #63 and #64 retain their documented outstanding scope.

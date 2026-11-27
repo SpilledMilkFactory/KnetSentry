@@ -3,6 +3,7 @@
 #include "knetsentry/core/build_info.hpp"
 #include "service_health_model.hpp"
 #include "event_explorer_model.hpp"
+#include "alert_model.hpp"
 #include "daemon_control.hpp"
 #include "knetsentry/core/diagnostics.hpp"
 
@@ -37,13 +38,13 @@ void set_application_metadata() {
 
 void configure_parser(QCommandLineParser &parser) {
     parser.setApplicationDescription(QStringLiteral(
-        "KnetSentry read-only network scope, enrollment, stored event inspection and local manager health; no SIEM monitoring is active."));
+        "KnetSentry network scope, enrollment, stored event and alert inspection, and local manager health; no SIEM monitoring is active."));
     parser.addHelpOption();
     parser.addOption(QCommandLineOption(QStringLiteral("agent-status-stdin"),
         QStringLiteral("Read aggregate local agent status from an explicitly inherited pipe on stdin.")));
     parser.addVersionOption();
     parser.addOption(QCommandLineOption(QStringLiteral("ipc-dir"),
-        QStringLiteral("Explicit private manager IPC directory for read-only health, enrollment and opted-in event inspection."),
+        QStringLiteral("Explicit private manager IPC directory for health, enrollment, opted-in event and alert inspection and acknowledgement."),
         QStringLiteral("absolute-directory")));
 }
 
@@ -150,6 +151,9 @@ int main(int argc, char *argv[]) {
     const QCommandLineOption events_smoke_test(QStringLiteral("self-test-events"),
         QStringLiteral("Verify rendered event explorer against the private M6.8 synthetic store."));
     parser.addOption(events_smoke_test);
+    const QCommandLineOption alerts_smoke_test(QStringLiteral("self-test-alerts"),
+        QStringLiteral("Verify rendered alert interface against a disposable M7.7 synthetic ledger."));
+    parser.addOption(alerts_smoke_test);
     parser.process(app);
 
     // The model outlives QML and is not a management authority.
@@ -161,11 +165,14 @@ int main(int argc, char *argv[]) {
     knetsentry::desktop::DaemonControl control(health, parser.isSet(QStringLiteral("ipc-dir")),
         QDir::cleanPath(QCoreApplication::applicationDirPath() + QStringLiteral("/../manager/knetsentryd")));
     knetsentry::desktop::EventExplorerModel events(parser.value(QStringLiteral("ipc-dir")));
+    knetsentry::desktop::AlertModel alerts(parser.value(QStringLiteral("ipc-dir")));
     QQmlApplicationEngine engine;
+    QQmlEngine::setObjectOwnership(&alerts, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&events, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&health, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&control, QQmlEngine::CppOwnership);
-    engine.setInitialProperties({{QStringLiteral("eventModel"), QVariant::fromValue(&events)},
+    engine.setInitialProperties({{QStringLiteral("alertModel"), QVariant::fromValue(&alerts)},
+                                 {QStringLiteral("eventModel"), QVariant::fromValue(&events)},
                                  {QStringLiteral("healthModel"), QVariant::fromValue(&health)},
                                  {QStringLiteral("daemonControl"), QVariant::fromValue(&control)}});
     engine.loadFromModule("io.github.spilledmilkfactory.KnetSentry", "Main");
@@ -307,6 +314,43 @@ int main(int argc, char *argv[]) {
         });
         check.start(50); deadline.start(10000);
         return loop.exec();
+    }
+    if (parser.isSet(alerts_smoke_test)) {
+        if (!parser.isSet(QStringLiteral("ipc-dir"))) { return 1; }
+        QObject* root = engine.rootObjects().constFirst();
+        if (!root->setProperty("navigationRequest", QStringLiteral("alerts"))) { return 1; }
+        QCoreApplication::processEvents();
+        QObject* refresh = root->property("currentAlertRefreshButton").value<QObject*>();
+        QObject* ack = root->property("currentAlertAckButton").value<QObject*>();
+        if (!refresh || !ack || !QMetaObject::invokeMethod(refresh,"clicked")) { return 1; }
+        QEventLoop loop; QTimer check; QTimer deadline; deadline.setSingleShot(true); int stage = 0;
+        QObject::connect(&deadline,&QTimer::timeout,&loop,[&loop] { loop.exit(1); });
+        QObject::connect(&check,&QTimer::timeout,&loop,[&] {
+            if (alerts.busy()) { return; }
+            if (stage == 0) {
+                if (root->property("currentAlertCount").toInt() != 8 || !alerts.more()) { loop.exit(1); return; }
+                alerts.select(1); // First alert already acknowledged by the native IPC regression.
+                if (!root->property("currentAlertDetail").toString().contains(QStringLiteral("Alert 1/3")) || !alerts.canAcknowledge()) { loop.exit(1); return; }
+                alerts.inspectEvidence(0); ++stage;
+            } else if (stage == 1) {
+                if (!root->property("currentAlertEvidence").toString().contains(QStringLiteral("Verified stored evidence #2")) || !QMetaObject::invokeMethod(ack,"clicked")) { loop.exit(1); return; }
+                ++stage;
+            } else if (stage == 2) {
+                if (!alerts.status().startsWith(QStringLiteral("Acknowledgement committed"))) { loop.exit(1); return; }
+                alerts.search(3); ++stage;
+            } else if (stage == 3) {
+                alerts.select(1);
+                if (alerts.rowCount() != 8 || alerts.canAcknowledge() || !alerts.detail().contains(QStringLiteral("Acknowledged"))) { loop.exit(1); return; }
+                alerts.next(); ++stage;
+            } else if (stage == 4) {
+                if (alerts.rowCount() != 3 || alerts.more()) { loop.exit(1); return; }
+                alerts.search(4); ++stage;
+            } else {
+                if (alerts.rowCount() != 0 || !alerts.status().startsWith(QStringLiteral("No matching")) || !root->setProperty("navigationRequest",QStringLiteral("dashboard")) || alerts.rowCount() != 0 || !alerts.detail().isEmpty()) { loop.exit(1); return; }
+                std::cout << "M7.7 rendered alert interface: PASS\n"; loop.exit(0);
+            }
+        });
+        check.start(50); deadline.start(12000); return loop.exec();
     }
     if (parser.isSet(telemetry_smoke_test)) {
         if (!parser.isSet(QStringLiteral("agent-status-stdin"))) { return 1; }

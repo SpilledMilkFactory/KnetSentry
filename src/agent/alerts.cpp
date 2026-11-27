@@ -133,7 +133,7 @@ int locked(std::string_view path) {
 bool absent(int fd, const char* filename) {
     struct stat st{}; return ::fstatat(fd, filename, &st, AT_SYMLINK_NOFOLLOW) != 0 && errno == ENOENT;
 }
-bool load(int fd, const SchedulePolicy& policy, std::string_view identity, Records& records) {
+bool load(int fd, const SchedulePolicy& policy, std::string_view identity, Records& records, bool recover_pending = true) {
     File file(::openat(fd, name, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK));
     if (file.fd < 0 || !regular_private(file.fd)) { return false; }
     std::array<char, 4096> bytes{}; std::string data;
@@ -149,7 +149,7 @@ bool load(int fd, const SchedulePolicy& policy, std::string_view identity, Recor
     if (!decode(policy, identity, data, records)) { return false; }
     File temp(::openat(fd, pending, O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK));
     if (temp.fd >= 0) {
-        if (!regular_private(temp.fd) || ::unlinkat(fd, pending, 0) != 0) { return false; }
+        if (!recover_pending || !regular_private(temp.fd) || ::unlinkat(fd, pending, 0) != 0) { return false; }
     } else if (errno != ENOENT) { return false; }
     return ::fsync(fd) == 0;
 }
@@ -194,13 +194,13 @@ bool initialize_alerts(const SchedulePolicy& p, std::string_view directory, bool
     File dir(locked(directory));
     return dir.fd >= 0 && absent(dir.fd, name) && absent(dir.fd, pending) && commit(dir.fd, ledger_scope(p, *identity), {}) == AlertResult::Ok;
 }
-AlertSnapshot read_alerts(const SchedulePolicy& p, std::string_view directory, bool authorized) {
+AlertSnapshot read_alerts(const SchedulePolicy& p, std::string_view directory, bool authorized, bool recover_pending) {
     AlertSnapshot out;
     if (!authorized) { out.result = AlertResult::Unverified; return out; }
     const auto identity = schedule_policy_identity(p);
     if (!identity) { return out; }
     File dir(locked(directory)); Records records;
-    if (dir.fd < 0 || !load(dir.fd, p, ledger_scope(p, *identity), records)) { out.result = AlertResult::Unavailable; return out; }
+    if (dir.fd < 0 || !load(dir.fd, p, ledger_scope(p, *identity), records, recover_pending)) { out.result = AlertResult::Unavailable; return out; }
     out.result = AlertResult::Ok; out.schedule_identity = *identity; out.store_identity = p.store_identity;
     out.binding = p.binding; out.source = p.rule.predicate.source_unit; out.rule_id = p.rule.predicate.id;
     out.rule_version = p.rule.predicate.version; out.severity = p.rule.severity; out.alerts = std::move(records);

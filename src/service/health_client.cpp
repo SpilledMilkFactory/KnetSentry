@@ -72,11 +72,11 @@ HealthClient::~HealthClient() noexcept { cancel(); }
 void HealthClient::finish(HealthQueryState state) noexcept {
     if (fd_ >= 0) { static_cast<void>(::close(fd_)); fd_ = -1; }
     state_ = state;
-    if (state != HealthQueryState::Available) { snapshot_.reset(); roster_.reset(); events_.reset(); }
+    if (state != HealthQueryState::Available) { snapshot_.reset(); roster_.reset(); events_.reset(); alerts_.reset(); }
 }
 void HealthClient::cancel() noexcept {
     finish(HealthQueryState::Idle);
-    event_query_ = {};
+    event_query_ = {}; alert_query_ = {};
     request_.fill(0);
     response_.fill(0);
 }
@@ -90,10 +90,13 @@ void HealthClient::begin_agents(std::string_view directory, std::string_view req
 void HealthClient::begin_events(std::string_view directory, std::string_view request_id, const EventQuery& query) noexcept {
     begin_query(directory, request_id, false, &query);
 }
-void HealthClient::begin_query(std::string_view directory, std::string_view request_id, bool agents, const EventQuery* query) noexcept {
+void HealthClient::begin_alerts(std::string_view directory, std::string_view request_id, const AlertQuery& query) noexcept {
+    begin_query(directory, request_id, false, nullptr, &query);
+}
+void HealthClient::begin_query(std::string_view directory, std::string_view request_id, bool agents, const EventQuery* query, const AlertQuery* alert) noexcept {
     cancel();
     agents_ = agents;
-    event_request_ = query != nullptr;
+    event_request_ = query != nullptr; alert_request_ = alert != nullptr;
     state_ = HealthQueryState::Unavailable;
     constexpr std::string_view suffix = "/manager.sock";
     sockaddr_un address{};
@@ -123,10 +126,11 @@ void HealthClient::begin_query(std::string_view directory, std::string_view requ
     const auto connected = ::connect(fd_, reinterpret_cast<const sockaddr*>(&address), sizeof(address));
     if (connected != 0 && errno != EINPROGRESS) { finish(HealthQueryState::Unavailable); return; }
     std::ranges::copy(request_id, request_id_.begin());
-    if (query) {
+    if (query || alert) {
         try {
-            event_query_ = *query;
-            const auto payload = encode_event_request(event_query_, request_id);
+            if (query) { event_query_ = *query; }
+            if (alert) { alert_query_ = *alert; }
+            const auto payload = alert ? encode_alert_request(alert_query_,request_id) : encode_event_request(event_query_,request_id);
             if (payload.empty() || payload.size() > max_event_request) { finish(HealthQueryState::Invalid); return; }
             const auto size = payload.size();
             request_[0] = request_[1] = 0;
@@ -187,18 +191,21 @@ void HealthClient::advance() noexcept {
     received_ += static_cast<std::size_t>(count);
     if (received_ >= 4) {
         const auto size = frame_size(response_.data());
-        if (size == 0 || size > (event_request_ ? max_event_response : (agents_ ? max_roster_response_size : max_health_response_size)) || received_ > size + 4) {
+        if (size == 0 || size > (alert_request_ ? max_alert_response : event_request_ ? max_event_response : (agents_ ? max_roster_response_size : max_health_response_size)) || received_ > size + 4) {
             finish(HealthQueryState::Invalid); return;
         }
         if (count == 0 && received_ == size + 4) {
             const std::string_view payload(response_.data() + 4, size);
             const std::string_view id(request_id_.data(), request_id_.size());
-            if (event_request_) {
+            if (alert_request_) {
+                try { alerts_ = decode_alert_page(payload,id,alert_query_); }
+                catch (...) { finish(HealthQueryState::Invalid); return; }
+            } else if (event_request_) {
                 try { events_ = decode_event_page(payload, id, event_query_); }
                 catch (...) { finish(HealthQueryState::Invalid); return; }
             } else if (agents_) { roster_ = decode_roster(payload, id); }
             else { snapshot_ = decode_health(payload, id); }
-            finish((snapshot_ || roster_ || events_) ? HealthQueryState::Available : HealthQueryState::Invalid);
+            finish((snapshot_ || roster_ || events_ || alerts_) ? HealthQueryState::Available : HealthQueryState::Invalid);
             return;
         }
     }

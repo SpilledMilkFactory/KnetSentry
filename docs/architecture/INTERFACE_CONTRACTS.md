@@ -202,3 +202,7 @@ The [scheduler](../development/RULE_SCHEDULING_M75.md) composes the validated M7
 ### M7.6 alert lifecycle boundary
 
 The [alert ledger](../development/ALERT_LIFECYCLE_M76.md) consumes only a committed scheduler generation and revalidates durable evidence before atomic publication. Stable keys and revisions separate analyst lifecycle changes from original evidence. Caller authorization, serial access, volume identity and operational integration remain outstanding.
+
+### M7.7 local alert interface (I-01 / I-13)
+
+See [M7.7](../development/ALERT_INTERFACE_M77.md). Explicitly opted-in same-UID/GID manager mediates bounded alert listing, exact evidence lookup and optional revision-checked acknowledgement. Actor and clock are manager-derived; persistent audit is required. Default denies access, read mode denies acknowledgement. No production RBAC, direct GUI ledger access or response authority.
