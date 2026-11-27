@@ -31,3 +31,10 @@ add_library(knetsentry_event_storage STATIC event_store.cpp)
 add_library(KnetSentry::EventStorage ALIAS knetsentry_event_storage)
 target_link_libraries(knetsentry_event_storage PUBLIC KnetSentry::AgentDelivery)
 knetsentry_apply_project_options(knetsentry_event_storage)
+
+# M6.4: distro SQLite, no download, amalgamation or extension loading.
+find_package(SQLite3 3.37 REQUIRED)
+add_library(knetsentry_sqlite_storage STATIC sqlite_event_store.cpp)
+add_library(KnetSentry::SqliteStorage ALIAS knetsentry_sqlite_storage)
+target_link_libraries(knetsentry_sqlite_storage PUBLIC KnetSentry::EventStorage PRIVATE SQLite::SQLite3)
+knetsentry_apply_project_options(knetsentry_sqlite_storage)

@@ -110,7 +110,7 @@ The reference backend has no filesystem or database operations.
 
 Target: desktop 63/57, core-only 50/51 (normal/sanitized), 410 CTest executions,
 55 structural verifiers, 121 consolidated acceptance gates. Target-host
-qualification is pending. M6.4 SQLite and M6.5 original-event integrity work
+qualification passed (121/0/0/0; 410 CTest executions; nine hosted checks; 75 supplementary repeated tests). M6.4 resolves the analyzer enum warning from the M6.2 negative fixture. M6.4 SQLite and M6.5 original-event integrity work
 remain distinct. M0.5 stable destination identity, service permissions,
 mount safety, approved secondary volumes and no-silent-fallback requirements
 remain outstanding, as do raw segment durability, independent index placement,

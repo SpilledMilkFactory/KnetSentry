@@ -6,7 +6,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # KnetSentry — Storage Placement and Raw-First Event Contract
 
 **Issue:** M0.5. **Status:** architecture and future acceptance requirements;
-M6.3 supplies a volatile reference interface; no actual durable raw-volume
+M6.3 supplies a volatile reference interface and M6.4 supplies a development SQLite backend; no actual durable raw-volume
 writer, storage selector, or Qt configuration UI exists yet.
 
 ## Configuration model
@@ -100,3 +100,11 @@ backend never reports RAW_DURABLE or participates in authenticated ACKs.
 KS-PERF-041/043–046, mount/device authorization, protected durable segments,
 separate index placement, replay after restart, relocation and quotas remain
 unqualified operational requirements; no fallback path is introduced.
+
+## M6.4 development SQLite boundary
+
+The [SQLite backend](../development/SQLITE_STORAGE_M64.md) retains minimized
+KSTD rows and their indexed projection in one dedicated development database.
+Separate transactions exercise raw-before-index visibility and restart; this
+is not the approved independent raw-segment/index-volume deployment. The
+backend is not a ReceiptSink. No production volume configuration is activated.

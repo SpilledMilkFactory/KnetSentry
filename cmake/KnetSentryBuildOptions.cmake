@@ -91,6 +91,7 @@ function(knetsentry_apply_project_options target)
     set_target_properties("${target}" PROPERTIES POSITION_INDEPENDENT_CODE ON)
     if(KNETSENTRY_ENABLE_CLANG_TIDY)
         set_property(TARGET "${target}" PROPERTY CXX_CLANG_TIDY
-            "${KNETSENTRY_CLANG_TIDY_EXECUTABLE}")
+            "${KNETSENTRY_CLANG_TIDY_EXECUTABLE}"
+            "--warnings-as-errors=clang-analyzer-*")
     endif()
 endfunction()

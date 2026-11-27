@@ -17,7 +17,7 @@ PRESETS = {
     'linux-release', 'linux-debug', 'linux-sanitize', 'linux-clazy',
     'linux-analysis', 'linux-core-only', 'linux-sanitize-core-only',
 }
-BASIC = {'build-essential', 'cmake', 'ninja-build', 'python3', 'libssl-dev', 'pkg-config', 'libsystemd-dev'}
+BASIC = {'build-essential', 'cmake', 'ninja-build', 'python3', 'libssl-dev', 'pkg-config', 'libsystemd-dev', 'libsqlite3-dev'}
 DESKTOP = {'qt6-base-dev', 'qt6-declarative-dev', 'libkirigami-dev',
            'qml6-module-org-kde-kirigami', 'qml6-module-qtquick-controls'}
 
@@ -47,7 +47,7 @@ def check_profiles() -> None:
 
     for profile in ('linux-core-only', 'linux-sanitize-core-only'):
         require(packages[profile] == BASIC,
-                f'{profile}: must install only seven Qt-independent prerequisites')
+                f'{profile}: must install only eight Qt-independent prerequisites')
     for profile in ('linux-release', 'linux-debug', 'linux-sanitize', 'qml'):
         require(BASIC | DESKTOP <= packages[profile],
                 f'{profile}: desktop prerequisites missing')
@@ -76,7 +76,7 @@ def check_profiles() -> None:
             'Ubuntu 26.04 x86-64 runner gate missing')
     require('actions/cache' not in shell and 'apt-get clean' not in shell,
             'do not restore opaque caches or globally clear APT state')
-    print('M1.9 CI profile check: PASS (7 build, QML, policy; core-only=7 prerequisites)')
+    print('M1.9 CI profile check: PASS (7 build, QML, policy; core-only=8 prerequisites)')
 
 
 def check_workflow() -> None:

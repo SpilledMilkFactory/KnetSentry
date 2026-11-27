@@ -75,9 +75,12 @@ void verify() {
     invalid = base; invalid[0] = '\0'; require(!valid(invalid), "NUL accepted");
     invalid = base; invalid.replace(invalid.find(std::string(32, 'c')), 32, std::string(32, '0'));
     require(!valid(invalid), "zero machine ID accepted");
+    require(decode_journal_mode(-1) == J::Unsupported && decode_journal_mode(0) == J::Metadata &&
+        decode_journal_mode(1) == J::Authentication && decode_journal_mode(2) == J::Audit &&
+        decode_journal_mode(99) == J::Unsupported, "numeric mode decoding");
     require(!normalize_event(base, "invalid", "fixture.service", J::Metadata) &&
         !normalize_event(base, std::string(96, '0'), "fixture.service", J::Metadata) &&
-        !normalize_event(base, binding, "fixture.service", static_cast<J>(99)), "invalid configuration accepted");
+        !normalize_event(base, binding, "fixture.service", decode_journal_mode(99)), "invalid configuration accepted");
     require(!normalize_event(row("ssh.service", "\tlogin-failed"), binding, "ssh.service", J::Authentication) &&
         !normalize_event(row("ssh.service", "\tunknown"), binding, "ssh.service", J::Authentication) &&
         !normalize_event(row("audit", "\t0999\t9"), binding, "audit", J::Audit) &&

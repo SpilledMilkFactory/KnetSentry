@@ -73,6 +73,7 @@ qualification targets, not measured results.
 - [M6.1 — Bounded authenticated event ingestion](development/EVENT_INGESTION_M61.md)
 - [M6.2 — OCSF-aligned event normalization](development/EVENT_NORMALIZATION_M62.md)
 - [M6.3 — Event storage abstraction](development/EVENT_STORAGE_M63.md)
+- [M6.4 — SQLite metadata and indexed event storage](development/SQLITE_STORAGE_M64.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)
