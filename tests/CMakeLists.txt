@@ -607,3 +607,10 @@ target_link_libraries(knetsentry_rule_schema_test PRIVATE KnetSentry::Detection 
 knetsentry_apply_project_options(knetsentry_rule_schema_test)
 add_test(NAME knetsentry_rule_schema_contract COMMAND $<TARGET_FILE:knetsentry_rule_schema_test>)
 set_tests_properties(knetsentry_rule_schema_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)
+
+# M7.3: bounded snapshot authentication patterns and evidence linkage.
+add_executable(knetsentry_authentication_patterns_test authentication_patterns_m73.cpp)
+target_link_libraries(knetsentry_authentication_patterns_test PRIVATE KnetSentry::Detection KnetSentry::EventStorage)
+knetsentry_apply_project_options(knetsentry_authentication_patterns_test)
+add_test(NAME knetsentry_authentication_patterns_contract COMMAND $<TARGET_FILE:knetsentry_authentication_patterns_test>)
+set_tests_properties(knetsentry_authentication_patterns_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)

@@ -80,5 +80,5 @@ Existing M7.1 regressions remain mandatory. All fixtures are synthetic.
 ctest --preset linux-release -R '^knetsentry_(rule_schema_contract|detection_contract)$' --verbose --no-tests=error
 ```
 
-Target Ubuntu qualification pending. No new dependency, service, GUI or
+Target Ubuntu qualification passed; M7.2 merged. See project status for evidence. No new dependency, service, GUI or
 operational monitoring permission is introduced.
