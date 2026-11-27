@@ -159,7 +159,7 @@ if args.build_dir:
             ERRORS.append(f"invalid compilation database: {exc}")
             commands = []
         source_names = ("build_info.cpp", "core_smoke.cpp", "lifecycle.cpp", "main.cpp",
-                        "agent_main.cpp", "telemetry_status_m59.cpp", "privacy.cpp", "fim.cpp", "agent_lifecycle_m51.cpp", "journal.cpp", "systemd_journal.cpp", "journal_m52.cpp", "authentication.cpp", "authentication_m53.cpp", "audit_m54.cpp", "delivery.cpp", "receipt.cpp", "ingestion.cpp", "normalization.cpp", "normalization_m62.cpp", "event_store.cpp", "event_storage_m63.cpp", "sqlite_event_store.cpp", "sqlite_storage_m64.cpp", "evidence_integrity_m65.cpp", "event_search_m66.cpp", "storage_retention_m67.cpp", "event_query.cpp", "event_explorer_m68.cpp", "storage_recovery_m69.cpp", "split_storage_m610.cpp", "split_event_store.cpp", "detection_engine.cpp", "detection_m71.cpp", "rule_schema.cpp", "rule_schema_m72.cpp", "authentication_patterns.cpp", "authentication_patterns_m73.cpp", "system_integrity.cpp", "system_integrity_m74.cpp", "scheduler.cpp", "scheduler_m75.cpp", "enrollment.cpp", "enrollment_admission.cpp", "agent_roster.cpp", "agent_roster_m47.cpp", "enrollment_admin.cpp", "enrollment_m44.cpp", "agent_health.cpp")
+                        "agent_main.cpp", "telemetry_status_m59.cpp", "privacy.cpp", "fim.cpp", "agent_lifecycle_m51.cpp", "journal.cpp", "systemd_journal.cpp", "journal_m52.cpp", "authentication.cpp", "authentication_m53.cpp", "audit_m54.cpp", "delivery.cpp", "receipt.cpp", "ingestion.cpp", "normalization.cpp", "normalization_m62.cpp", "event_store.cpp", "event_storage_m63.cpp", "sqlite_event_store.cpp", "sqlite_storage_m64.cpp", "evidence_integrity_m65.cpp", "event_search_m66.cpp", "storage_retention_m67.cpp", "event_query.cpp", "event_explorer_m68.cpp", "storage_recovery_m69.cpp", "split_storage_m610.cpp", "split_event_store.cpp", "detection_engine.cpp", "detection_m71.cpp", "rule_schema.cpp", "rule_schema_m72.cpp", "authentication_patterns.cpp", "authentication_patterns_m73.cpp", "system_integrity.cpp", "system_integrity_m74.cpp", "scheduler.cpp", "scheduler_m75.cpp", "alerts.cpp", "alerts_m76.cpp", "enrollment.cpp", "enrollment_admission.cpp", "agent_roster.cpp", "agent_roster_m47.cpp", "enrollment_admin.cpp", "enrollment_m44.cpp", "agent_health.cpp")
         if desktop:
             source_names += ("event_explorer_model.cpp",)
         for filename in source_names:
@@ -211,7 +211,7 @@ if args.build_dir:
                        directory / "tests/knetsentry_rule_schema_test",
                        directory / "tests/knetsentry_authentication_patterns_test",
                        directory / "tests/knetsentry_system_integrity_test",
-                       directory / "tests/knetsentry_scheduler_test"]
+                       directory / "tests/knetsentry_scheduler_test", directory / "tests/knetsentry_alerts_test"]
         if desktop:
             executables.append(directory / "apps/desktop/knetsentry")
         for exe in executables:

@@ -306,6 +306,21 @@ ScheduleReport run_schedule(const SchedulePolicy& policy, std::string_view direc
     identify(policy, state.report);
     return state.report;
 }
+std::optional<std::string> schedule_policy_identity(const SchedulePolicy& policy) {
+    if (!valid_policy(policy)) { return std::nullopt; }
+    return identity(policy);
+}
+ScheduleReport pending_schedule(const SchedulePolicy& policy, std::string_view directory, EvidenceTrust trust) {
+    if (!valid_policy(policy)) { return {}; }
+    if (trust != EvidenceTrust::VerifiedStored) { return refused(ScheduleStatus::Unverified); }
+    File dir(locked_directory(directory));
+    State state;
+    if (dir.fd < 0 || !load(dir.fd, policy, state)) { return refused(ScheduleStatus::Unavailable); }
+    if (state.report.findings.empty()) { return refused(ScheduleStatus::NotDue); }
+    state.report.status = ScheduleStatus::Replay;
+    identify(policy, state.report);
+    return state.report;
+}
 bool acknowledge_schedule(const SchedulePolicy& policy, std::string_view directory, std::uint64_t generation) {
     if (!valid_policy(policy) || generation == 0) { return false; }
     File dir(locked_directory(directory));

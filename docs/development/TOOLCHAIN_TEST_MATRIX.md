@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns accepted; M7.4 Audit detection foundation accepted (#63 remains open); M7.5 scheduling foundation qualification pending (#64 remains open); issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns accepted; M7.4 Audit detection foundation accepted (#63 remains open); M7.5 scheduling foundation accepted (#64 remains open); M7.6 alert ledger qualification pending (#65); issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 78 Release/Debug/Clazy/analysis, 71 full ASan/UBSan,
-64 core-only and 65 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 79 Release/Debug/Clazy/analysis, 72 full ASan/UBSan,
+65 core-only and 66 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -436,4 +436,8 @@ The [M7.4 contract](SYSTEM_INTEGRITY_M74.md) adds one native test across all sev
 
 ### M7.5 scheduler
 
-The [M7.5 contract](RULE_SCHEDULING_M75.md) adds one mandatory native regression in all seven presets: 512 configured CTests, 67 structural verifiers and 147 consolidated gates with all privileged fixtures requested. Actual SQLite restart, bounded scheduling, replay, acknowledgement and state security are exercised. Target qualification pending.
+The [M7.5 contract](RULE_SCHEDULING_M75.md) adds one mandatory native regression in all seven presets: 512 configured CTests, 67 structural verifiers and 147 consolidated gates with all privileged fixtures requested. Actual SQLite restart, bounded scheduling, replay, acknowledgement and state security are exercised. Target qualification passed.
+
+### M7.6 alerts
+
+The [M7.6 contract](ALERT_LIFECYCLE_M76.md) adds one mandatory native regression in all seven presets: 519 configured CTests, 68 structural verifiers and 149 consolidated gates with all privileged fixtures requested. Target qualification pending.

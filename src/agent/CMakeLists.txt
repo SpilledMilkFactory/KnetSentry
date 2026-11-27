@@ -46,7 +46,7 @@ target_link_libraries(knetsentry_split_storage PUBLIC KnetSentry::EventStorage P
 knetsentry_apply_project_options(knetsentry_split_storage)
 
 # M7.1: pure bounded rule evaluation; no manager, Qt or AI linkage.
-add_library(knetsentry_detection STATIC detection_engine.cpp rule_schema.cpp authentication_patterns.cpp system_integrity.cpp scheduler.cpp)
+add_library(knetsentry_detection STATIC detection_engine.cpp rule_schema.cpp authentication_patterns.cpp system_integrity.cpp scheduler.cpp alerts.cpp)
 add_library(KnetSentry::Detection ALIAS knetsentry_detection)
 target_link_libraries(knetsentry_detection PUBLIC KnetSentry::AgentJournal PRIVATE OpenSSL::Crypto)
 knetsentry_apply_project_options(knetsentry_detection)

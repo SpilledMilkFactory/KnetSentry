@@ -628,3 +628,10 @@ target_link_libraries(knetsentry_scheduler_test PRIVATE KnetSentry::Detection Kn
 knetsentry_apply_project_options(knetsentry_scheduler_test)
 add_test(NAME knetsentry_scheduler_contract COMMAND $<TARGET_FILE:knetsentry_scheduler_test>)
 set_tests_properties(knetsentry_scheduler_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M7.6: durable alert consumer and independent lifecycle ledger.
+add_executable(knetsentry_alerts_test alerts_m76.cpp)
+target_link_libraries(knetsentry_alerts_test PRIVATE KnetSentry::Detection KnetSentry::SqliteStorage)
+knetsentry_apply_project_options(knetsentry_alerts_test)
+add_test(NAME knetsentry_alerts_contract COMMAND $<TARGET_FILE:knetsentry_alerts_test>)
+set_tests_properties(knetsentry_alerts_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)

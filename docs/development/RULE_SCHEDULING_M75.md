@@ -96,7 +96,7 @@ lock contention, unsafe pending objects, corruption, retained-context deletion,
 expiry, actual child-local file-write exhaustion, malformed later-page refusal and 128-record pagination. No private telemetry is needed.
 
 M7.5 is a foundation, not unattended operational rule scheduling. Keep #64
-open for scheduling adapters for M7.3/M7.4, durable alert consumer integration,
+open for scheduling adapters for M7.3/M7.4, multi-detector durable alert consumer integration (initial M7.6 single-scope ledger implemented),
 operational scheduler lifecycle and production authorization/volume binding.
 Issue #63's remaining FIM evidence and confirmed integrity semantics remain
-open. Target Ubuntu qualification is pending.
+open. Target Ubuntu qualification passed: 147 consolidated gates, 512 configured CTests, 67 structural checks and nine hosted CI checks; merge reported successful.
