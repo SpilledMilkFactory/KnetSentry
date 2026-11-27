@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Initial Dependency Candidate Register
 
-**Status:** Candidate inventory with scoped M4.2/M4.3, M5.2 and M5.6 development-build decisions. No runtime bundle or distribution clearance has been approved. This is not a dependency lockfile.
+**Status:** Candidate inventory with scoped M4.2/M4.3, M5.2, M5.6 and M6.4 development-build decisions. No runtime bundle or distribution clearance has been approved. This is not a dependency lockfile.
 
 | ID | Candidate / class | Planned use | License / constraint to verify | Future owner | Decision |
 |---|---|---|---|---|---|
@@ -14,7 +14,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 | `DEP-003` | Kirigami / Kirigami Addons (if needed) | Qt Quick UI patterns | Exact KDE module, packaging and LGPL/other license | M1.3 | `CANDIDATE` |
 | `DEP-004` | Extra CMake Modules (ECM) | KDE-oriented build configuration | Tooling license, package origin; custom CMake files BSD-2-Clause | M1.1 | `CANDIDATE` |
 | `DEP-005` | OpenSSL 3.5.x system shared libcrypto and libssl | Offline identity, isolated mutual TLS, local file and privacy-policy SHA-256 | Apache-2.0; [identity build decision](IDENTITY_M42.md), [TLS extension](TLS_TRANSPORT_M43.md), [FIM extension](FILE_INTEGRITY_M56.md), [privacy extension](PRIVACY_MINIMIZATION_M57.md) | M4.2/M4.3/M5.6/M5.7 | `APPROVED_FOR_BUILD` |
-| `DEP-006` | SQLite | Indexed event and metadata store | Source provenance, public-domain status/attestation and bundled components | M6.4 | `CANDIDATE` |
+| `DEP-006` | SQLite distro shared library (>= 3.37) | Development indexed event and metadata store | SQLite core public domain; distro notices and exact package review; [M6.4 build decision](SQLITE_STORAGE_M64.md) | M6.4 | `APPROVED_FOR_BUILD` |
 | `DEP-007` | Linux capture stack (e.g. libpcap) | Privileged capture broker / passive sensor | Licensing, privileges, parser security and deployment | M5.10 | `CANDIDATE` |
 | `DEP-008` | systemd / distro shared libsystemd | Host service control and local journal metadata | LGPL-2.1-or-later library; component notices and installed version review; [M5.2 build decision](JOURNAL_COLLECTION_M52.md) | M2.7/M5.2 | `APPROVED_FOR_BUILD` |
 | `DEP-009` | Optional network analytics (Zeek / Suricata) | Potential network telemetry adapters | Separate runtime/redistribution and copyleft implications | M9.5 | `CANDIDATE` |
@@ -23,4 +23,4 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 | `DEP-012` | Offline AI inference engine and model weights | Optional local investigation assistance | Runtime code vs model weights terms, source provenance and privacy | M12.3 | `CANDIDATE` |
 | `DEP-013` | Qt Graphs / other Qt GPL-only add-ons | Optional rich visualizations | **GPL-only open-source option may conflict with MIT-app distribution goal**; not an approved default | M8.2 | `REVIEW_REQUIRED` |
 
-The `CANDIDATE` label means **not approved**. DEP-005 is limited to maintained distro 3.5.x packages for this development build; exact package versions are recorded by CI and the acceptance runner. DEP-008 is limited to distro shared libsystemd for local metadata reads; target package version review is pending. No provider, bundled artifact or release approval follows. Other candidates remain a review queue. Future distribution entries must include version/source digest, exact licenses and artifact approval evidence. Relevant security risk: `TH-031` / `TB-10` / `TV-24` in the [threat model](../security/THREAT_MODEL.md) and [verification matrix](../security/THREAT_VERIFICATION_MATRIX.md).
+The `CANDIDATE` label means **not approved**. DEP-005 is limited to maintained distro 3.5.x packages for this development build; exact package versions are recorded by CI and the acceptance runner. DEP-008 is limited to distro shared libsystemd for local metadata reads; target package version review is pending. DEP-006 is restricted to maintained distro shared SQLite for this development build, with no third-party extensions or bundled source. Exact target package provenance and distribution clearance remain pending. No provider, bundled artifact or release approval follows. Other candidates remain a review queue. Future distribution entries must include version/source digest, exact licenses and artifact approval evidence. Relevant security risk: `TH-031` / `TB-10` / `TV-24` in the [threat model](../security/THREAT_MODEL.md) and [verification matrix](../security/THREAT_VERIFICATION_MATRIX.md).

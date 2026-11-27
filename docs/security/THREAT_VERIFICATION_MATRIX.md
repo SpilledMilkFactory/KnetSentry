@@ -234,3 +234,13 @@ revision-checked retention, and held-evidence exclusion. TV-25 fixtures are
 synthetic. TB-07 durable storage, legal-hold authorization, mount safety,
 integrity, disk failure, persistent retention audit and threat closure remain
 unqualified. The reference backend cannot authorize a durable receipt.
+
+## M6.4 SQLite event storage
+
+The [M6.4 contract](../development/SQLITE_STORAGE_M64.md) provides partial
+TB-07, TV-10/TV-25/TV-26 and TB-10/TV-24 evidence: controlled development
+SQLite access, strict schema validation and migration, bounded transaction
+and query processing, checked numeric mode decoding, and protected file
+activation. Production independent raw-volume durability, hostile storage
+integrity, mount-race safety, complete retention authority and threat closure
+remain outstanding.

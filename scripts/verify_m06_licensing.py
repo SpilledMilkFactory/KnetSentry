@@ -98,11 +98,12 @@ rows = re.findall(r'^\| `(DEP-\d{3})` \|.*\| `(CANDIDATE|REVIEW_REQUIRED|APPROVE
 ids = [id for id, _ in rows]
 check(len(ids) == len(set(ids)) == 13, 'expected 13 unique dependency candidates')
 check(set(ids) == {f'DEP-{i:03}' for i in range(1, 14)}, 'dependency IDs missing')
-check(all(status == 'APPROVED_FOR_BUILD' if dep in ('DEP-005', 'DEP-008') else
+check(all(status == 'APPROVED_FOR_BUILD' if dep in ('DEP-005', 'DEP-006', 'DEP-008') else
           status in ('CANDIDATE', 'REVIEW_REQUIRED') for dep, status in rows),
-      'unexpected dependency approval outside the M4.2/M4.3 and M5.2 scoped decisions')
+      'unexpected dependency approval outside the M4.2/M4.3, M5.2 and M6.4 scoped decisions')
 check('IDENTITY_M42.md' in reg and 'TLS_TRANSPORT_M43.md' in reg and 'Apache-2.0' in reg, 'missing DEP-005 build evidence')
 check('JOURNAL_COLLECTION_M52.md' in reg and 'LGPL-2.1-or-later' in reg, 'missing DEP-008 build evidence')
+check('SQLITE_STORAGE_M64.md' in reg and 'public domain' in reg, 'missing DEP-006 build evidence')
 check('Qt Graphs' in reg and 'GPL-only' in reg,
       'missing Qt GPL-only module warning')
 for rel in ('docs/development/DEPENDENCY_APPROVAL_POLICY.md',
@@ -126,5 +127,5 @@ if ERRORS:
 print('M0.6 licensing documentation verification: PASS')
 print(f'  {len(mds)} documented Markdown files; {len(scripts)} MIT Python tools')
 print('  MIT application policy; CC-BY-SA-4.0 docs; future BSD-2-Clause CMake')
-print('  13 dependency entries, two scoped build approvals, zero approved bundles; release clearance pending')
+print('  13 dependency entries, three scoped build approvals, zero approved bundles; release clearance pending')
 print('  Offline policy checks only; official reuse lint and artifact audits pending')

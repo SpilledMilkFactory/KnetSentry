@@ -14,7 +14,8 @@ public:
     SystemJournal(std::string directory, JournalMode mode, bool redact_auth) : directory_(std::move(directory)), mode_(mode), redact_auth_(redact_auth) {}
     ~SystemJournal() override { close(); }
     bool open(std::string_view unit) override {
-        if (journal_ != nullptr || (mode_ == JournalMode::Audit ? unit != "audit" : !valid_journal_unit(unit)) ||
+        if (journal_ != nullptr || (mode_ != JournalMode::Metadata && mode_ != JournalMode::Authentication && mode_ != JournalMode::Audit) ||
+            (mode_ == JournalMode::Audit ? unit != "audit" : !valid_journal_unit(unit)) ||
             (mode_ == JournalMode::Authentication && !valid_auth_unit(unit))) { return false; }
         const int result = directory_.empty() ? sd_journal_open(&journal_, SD_JOURNAL_LOCAL_ONLY) :
             sd_journal_open_directory(&journal_, directory_.c_str(), 0);

@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.2 normalization accepted; M6.3 storage abstraction qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.3 storage abstraction accepted; M6.4 SQLite qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 63 Release/Debug/Clazy/analysis, 57 full ASan/UBSan,
-50 core-only and 51 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 64 Release/Debug/Clazy/analysis, 58 full ASan/UBSan,
+51 core-only and 52 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -385,3 +385,11 @@ See [M6.2](EVENT_NORMALIZATION_M62.md). The standalone normalization contract is
 ## M6.3 event storage abstraction
 
 See [M6.3](EVENT_STORAGE_M63.md). The standalone storage contract is mandatory in all seven presets, with existing compiler, sanitizer and ELF hardening gates. It runs through the database-independent interface without a GUI, database, filesystem fixture, network or production credentials.
+
+### M6.4 SQLite development backend
+
+The [M6.4 regression](SQLITE_STORAGE_M64.md) is mandatory in all seven presets.
+Distro SQLite >= 3.37 is required. Synthetic dedicated private fixtures exercise
+restart, schema migration, transactional rollback, search, retention and mode
+validation. Clang analyzer diagnostics are now fatal in the analysis preset;
+no enum diagnostic is suppressed. The target inventory is 417 CTest executions.

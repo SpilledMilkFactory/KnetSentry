@@ -530,3 +530,11 @@ target_link_libraries(knetsentry_event_storage_test PRIVATE KnetSentry::EventSto
 knetsentry_apply_project_options(knetsentry_event_storage_test)
 add_test(NAME knetsentry_event_storage_contract COMMAND $<TARGET_FILE:knetsentry_event_storage_test>)
 set_tests_properties(knetsentry_event_storage_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)
+
+# M6.4: real SQLite restart, migration, transaction and validation regression.
+find_package(SQLite3 3.37 REQUIRED)
+add_executable(knetsentry_sqlite_storage_test sqlite_storage_m64.cpp)
+target_link_libraries(knetsentry_sqlite_storage_test PRIVATE KnetSentry::SqliteStorage SQLite::SQLite3)
+knetsentry_apply_project_options(knetsentry_sqlite_storage_test)
+add_test(NAME knetsentry_sqlite_storage_contract COMMAND $<TARGET_FILE:knetsentry_sqlite_storage_test>)
+set_tests_properties(knetsentry_sqlite_storage_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)

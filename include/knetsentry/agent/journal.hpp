@@ -11,7 +11,16 @@
 #include <vector>
 
 namespace knetsentry::agent {
-enum class JournalMode { Metadata, Authentication, Audit };
+enum class JournalMode { Metadata = 0, Authentication = 1, Audit = 2, Unsupported = 3 };
+// Decode an untrusted numeric mode before it enters a typed interface.
+[[nodiscard]] constexpr JournalMode decode_journal_mode(std::int64_t value) noexcept {
+    switch (value) {
+    case 0: return JournalMode::Metadata;
+    case 1: return JournalMode::Authentication;
+    case 2: return JournalMode::Audit;
+    default: return JournalMode::Unsupported;
+    }
+}
 struct JournalRecord {
     std::string cursor, unit, machine, boot;
     std::uint64_t realtime_usec{}, monotonic_usec{};
