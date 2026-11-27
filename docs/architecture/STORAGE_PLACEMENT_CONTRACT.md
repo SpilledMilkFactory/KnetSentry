@@ -6,8 +6,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # KnetSentry — Storage Placement and Raw-First Event Contract
 
 **Issue:** M0.5. **Status:** architecture and future acceptance requirements;
-M6.3 supplies a volatile reference interface and M6.4 supplies a development SQLite backend; no actual durable raw-volume
-writer, storage selector, or Qt configuration UI exists yet.
+M6.3 supplies a volatile reference interface and M6.4 supplies a development SQLite backend; M6.10 adds a bounded independent raw/index library foundation, not an operational storage selector or Qt configuration UI.
 
 ## Configuration model
 
@@ -78,7 +77,7 @@ uncontrolled writer activity.
 
 ## Future ownership and acceptance
 
-- M6.3–M6.5 and proposed M6.10: secure raw store, independent indexed database, raw-first commit,
+- M6.3–M6.5 and M6.10: secure raw store, independent indexed database, raw-first commit,
   durability states, volume validation and incident evidence IDs.
 - M6.7/M14.3: per-volume retention/quota/reserve and no-silent-loss rules.
 - Proposed M8.10: Qt 6/Kirigami folder selection, mount health, permission preview and
@@ -124,3 +123,7 @@ or independent production placement and reserve enforcement.
 See [retention contract](../development/STORAGE_RETENTION_M67.md).
 
 M6.8 permits explicitly selected existing schema-v4 development stores to be queried through the foreground manager. The desktop never opens SQLite. This read-only query interface does not approve production raw/index placement or implement independent filesystem-enforced read-only storage access. See [M6.8](../development/EVENT_EXPLORER_M68.md).
+
+## M6.10 split-storage foundation
+
+See [M6.10](../development/SPLIT_STORAGE_M610.md). Separate approved directories, descriptor-relative immutable raw segments and a paired bounded SQLite projection implement an opt-in library foundation. Current approvals are boot/mount scoped; persistent UUID validation, actual distinct-volume qualification, operational integration, retention and relocation remain outstanding.
