@@ -600,3 +600,10 @@ target_link_libraries(knetsentry_detection_test PRIVATE KnetSentry::Detection Kn
 knetsentry_apply_project_options(knetsentry_detection_test)
 add_test(NAME knetsentry_detection_contract COMMAND $<TARGET_FILE:knetsentry_detection_test>)
 set_tests_properties(knetsentry_detection_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)
+
+# M7.2: versioned rule validation and all-or-nothing compilation.
+add_executable(knetsentry_rule_schema_test rule_schema_m72.cpp)
+target_link_libraries(knetsentry_rule_schema_test PRIVATE KnetSentry::Detection KnetSentry::EventStorage)
+knetsentry_apply_project_options(knetsentry_rule_schema_test)
+add_test(NAME knetsentry_rule_schema_contract COMMAND $<TARGET_FILE:knetsentry_rule_schema_test>)
+set_tests_properties(knetsentry_rule_schema_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)

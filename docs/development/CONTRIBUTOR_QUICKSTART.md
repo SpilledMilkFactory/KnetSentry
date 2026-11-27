@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **74 CTest tests**, including
+The Release desktop suite currently contains **75 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **67 CTests**, including the
+The full sanitizer suite currently contains **68 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **60 CTests**) and `linux-sanitize-core-only` for **61**.
+C++ test (currently **61 CTests**) and `linux-sanitize-core-only` for **62**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -466,4 +466,8 @@ See [M6.10](SPLIT_STORAGE_M610.md). Run `ctest --preset linux-release -R '^knets
 
 ### M7.1 deterministic detection
 
-See [M7.1](DETECTION_ENGINE_M71.md). Run `ctest --preset linux-release -R '^knetsentry_detection_contract$' --verbose --no-tests=error`. Current inventories: desktop 74/67, core-only 60/61 (normal/sanitized). No operational detection or GUI changes.
+See [M7.1](DETECTION_ENGINE_M71.md). Run `ctest --preset linux-release -R '^knetsentry_detection_contract$' --verbose --no-tests=error`. Accepted M7.1 inventories: desktop 74/67, core-only 60/61 (normal/sanitized). No operational detection or GUI changes.
+
+### M7.2 rule schema
+
+See [M7.2](RULE_SCHEMA_M72.md). Run `ctest --preset linux-release -R '^knetsentry_(rule_schema_contract|detection_contract)$' --verbose --no-tests=error`. Current inventories: desktop 75/68, core-only 61/62 (normal/sanitized). No operational or GUI changes.

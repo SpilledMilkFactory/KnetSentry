@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection qualification pending; issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema qualification pending; issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 74 Release/Debug/Clazy/analysis, 67 full ASan/UBSan,
-60 core-only and 61 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 75 Release/Debug/Clazy/analysis, 68 full ASan/UBSan,
+61 core-only and 62 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -421,3 +421,7 @@ The [M6.10 contract](SPLIT_STORAGE_M610.md) adds one mandatory native test acros
 ### M7.1 deterministic detection
 
 The [M7.1 contract](DETECTION_ENGINE_M71.md) adds a native test in all seven configurations. Target inventory: 484 configured CTests, 63 structural verifiers, 139 consolidated gates with all previous privileged fixtures requested.
+
+### M7.2 rule schema
+
+The [M7.2 contract](RULE_SCHEMA_M72.md) adds a native test in all seven presets. Target inventory: 491 configured CTests, 64 structural verifiers, 141 consolidated gates with all previous privileged fixtures requested. Existing M7.1 detection behavior and compiler enforcement remain mandatory.
