@@ -198,3 +198,7 @@ The [Audit detection scan](../development/SYSTEM_INTEGRITY_M74.md) uses policy-a
 ### M7.5 scheduling boundary
 
 The [scheduler](../development/RULE_SCHEDULING_M75.md) composes the validated M7.2 engine with bounded exact-scope stored snapshots and a private state checkpoint. A durable pending generation is replayed until the caller acknowledges it. Scheduling does not confer store authorization, alert publication, response authority or live monitoring.
+
+### M7.6 alert lifecycle boundary
+
+The [alert ledger](../development/ALERT_LIFECYCLE_M76.md) consumes only a committed scheduler generation and revalidates durable evidence before atomic publication. Stable keys and revisions separate analyst lifecycle changes from original evidence. Caller authorization, serial access, volume identity and operational integration remain outstanding.

@@ -85,6 +85,7 @@ qualification targets, not measured results.
 - [M7.3 — Foundational authentication detections](development/AUTHENTICATION_PATTERNS_M73.md)
 - [M7.4 — Privilege and system-integrity detections](development/SYSTEM_INTEGRITY_M74.md)
 - [M7.5 — Rule scheduling, state and suppression](development/RULE_SCHEDULING_M75.md)
+- [M7.6 — Alert creation and lifecycle management](development/ALERT_LIFECYCLE_M76.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)

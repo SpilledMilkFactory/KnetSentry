@@ -39,6 +39,9 @@ struct ScheduleReport {
 // No background work. Durable candidate batch is replayed until explicitly acknowledged.
 [[nodiscard]] ScheduleReport run_schedule(const SchedulePolicy& policy, std::string_view directory,
     const storage::EventStore& store, std::uint64_t now_ms, bool enabled, EvidenceTrust trust, Coverage coverage);
+// Read only a committed nonempty generation; never execute a new scan.
+[[nodiscard]] ScheduleReport pending_schedule(const SchedulePolicy& policy, std::string_view directory, EvidenceTrust trust);
+[[nodiscard]] std::optional<std::string> schedule_policy_identity(const SchedulePolicy& policy);
 // Acknowledge only after the caller has durably consumed the scoped generation.
 // Does not authorize alert publication. Caller must reverify evidence before use.
 [[nodiscard]] bool acknowledge_schedule(const SchedulePolicy& policy, std::string_view directory,

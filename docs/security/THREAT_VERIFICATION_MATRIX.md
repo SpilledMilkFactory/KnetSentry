@@ -301,3 +301,7 @@ The [M7.4 contract](../development/SYSTEM_INTEGRITY_M74.md) contributes partial 
 ## M7.5 scheduling and persistent state
 
 The [M7.5 contract](../development/RULE_SCHEDULING_M75.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for scoped bounded rule scheduling, private checkpoint persistence, corruption refusal, duplicate management and historical batch replay. A trusted caller remains responsible for authorization, state and volume identity, clock, evidence revalidation and durable consumer deduplication.
+
+## M7.6 alert lifecycle
+
+The [M7.6 contract](../development/ALERT_LIFECYCLE_M76.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for private alert state, evidence revalidation, generation deduplication and bounded lifecycle updates. Caller authorization, note privacy, evidence holds and production volume identity remain outstanding.
