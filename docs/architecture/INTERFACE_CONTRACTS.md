@@ -186,3 +186,7 @@ No operational agent session or administrative mutation interface is exposed.
 ### M7.2 rule configuration boundary
 
 The [versioned rule schema](../development/RULE_SCHEMA_M72.md) requires validated metadata, supported source requirements and reachable predicates before constructing a schema-aware engine. Static diagnostics do not echo supplied content. The trusted caller retains ownership of authorization, rule history and store provenance. No operational scheduling or response authority is introduced.
+
+### M7.3 authentication pattern boundary
+
+The [authentication pattern scan](../development/AUTHENTICATION_PATTERNS_M73.md) consumes a revision-bound, exact-binding and exact-source EventStore snapshot under explicit caller-established trust. It uses schema-validated predicates, bounded receiver-time windows and store-scoped evidence IDs. It does not establish account identity, authorize access, or persist alerts.

@@ -82,6 +82,7 @@ qualification targets, not measured results.
 - [M6.10 — Independently approved raw and indexed storage](development/SPLIT_STORAGE_M610.md)
 - [M7.1 — Deterministic detection engine](development/DETECTION_ENGINE_M71.md)
 - [M7.2 — Detection-rule schema and validation](development/RULE_SCHEMA_M72.md)
+- [M7.3 — Foundational authentication detections](development/AUTHENTICATION_PATTERNS_M73.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)

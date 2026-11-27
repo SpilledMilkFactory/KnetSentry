@@ -288,4 +288,8 @@ The [M7.1 contract](../development/DETECTION_ENGINE_M71.md) contributes partial 
 
 ## M7.2 rule schema
 
-The [M7.2 contract](../development/RULE_SCHEMA_M72.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for bounded rule validation, atomic refusal, static diagnostics and evidence preservation. Rule authorization, persistent history and operational activation remain outstanding. Target qualification pending.
+The [M7.2 contract](../development/RULE_SCHEMA_M72.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for bounded rule validation, atomic refusal, static diagnostics and evidence preservation. Rule authorization, persistent history and operational activation remain outstanding. M7.2 accepted.
+
+## M7.3 authentication patterns
+
+The [M7.3 contract](../development/AUTHENTICATION_PATTERNS_M73.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for bounded scoped correlation, unknown barriers, evidence linkage and snapshot refusal. Caller authorization and trust, endpoint truthfulness, operational scheduling and alert persistence remain separate. Target qualification pending.
