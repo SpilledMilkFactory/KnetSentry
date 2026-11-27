@@ -545,3 +545,10 @@ target_link_libraries(knetsentry_evidence_integrity_test PRIVATE KnetSentry::Sql
 knetsentry_apply_project_options(knetsentry_evidence_integrity_test)
 add_test(NAME knetsentry_evidence_integrity_contract COMMAND $<TARGET_FILE:knetsentry_evidence_integrity_test>)
 set_tests_properties(knetsentry_evidence_integrity_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M6.6: known-dataset search/filter parity, migration and integrity boundaries.
+add_executable(knetsentry_event_search_test event_search_m66.cpp)
+target_link_libraries(knetsentry_event_search_test PRIVATE KnetSentry::SqliteStorage SQLite::SQLite3)
+knetsentry_apply_project_options(knetsentry_event_search_test)
+add_test(NAME knetsentry_event_search_contract COMMAND $<TARGET_FILE:knetsentry_event_search_test>)
+set_tests_properties(knetsentry_event_search_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)

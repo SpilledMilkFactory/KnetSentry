@@ -97,7 +97,7 @@ void verify() {
     // Simulate actual v2 schema, without integrity metadata.
     Fixture migrated;
     { SqliteEventStore store(migrated.path); require(store.append(input).status == StoreStatus::Ok, "legacy fixture"); }
-    { External db(migrated.db()); db.sql("BEGIN; DROP TABLE evidence_integrity; PRAGMA user_version=2; COMMIT"); }
+    { External db(migrated.db()); db.sql("BEGIN; DROP TABLE evidence_integrity; DROP INDEX event_mode; DROP INDEX event_source; DROP INDEX event_time; PRAGMA user_version=2; COMMIT"); }
     require(rejects(migrated.path), "legacy migration requires explicit approval");
     {
         SqliteEventStore store(migrated.path, LegacyIntegrityPolicy::EstablishBaseline);
@@ -114,7 +114,7 @@ void verify() {
     { SqliteEventStore store(migrated.path); require(store.raw(2).status == StoreStatus::Ok, "restart after retention"); }
     Fixture broken;
     { SqliteEventStore store(broken.path); require(store.append(input).status == StoreStatus::Ok, "broken legacy fixture"); }
-    { External db(broken.db()); db.sql("BEGIN; DROP TABLE evidence_integrity; PRAGMA user_version=2; UPDATE events SET wire='invalid' WHERE id=1; COMMIT"); }
+    { External db(broken.db()); db.sql("BEGIN; DROP TABLE evidence_integrity; DROP INDEX event_mode; DROP INDEX event_source; DROP INDEX event_time; PRAGMA user_version=2; UPDATE events SET wire='invalid' WHERE id=1; COMMIT"); }
     require(rejects(broken.path, LegacyIntegrityPolicy::EstablishBaseline), "invalid legacy rejected");
     { External db(broken.db());
         sqlite3_stmt* stmt{}; require(sqlite3_prepare_v2(db.db, "PRAGMA user_version", -1, &stmt, nullptr) == SQLITE_OK, "schema version query");

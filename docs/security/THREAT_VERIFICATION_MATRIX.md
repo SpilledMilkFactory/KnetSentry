@@ -252,3 +252,10 @@ partial TB-07, TV-10/TV-25/TV-26/TV-30 evidence via immutable record commitments
 explicit legacy baselines, bounded transactional verification, mismatch refusal
 and retention consistency. Unkeyed same-database digests do not establish
 authenticity, complete tamper resistance, anti-rollback or threat closure.
+
+## M6.6 event search
+
+The [M6.6 search contract](../development/EVENT_SEARCH_M66.md) contributes partial
+TB-07 and TV-10/TV-25/TV-26/TV-30 evidence for bounded typed queries, fixed SQL
+with bound values, index migration and integrity refusal even outside the
+filter. No query authorization or production throughput qualification is claimed.

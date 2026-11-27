@@ -76,7 +76,7 @@ void verify() {
     }
     // Simulate the known v1 schema (same tables, no secondary indexes) with
     // genuine data, then exercise the transactional v1 -> v2 migration.
-    { External db(f.db()); db.sql("BEGIN; DROP TABLE evidence_integrity; DROP INDEX event_search; DROP INDEX event_binding; DROP INDEX event_retention; PRAGMA user_version=1; COMMIT"); }
+    { External db(f.db()); db.sql("BEGIN; DROP TABLE evidence_integrity; DROP INDEX event_search; DROP INDEX event_binding; DROP INDEX event_retention; DROP INDEX event_mode; DROP INDEX event_source; DROP INDEX event_time; PRAGMA user_version=1; COMMIT"); }
     {
         SqliteEventStore store(f.path, LegacyIntegrityPolicy::EstablishBaseline);
         const auto raw = store.raw(first); require(raw.value && raw.value->canonical_row == original && raw.value->held && raw.value->received_ms == 100, "restart evidence and hold");
@@ -121,7 +121,7 @@ void verify() {
     }
     { External db(f.db()); db.sql("PRAGMA user_version=999"); }
     require(rejects(f.path), "future schema rejected");
-    { External db(f.db()); db.sql("PRAGMA user_version=3; UPDATE events SET status_id=2 WHERE id=1"); }
+    { External db(f.db()); db.sql("PRAGMA user_version=4; UPDATE events SET status_id=2 WHERE id=1"); }
     require(rejects(f.path), "inconsistent indexed projection rejected");
     { External db(f.db()); db.sql("UPDATE events SET status_id=1 WHERE id=1; PRAGMA ignore_check_constraints=ON; UPDATE events SET mode=99 WHERE id=1"); }
     require(rejects(f.path), "unknown stored enum rejected");

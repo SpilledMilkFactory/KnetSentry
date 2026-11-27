@@ -112,3 +112,7 @@ backend is not a ReceiptSink. No production volume configuration is activated.
 M6.5 adds record-level integrity metadata to the existing development SQLite
 store; it does not replace independently authorized production raw/index volumes.
 See [integrity model](../development/EVIDENCE_INTEGRITY_M65.md).
+
+M6.6 adds source/mode/time indexes and verifies existing evidence during schema
+migration; independent approved raw/index placement remains outstanding.
+See [search contract](../development/EVENT_SEARCH_M66.md).

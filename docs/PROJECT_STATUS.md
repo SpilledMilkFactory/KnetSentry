@@ -5,14 +5,14 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M6.4 — SQLite metadata and indexed event storage.**
+**Accepted baseline: M6.5 — Original-event preservation and integrity metadata.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
 M4.8 and M5.1–M5.8 are merged (M5.5 offline foundation only). M5.9 local aggregate agent status in Dashboard and Assets is qualified and merged. Multi-endpoint authenticated status integration remains outstanding (#50).
 Issue #46 operational network/manager integration remains outstanding.
 M6.1 bounded offline authenticated event ingestion is qualified and merged; operational and generic envelope integration (#51) remain outstanding.
 M6.2 typed OCSF-aligned normalization of the KSTD subset is qualified and merged.
-M6.3 and M6.4 storage foundations are qualified and merged. M6.5 adds versioned SHA-256 commitments for minimized original evidence; target qualification is pending.
+M6.3–M6.5 storage and record integrity foundations are qualified and merged. M6.6 adds typed bounded event search, filtering and schema-v4 indexes; target qualification is pending.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
@@ -30,7 +30,7 @@ This is an unreleased development baseline, not a v1.0.0 security qualification.
 | Endpoint agent | Independent foreground process, strict v1 startup configuration, bounded static collector lifecycle and non-root capability checks; opt-in selected journal metadata, authentication categories and journal-mediated audit records and explicit file integrity polling under mandatory explicit privacy policy; no operational network |
 | Event ingestion | Bounded per-source authenticated KSTD receipt pipeline, canonical validation, reject/overload disposition counters; no deployed manager ingress |
 | Event normalization | OCSF 1.4.0-aligned internal projection, native provenance, explicit mapping disposition and post-commit typed result; no normalized persistence or OCSF export |
-| Event storage | Database-independent storage interface, volatile reference and transactional SQLite development backend with record integrity commitments; no operational persistence or ACK integration |
+| Event storage | Database-independent storage interface, volatile reference and transactional SQLite development backend with record integrity commitments and typed bounded search; no operational persistence or ACK integration |
 | Telemetry delivery | Explicit protected FIFO outbox, durable bounded inbox and authenticated receipt/retry contract (offline); no running manager receiver |
 | Agent health | Offline TLS-backed KSAP reporting, current enrollment rechecks, bounded health snapshots and reconnect scheduling; no deployed agent |
 | Verification | Mandatory compiled regressions, static analysis, sanitizer configurations, strict QML diagnostics, isolated dual-stack kernel firewall and topology fixtures |
@@ -43,6 +43,16 @@ rules. Monitoring is unavailable, and no operational remote telemetry transport,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M6.5 maintainer acceptance (2026-11-27 UTC, applied working tree based on
+`1f9f538`) recorded 126 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 424 CTest
+executions, 57 structural verifiers and nine green hosted checks (`ad603ef`).
+Focused Release 10/10 and analysis 3/3, 70 repeated Release executions and
+direct integrity and prior storage/receipt regressions passed. The supplementary
+sanitized transcript ends mid-run (32 completed successful executions visible);
+the consolidated sanitizer suites passed. Analysis log inspection found no
+warning/error diagnostics. GUI review and merge were reported successful. Independent integrity trust anchors and operational
+storage integration remain open.
 
 M6.4 maintainer acceptance (2026-11-27 UTC, applied working tree based on
 `0822ed2`) recorded 124 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 417 CTest
@@ -244,7 +254,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
-| M5–M7 — functional SIEM foundations | M6.4 SQLite development backend accepted; M6.5 integrity qualification pending; operational integration outstanding |
+| M5–M7 — functional SIEM foundations | M6.5 record integrity accepted; M6.6 search qualification pending; operational integration outstanding |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |
