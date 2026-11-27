@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.4 SQLite accepted; M6.5 integrity qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.5 integrity accepted; M6.6 search qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 65 Release/Debug/Clazy/analysis, 59 full ASan/UBSan,
-52 core-only and 53 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 66 Release/Debug/Clazy/analysis, 60 full ASan/UBSan,
+53 core-only and 54 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -396,4 +396,8 @@ no enum diagnostic is suppressed. The target inventory is 417 CTest executions.
 
 ### M6.5 evidence integrity
 
-The [M6.5 regression](EVIDENCE_INTEGRITY_M65.md) is mandatory in all seven presets. It tests digest vectors, migration origin, restart, runtime tamper rejection and retention. Target: 424 CTest executions, 57 structural verifiers and 126 consolidated gates; official Ubuntu qualification pending.
+The [M6.5 regression](EVIDENCE_INTEGRITY_M65.md) is mandatory in all seven presets. It tests digest vectors, migration origin, restart, runtime tamper rejection and retention. Accepted: 424 CTest executions, 57 structural verifiers and 126 consolidated gates.
+
+### M6.6 event search
+
+The [M6.6 regression](EVENT_SEARCH_M66.md) is mandatory in all seven presets. Target: 431 CTest executions, 58 structural verifiers and 128 consolidated gates. It exercises known-dataset parity, bounded pagination, indexed source/time filters, v3 migration and integrity refusal. Official Ubuntu qualification pending.

@@ -56,6 +56,10 @@ struct EventSummary {
     agent::OcsfActivity activity_id{agent::OcsfActivity::Unknown};
     agent::OcsfStatus status_id{agent::OcsfStatus::Unknown};
     agent::MappingResult mapping{agent::MappingResult::MetadataOnly};
+    agent::OcsfCategory category{agent::OcsfCategory::Unknown};
+    agent::OcsfSeverity severity{agent::OcsfSeverity::Unknown};
+    agent::JournalMode source_mode{agent::JournalMode::Metadata};
+    std::string source_unit;
 };
 struct SearchQuery {
     std::optional<agent::OcsfClass> class_uid;
@@ -65,7 +69,19 @@ struct SearchQuery {
     EventId after{};
     std::optional<std::uint64_t> revision;
     std::size_t limit{32};
+    // All supplied filters are conjunctive; source_unit is exact, not a pattern.
+    std::string_view source_unit;
+    std::optional<agent::JournalMode> source_mode;
+    std::optional<agent::OcsfCategory> category;
+    std::optional<agent::OcsfSeverity> severity;
+    std::optional<agent::OcsfActivity> activity;
+    std::optional<agent::MappingResult> mapping;
 };
+// Shared query contract for both backends; not an authorization boundary.
+[[nodiscard]] bool valid_search_query(const SearchQuery& query) noexcept;
+[[nodiscard]] bool matches_search_query(const SearchQuery& query, const RawEvidence& raw,
+    const agent::NormalizedEvent& event) noexcept;
+[[nodiscard]] EventSummary summarize_event(const RawEvidence& raw, const agent::NormalizedEvent& event);
 struct SearchPage {
     StoreStatus status{StoreStatus::Invalid};
     std::uint64_t revision{};

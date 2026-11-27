@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M6.4 — SQLite Metadata and Indexed Event Storage
 
-Issue #54. Development implementation; Ubuntu maintainer qualification passed (124 gates, 417 CTests, 90 supplementary repeated tests, nine hosted checks, no analysis-build diagnostics). M6.5 extends this historical schema to v3; see [M6.5](EVIDENCE_INTEGRITY_M65.md) for the current activation and integrity contract.
+Issue #54. Development implementation; Ubuntu maintainer qualification passed (124 gates, 417 CTests, 90 supplementary repeated tests, nine hosted checks, no analysis-build diagnostics). M6.5 extends this historical schema to v3; see [M6.5](EVIDENCE_INTEGRITY_M65.md) for the integrity contract; [M6.6](EVENT_SEARCH_M66.md) extends the schema to v4.
 
 ## Backend and trust boundary
 

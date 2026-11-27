@@ -11,16 +11,55 @@ namespace {
 constexpr auto max_id = static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
 constexpr auto max_received_ms = max_id;
 bool valid_received(std::uint64_t ms) noexcept { return ms != 0 && ms <= max_received_ms; }
-bool valid_query(const SearchQuery& q) noexcept {
+bool valid_severity(agent::OcsfSeverity severity) noexcept {
+    using S = agent::OcsfSeverity;
+    switch (severity) {
+    case S::Unknown: case S::Informational: case S::Low: case S::Medium:
+    case S::High: case S::Critical: case S::Fatal: case S::Other: return true;
+    }
+    return false;
+}
+agent::OcsfCategory category_of(const agent::NormalizedEvent& event) noexcept {
+    return event.class_uid == agent::OcsfClass::Authentication
+        ? agent::OcsfCategory::IdentityAndAccessManagement : agent::OcsfCategory::Unknown;
+}
+} // namespace
+bool valid_search_query(const SearchQuery& q) noexcept {
     using C = agent::OcsfClass;
     using S = agent::OcsfStatus;
+    using J = agent::JournalMode;
+    using A = agent::OcsfActivity;
+    using M = agent::MappingResult;
+    using G = agent::OcsfCategory;
     return q.limit > 0 && q.limit <= EventStore::max_page && q.from_ms <= q.through_ms &&
         (q.binding.empty() || agent::valid_delivery_binding(q.binding)) &&
+        (q.source_unit.empty() || q.source_unit == "audit" || agent::valid_journal_unit(q.source_unit)) &&
+        (!q.source_mode || *q.source_mode == J::Metadata || *q.source_mode == J::Authentication || *q.source_mode == J::Audit) &&
+        (!q.category || *q.category == G::Unknown || *q.category == G::IdentityAndAccessManagement) &&
+        (!q.severity || valid_severity(*q.severity)) &&
+        (!q.activity || *q.activity == A::Unknown || *q.activity == A::Logon || *q.activity == A::Logoff) &&
+        (!q.mapping || *q.mapping == M::Classified || *q.mapping == M::MetadataOnly ||
+            *q.mapping == M::AuditTypeUnmapped || *q.mapping == M::Redacted || *q.mapping == M::Unclassified) &&
         (!q.class_uid || *q.class_uid == C::Base || *q.class_uid == C::Authentication) &&
         (!q.status_id || *q.status_id == S::Unknown || *q.status_id == S::Success || *q.status_id == S::Failure) &&
         (q.after == 0 || q.revision.has_value());
 }
-} // namespace
+bool matches_search_query(const SearchQuery& q, const RawEvidence& raw, const agent::NormalizedEvent& event) noexcept {
+    return raw.id > q.after && event.time_ms >= q.from_ms && event.time_ms <= q.through_ms &&
+        (q.binding.empty() || q.binding == raw.binding) &&
+        (q.source_unit.empty() || q.source_unit == raw.unit) &&
+        (!q.source_mode || *q.source_mode == raw.mode) &&
+        (!q.category || *q.category == category_of(event)) &&
+        (!q.severity || *q.severity == event.severity_id) &&
+        (!q.activity || *q.activity == event.activity_id) &&
+        (!q.mapping || *q.mapping == event.mapping) &&
+        (!q.class_uid || *q.class_uid == event.class_uid) &&
+        (!q.status_id || *q.status_id == event.status_id);
+}
+EventSummary summarize_event(const RawEvidence& raw, const agent::NormalizedEvent& event) {
+    return {raw.id, event.time_ms, raw.received_ms, event.class_uid, event.activity_id, event.status_id,
+        event.mapping, category_of(event), event.severity_id, raw.mode, raw.unit};
+}
 AppendResult MemoryEventStore::append(const RawInput& input) {
     if (!valid_received(input.received_ms) || !agent::valid_delivery_binding(input.binding)) { return {}; }
     auto parsed = agent::parse_delivery_row(input.canonical_row, input.unit, input.mode);
@@ -73,20 +112,16 @@ ReadResult<agent::NormalizedEvent> MemoryEventStore::normalized(EventId id) cons
 }
 SearchPage MemoryEventStore::search(const SearchQuery& query) const {
     SearchPage page;
-    if (!valid_query(query)) { return page; }
+    if (!valid_search_query(query)) { return page; }
     page.revision = revision_;
     if (query.revision && *query.revision != revision_) { page.status = StoreStatus::Stale; return page; }
     page.status = StoreStatus::Ok;
     for (const auto& entry : entries_) {
         if (!entry.normalized || entry.raw.id <= query.after) { continue; }
         const auto& event = *entry.normalized;
-        if ((!query.binding.empty() && query.binding != entry.raw.binding) ||
-            (query.class_uid && *query.class_uid != event.class_uid) ||
-            (query.status_id && *query.status_id != event.status_id) ||
-            event.time_ms < query.from_ms || event.time_ms > query.through_ms) { continue; }
+        if (!matches_search_query(query, entry.raw, event)) { continue; }
         if (page.events.size() == query.limit) { page.more = true; break; }
-        page.events.push_back({entry.raw.id, event.time_ms, entry.raw.received_ms, event.class_uid,
-            event.activity_id, event.status_id, event.mapping});
+        page.events.push_back(summarize_event(entry.raw, event));
     }
     return page;
 }

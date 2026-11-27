@@ -9,7 +9,12 @@ namespace knetsentry::agent {
 enum class OcsfClass : std::uint32_t { Base = 0, Authentication = 3002 };
 enum class OcsfActivity : std::uint32_t { Unknown = 0, Logon = 1, Logoff = 2 };
 enum class OcsfStatus : std::uint32_t { Unknown = 0, Success = 1, Failure = 2 };
-enum class OcsfSeverity : std::uint32_t { Unknown = 0 };
+// Query vocabulary; mapping revision 1 still emits Unknown exclusively.
+enum class OcsfSeverity : std::uint32_t {
+    Unknown = 0, Informational = 1, Low = 2, Medium = 3, High = 4,
+    Critical = 5, Fatal = 6, Other = 99
+};
+enum class OcsfCategory : std::uint32_t { Unknown = 0, IdentityAndAccessManagement = 3 };
 enum class MappingResult { Classified, MetadataOnly, AuditTypeUnmapped, Redacted, Unclassified };
 struct NormalizedEvent {
     static constexpr std::string_view schema_version = "1.4.0";

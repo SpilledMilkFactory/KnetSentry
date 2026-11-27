@@ -27,6 +27,9 @@ constexpr char events_sql[] = "CREATE TABLE events(id INTEGER PRIMARY KEY CHECK(
 constexpr char index_search[] = "CREATE INDEX event_search ON events(class_uid,status_id,time_ms,id) WHERE time_ms IS NOT NULL";
 constexpr char index_binding[] = "CREATE INDEX event_binding ON events(binding,id) WHERE time_ms IS NOT NULL";
 constexpr char index_retention[] = "CREATE INDEX event_retention ON events(received,id) WHERE held=0 AND time_ms IS NOT NULL";
+constexpr char index_mode[] = "CREATE INDEX event_mode ON events(mode,id) WHERE time_ms IS NOT NULL";
+constexpr char index_source[] = "CREATE INDEX event_source ON events(unit,mode,id) WHERE time_ms IS NOT NULL";
+constexpr char index_time[] = "CREATE INDEX event_time ON events(time_ms,id) WHERE time_ms IS NOT NULL";
 constexpr char integrity_sql[] = "CREATE TABLE evidence_integrity(id INTEGER PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,origin INTEGER NOT NULL CHECK(origin IN(0,1)),sha256 TEXT NOT NULL CHECK(length(sha256)=64)) STRICT";
 constexpr char filename[] = "events-m64.sqlite3";
 constexpr char journalname[] = "events-m64.sqlite3-journal";
@@ -176,6 +179,8 @@ Stored decode(sqlite3* db, Statement& s, bool committed = true) {
     require(valid_id(raw.id) && valid_received(raw.received_ms) && s.number(6) <= 1);
     auto normalized = agent::normalize_event(raw.canonical_row, raw.binding, raw.unit, raw.mode);
     require(normalized.has_value());
+    // Schema pin 1 has no persisted severity column and emits only Unknown.
+    require(normalized->severity_id == agent::OcsfSeverity::Unknown);
     require(s.string(7) == raw.binding.substr(0, 32) && s.string(8) == normalized->source.cursor);
     const bool indexed = !s.null(9);
     if (indexed) {
@@ -196,11 +201,16 @@ void validate_schema(sqlite3* db, std::uint64_t version) {
     Statement s(db, "SELECT sql FROM sqlite_schema WHERE sql IS NOT NULL ORDER BY name");
     if (version >= 2) {
         require(s.row() && s.string(0) == index_binding);
+        if (version >= 4) { require(s.row() && s.string(0) == index_mode); }
         require(s.row() && s.string(0) == index_retention);
         require(s.row() && s.string(0) == index_search);
+        if (version >= 4) {
+            require(s.row() && s.string(0) == index_source);
+            require(s.row() && s.string(0) == index_time);
+        }
     }
     require(s.row() && s.string(0) == events_sql);
-    if (version == 3) { require(s.row() && s.string(0) == integrity_sql); }
+    if (version >= 3) { require(s.row() && s.string(0) == integrity_sql); }
     require(s.row() && s.string(0) == meta_sql); s.done();
 }
 void validate_evidence(sqlite3* db, bool committed) {
@@ -222,8 +232,8 @@ void validate_contents(sqlite3* db, bool committed) {
     Statement check(db, "PRAGMA integrity_check(1)"); require(check.row() && check.string(0) == "ok"); check.done();
 }
 void verify_store(sqlite3* db) {
-    require(scalar(db, "PRAGMA user_version") == 3 && scalar(db, "PRAGMA application_id") == static_cast<std::uint64_t>(application_id));
-    validate_schema(db, 3);
+    require(scalar(db, "PRAGMA user_version") == 4 && scalar(db, "PRAGMA application_id") == static_cast<std::uint64_t>(application_id));
+    validate_schema(db, 4);
     validate_evidence(db, true);
 }
 RetentionPreview preview(sqlite3* db, std::uint64_t before, std::size_t limit) {
@@ -300,7 +310,7 @@ struct SqliteEventStore::Impl {
         const auto version = scalar(db, "PRAGMA user_version");
         const auto app = scalar(db, "PRAGMA application_id");
         require((version == 0 && app == 0 && scalar(db, "SELECT count(*) FROM sqlite_schema") == 0) ||
-            ((version == 1 || version == 2 || version == 3) && app == static_cast<std::uint64_t>(application_id)));
+            ((version == 1 || version == 2 || version == 3 || version == 4) && app == static_cast<std::uint64_t>(application_id)));
         if (version == 1 || version == 2) { require(legacy == LegacyIntegrityPolicy::EstablishBaseline); }
         if (version != 0) { validate_schema(db, version); }
         require(scalar(db, "PRAGMA page_size") == 4096 && scalar(db, "PRAGMA page_count") <= 2048);
@@ -310,11 +320,14 @@ struct SqliteEventStore::Impl {
         require(scalar(db, "PRAGMA foreign_keys") == 1);
         require(scalar(db, "PRAGMA synchronous") == 3 && scalar(db, "PRAGMA temp_store") == 2);
         Transaction tx(db);
+        require(scalar(db, "PRAGMA user_version") == version && scalar(db, "PRAGMA application_id") == app);
+        if (version != 0) { validate_schema(db, version); }
+        else { require(scalar(db, "SELECT count(*) FROM sqlite_schema") == 0); }
         if (version == 0) {
             exec(db, meta_sql); exec(db, events_sql);
             exec(db, "INSERT INTO meta VALUES(1,1,1,'1.4.0',1); PRAGMA application_id=1263751988; PRAGMA user_version=1");
         }
-        validate_contents(db, version == 3);
+        validate_contents(db, version >= 3);
         if (version < 2) {
             exec(db, index_search); exec(db, index_binding); exec(db, index_retention); exec(db, "PRAGMA user_version=2");
         }
@@ -326,7 +339,11 @@ struct SqliteEventStore::Impl {
             }
             exec(db, "PRAGMA user_version=3");
         }
-        validate_schema(db, 3);
+        if (version < 4) {
+            exec(db, index_mode); exec(db, index_source); exec(db, index_time);
+            exec(db, "PRAGMA user_version=4");
+        }
+        validate_schema(db, 4);
         validate_contents(db, true);
         tx.commit();
         static_cast<void>(checked_db());
@@ -383,22 +400,27 @@ ReadResult<agent::NormalizedEvent> SqliteEventStore::normalized(EventId id) cons
     return {StoreStatus::Ok, std::move(value->event)};
 } catch (const DbError& e) { return {e.status, std::nullopt}; }
 SearchPage SqliteEventStore::search(const SearchQuery& q) const try {
-    using C = agent::OcsfClass; using S = agent::OcsfStatus;
     SearchPage page;
-    if (q.limit == 0 || q.limit > max_page || q.from_ms > q.through_ms || (q.after != 0 && !q.revision) ||
-        (!q.binding.empty() && !agent::valid_delivery_binding(q.binding)) ||
-        (q.class_uid && *q.class_uid != C::Base && *q.class_uid != C::Authentication) ||
-        (q.status_id && *q.status_id != S::Unknown && *q.status_id != S::Success && *q.status_id != S::Failure)) { return page; }
+    if (!valid_search_query(q)) { return page; }
     auto* db = impl_->checked_db(); Transaction tx(db); verify_store(db); page.revision = revision(db);
     if (q.revision && *q.revision != page.revision) { page.status = StoreStatus::Stale; return page; }
     page.status = StoreStatus::Ok;
-    if (q.after >= ceiling || q.from_ms > ceiling) { tx.commit(); return page; }
+    // Mapping revision 1 emits only Unknown severity. Verify the store even
+    // for an impossible severity predicate; never manufacture a severity.
+    if (q.after >= ceiling || q.from_ms > ceiling || (q.severity && *q.severity != agent::OcsfSeverity::Unknown)) {
+        tx.commit(); return page;
+    }
     // Compose only fixed clauses; user values are always bound parameters.
     // Avoid optional-filter OR expressions that prevent useful index lookups.
     std::string sql = "SELECT id,binding,unit,wire,mode,received,held,endpoint,cursor,time_ms,class_uid,status_id,activity_id,mapping FROM events WHERE time_ms IS NOT NULL AND id>?1 AND time_ms BETWEEN ?2 AND ?3";
     if (q.class_uid) { sql += " AND class_uid=?4"; }
     if (q.status_id) { sql += " AND status_id=?5"; }
     if (!q.binding.empty()) { sql += " AND binding=?6"; }
+    if (!q.source_unit.empty()) { sql += " AND unit=?8"; }
+    if (q.source_mode) { sql += " AND mode=?9"; }
+    if (q.category) { sql += " AND class_uid=?10"; }
+    if (q.activity) { sql += " AND activity_id=?11"; }
+    if (q.mapping) { sql += " AND mapping=?12"; }
     sql += " ORDER BY id LIMIT ?7";
     Statement s(db, sql.c_str());
     s.number(1, q.after); s.number(2, q.from_ms); s.number(3, q.through_ms > ceiling ? ceiling : q.through_ms);
@@ -406,10 +428,15 @@ SearchPage SqliteEventStore::search(const SearchQuery& q) const try {
     if (q.status_id) { s.number(5, static_cast<std::uint64_t>(*q.status_id)); }
     if (!q.binding.empty()) { s.string(6, q.binding); }
     s.number(7, q.limit + 1);
+    if (!q.source_unit.empty()) { s.string(8, q.source_unit); }
+    if (q.source_mode) { s.number(9, static_cast<std::uint64_t>(*q.source_mode)); }
+    if (q.category) { s.number(10, *q.category == agent::OcsfCategory::IdentityAndAccessManagement ? 3002U : 0U); }
+    if (q.activity) { s.number(11, static_cast<std::uint64_t>(*q.activity)); }
+    if (q.mapping) { s.number(12, static_cast<std::uint64_t>(*q.mapping)); }
     while (s.row()) {
-        const auto v = decode(db, s); require(v.indexed);
+        const auto v = decode(db, s); require(v.indexed && matches_search_query(q, v.raw, v.event));
         if (page.events.size() == q.limit) { page.more = true; break; }
-        page.events.push_back({v.raw.id, v.event.time_ms, v.raw.received_ms, v.event.class_uid, v.event.activity_id, v.event.status_id, v.event.mapping});
+        page.events.push_back(summarize_event(v.raw, v.event));
     }
     tx.commit(); return page;
 } catch (const DbError& e) { return {e.status, 0, {}, false}; }

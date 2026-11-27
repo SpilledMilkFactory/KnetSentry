@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M6.5 — Original-event preservation and integrity metadata
 
-Issue #55. Development implementation; target-host qualification pending.
+Issue #55. Development implementation accepted: 126 local gates, 424 CTests, 70 repeated Release regressions, nine hosted checks and no analysis-build diagnostics. M6.6 extends the schema to v4 without replacing existing commitments; see [M6.6](EVENT_SEARCH_M66.md).
 
 ## Integrity model
 
@@ -35,7 +35,7 @@ The existing fixed database filename is retained. Schema v3 adds the strict
 `evidence_integrity` table (one digest and origin per event ID), with a foreign
 key and transactional cascade on explicit retention. New admission inserts both
 original evidence and commitment in the same transaction; retry, indexing and
-hold changes never replace the commitment. Fresh databases initialize to v3.
+hold changes never replace the commitment. At M6.5 fresh databases initialized to v3; M6.6 adds search indexes and initializes to v4.
 Legacy v1/v2 activation is rejected by default; a trusted caller must explicitly
 select `LegacyIntegrityPolicy::EstablishBaseline`. Migration validates the old
 schema, canonical evidence and indexed projection, then creates the new table and

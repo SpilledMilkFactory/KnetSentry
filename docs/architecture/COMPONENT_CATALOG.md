@@ -205,3 +205,7 @@ M6.5 adds admission-time SHA-256 commitments for immutable minimized evidence,
 explicit legacy baselining, and transactional verification in the development
 SQLite backend. See [M6.5](../development/EVIDENCE_INTEGRITY_M65.md). Independent
 trust anchors and production raw/index placement remain outstanding.
+
+M6.6 extends C-13 with bounded typed search, exact configured source filters,
+normalized categories and severity filtering, stable ID pagination and schema-v4
+indexes. No new manager or GUI query authority. See [M6.6](../development/EVENT_SEARCH_M66.md).
