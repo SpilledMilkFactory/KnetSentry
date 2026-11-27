@@ -182,3 +182,7 @@ No operational agent session or administrative mutation interface is exposed.
 ### M7.1 development boundary
 
 [I-12 development engine](../development/DETECTION_ENGINE_M71.md) consumes one minimized EventSummary from a bounded caller-selected page and explicit caller-provided trust and coverage metadata. Findings reference a store-scoped ID and rule revision; neither the engine nor its output grants I-13 persistence or response authority.
+
+### M7.2 rule configuration boundary
+
+The [versioned rule schema](../development/RULE_SCHEMA_M72.md) requires validated metadata, supported source requirements and reachable predicates before constructing a schema-aware engine. Static diagnostics do not echo supplied content. The trusted caller retains ownership of authorization, rule history and store provenance. No operational scheduling or response authority is introduced.

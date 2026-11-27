@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Chris Sutton
 // SPDX-License-Identifier: MIT
-#include <knetsentry/detection/engine.hpp>
+#include <knetsentry/detection/rule_schema.hpp>
 #include <knetsentry/agent/authentication.hpp>
 #include <algorithm>
 #include <limits>
@@ -17,15 +17,6 @@ using J = agent::JournalMode;
 using E = agent::AuthEvent;
 constexpr auto max_id = static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max());
 constexpr auto max_source_ms = ((std::uint64_t{1} << 55) - 1) / 1000;
-bool valid_rule(const Rule& rule) noexcept {
-    return !rule.id.empty() && rule.id.size() <= Engine::max_rule_id && rule.version != 0 &&
-        std::ranges::all_of(rule.id, [](char c) {
-            return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.';
-        }) && (rule.activity || rule.outcome) &&
-        (!rule.activity || *rule.activity == A::Logon || *rule.activity == A::Logoff) &&
-        (!rule.outcome || *rule.outcome == S::Success || *rule.outcome == S::Failure) &&
-        (rule.source_unit.empty() || agent::valid_auth_unit(rule.source_unit));
-}
 bool valid_classified(const storage::EventSummary& event) noexcept {
     const auto allowed = [&](E category) { return agent::valid_auth_event(event.source_unit, category); };
     if (event.activity_id == A::Logon && event.status_id == S::Success) { return allowed(E::SshAccepted); }
@@ -53,7 +44,7 @@ bool valid_event(const storage::EventSummary& event) noexcept {
 } // namespace
 Engine::Engine(std::vector<Rule> rules) : rules_(std::move(rules)) {}
 std::optional<Engine> Engine::create(std::span<const Rule> rules) {
-    if (rules.size() > max_rules || !std::ranges::all_of(rules, valid_rule)) { return std::nullopt; }
+    if (rules.size() > max_rules || !std::ranges::all_of(rules, [](const Rule& rule) { return validate_predicate(rule) == RuleError::None; })) { return std::nullopt; }
     std::vector<Rule> owned(rules.begin(), rules.end());
     std::ranges::sort(owned, {}, &Rule::id);
     if (std::ranges::adjacent_find(owned, [](const Rule& lhs, const Rule& rhs) { return lhs.id == rhs.id; }) != owned.end()) {

@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M6.10 — Independently approved split-storage foundation.**
+**Accepted baseline: M7.1 — Deterministic detection engine.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
 M4.8 and M5.1–M5.8 are merged (M5.5 offline foundation only). M5.9 local aggregate agent status in Dashboard and Assets is qualified and merged. Multi-endpoint authenticated status integration remains outstanding (#50).
@@ -13,7 +13,7 @@ Issue #46 operational network/manager integration remains outstanding.
 M6.1 bounded offline authenticated event ingestion is qualified and merged; operational and generic envelope integration (#51) remain outstanding.
 M6.2 typed OCSF-aligned normalization of the KSTD subset is qualified and merged.
 M6.3–M6.8 storage, integrity, search, quotas, explicit cleanup and opt-in manager-mediated stored event exploration foundations are qualified and merged. M6.9 composed failure-recovery regressions are qualified and merged. M6.10 independently approved split-storage foundation is qualified and merged, including actual mount replacement and distinct local filesystem tests. Persistent cross-boot approval and operational integration remain outstanding (#148).
-M7.1 adds a bounded offline deterministic rule engine for the current normalized authentication subset; target qualification pending. No operational detection, alert persistence or response authority is enabled.
+M7.1 bounded offline deterministic rule evaluation is qualified and merged. M7.2 adds a versioned typed rule schema, actionable diagnostics and all-or-nothing compilation; target qualification pending. No operational detection, alert persistence or response authority is enabled.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
@@ -44,6 +44,8 @@ rules. Monitoring is unavailable, and no operational remote telemetry transport,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M7.1 maintainer acceptance (2026-11-27 UTC, applied working tree based on `bd03c2c` with the two corrective files modified) recorded 139 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 484 configured CTest executions, 63 structural verifiers, 60 repeated Release and 30 repeated sanitized executions, clean Release/analysis-build diagnostics, GUI independence, installed manager equality, actual private mount regression and nine green hosted checks (`a71d775`). Manual GUI regression and merge were reported successful.
 
 M6.10 maintainer acceptance (2026-11-27 UTC, applied working tree based on `5518bef`) recorded 137 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 477 configured CTest executions, 62 structural verifiers, 140 repeated Release and 70 repeated sanitized executions, zero warning/error diagnostics in the analysis build section and nine green hosted checks (`148a5d9`). Actual private bind mount detachment/replacement and independent local filesystem persistence/restart passed. Synthetic raw and index files had mode 0600. Manual GUI regression and merge were reported successful. Cross-boot UUID authorization and operational integration remain outstanding (#148).
 
@@ -291,7 +293,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
-| M5–M7 — functional SIEM foundations | M6.10 split-storage foundation accepted; persistent volume approval and operational integration outstanding |
+| M5–M7 — functional SIEM foundations | M7.1 accepted; M7.2 qualification pending; persistent volume approval and operational integration outstanding |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |

@@ -6,7 +6,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # M7.1 — Deterministic detection engine
 
 Issue #60; bounded offline rule evaluation against the M6.2 mapping revision 1
-(OCSF-aligned 1.4.0 subset). Target qualification pending.
+(OCSF-aligned 1.4.0 subset). Target qualification accepted.
 
 ## Interface and trust
 
@@ -68,8 +68,9 @@ while optimizing temporary expected-finding vectors in the regression. The
 follow-up compares named evaluation results using size-guarded, field-by-field
 finding assertions, preserving exact match counts, order, identity, version,
 evidence and coverage. No warning suppression, optimization change, or
-production detection change is introduced. Target-host qualification remains
-pending.
+production detection change is introduced. Target-host qualification passed.
+
+M7.1 maintainer acceptance (2026-11-27 UTC, applied working tree based on `bd03c2c` with the two corrective files modified) recorded 139 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 484 configured CTest executions, 63 structural verifiers, 60 repeated Release and 30 repeated sanitized executions, clean Release/analysis-build diagnostics, GUI independence, installed manager equality, actual private mount regression and nine green hosted checks (`a71d775`). Manual GUI regression and merge were reported successful.
 
 All fixtures are synthetic. The target is all seven presets and existing
 security, sanitizer and GUI regressions; no privileges or new dependency needed.
@@ -82,3 +83,5 @@ Production store identity integration, rule format/import, authenticated rule
 administration, correlation, alert lifecycle, resource budgets across events,
 suppression, deployment and response remain future work. M6.10 persistent
 volume identity and operational integration (#148) remain outstanding.
+
+M7.2 adds a [versioned rule schema](RULE_SCHEMA_M72.md) for new schema-aware callers.

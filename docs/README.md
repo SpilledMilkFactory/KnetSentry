@@ -81,6 +81,7 @@ qualification targets, not measured results.
 - [M6.9 — Ingestion, storage and recovery regressions](development/STORAGE_RECOVERY_M69.md)
 - [M6.10 — Independently approved raw and indexed storage](development/SPLIT_STORAGE_M610.md)
 - [M7.1 — Deterministic detection engine](development/DETECTION_ENGINE_M71.md)
+- [M7.2 — Detection-rule schema and validation](development/RULE_SCHEMA_M72.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)

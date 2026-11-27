@@ -285,3 +285,7 @@ The [M6.10 foundation](../development/SPLIT_STORAGE_M610.md) contributes partial
 ## M7.1 deterministic detection
 
 The [M7.1 contract](../development/DETECTION_ENGINE_M71.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for bounded typed rule evaluation, explicit unknown handling, immutable evidence references and caller-provided trust. No rule administration, suppression authorization, operational coverage or response authority is qualified.
+
+## M7.2 rule schema
+
+The [M7.2 contract](../development/RULE_SCHEMA_M72.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for bounded rule validation, atomic refusal, static diagnostics and evidence preservation. Rule authorization, persistent history and operational activation remain outstanding. Target qualification pending.
