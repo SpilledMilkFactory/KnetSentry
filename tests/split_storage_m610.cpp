@@ -164,6 +164,21 @@ void two_volumes(const std::string& raw, const std::string& index) {
     { SplitEventStore store(c, SplitOpenMode::Existing); require(store.raw(1).value.has_value() && store.search({}).events.size() == 1, "two-volume restart"); }
     std::cout << "M6.10 explicitly approved distinct local filesystems and restart: PASS\n";
 }
+void audit_projection() {
+    Fixture f; const auto c = f.config();
+    const auto row = "audit-cursor\t1795000000123456\t42\t" + std::string(32, 'c') + '\t' + std::string(32, 'd') + "\taudit\t1305\t9\n";
+    {
+        SplitEventStore store(c, SplitOpenMode::CreateNew);
+        const auto admission = store.append({std::string(96, 'a'), "audit", row, knetsentry::agent::JournalMode::Audit, 100});
+        require(admission.status == StoreStatus::Ok && store.index(admission.id).status == StoreStatus::Ok, "Audit admission and indexing");
+    }
+    {
+        SplitEventStore store(c, SplitOpenMode::Existing);
+        SearchQuery q; q.source_unit = "audit";
+        const auto page = store.search(q);
+        require(page.status == StoreStatus::Ok && page.events.size() == 1 && page.events.front().audit_type == 1305, "Audit projection after split-store restart");
+    }
+}
 void head_recovery() {
     Fixture f; const auto c = f.config(); const auto head = f.raw() + "/head";
     {
@@ -206,7 +221,7 @@ int main(int argc, char** argv) {
     try {
         if (argc == 2 && std::string_view(argv[1]) == "--mount-fixture") { mount_fixture(); return 0; }
         if (argc == 4 && std::string_view(argv[1]) == "--two-volumes") { two_volumes(argv[2], argv[3]); return 0; }
-        require(argc == 1, "unknown test mode"); exercise(); head_recovery(); index_integrity(); write_failure(); return 0;
+        require(argc == 1, "unknown test mode"); exercise(); head_recovery(); index_integrity(); write_failure(); audit_projection(); return 0;
     }
     catch (const std::exception& e) { std::cerr << "M6.10: " << e.what() << '\n'; return 1; }
 }

@@ -69,7 +69,7 @@ are introduced. Rule severity does not alter original event severity.
 `knetsentry_authentication_patterns_contract` exercises actual reference store
 admission and normalization, scope isolation, window boundaries, evidence IDs,
 unknown barriers, pending indexes, clock regression, ties, capacity and
-cross-page sequences. Synthetic evidence only. Target Ubuntu qualification pending.
+cross-page sequences. Synthetic evidence only. Target Ubuntu qualification passed: 143 consolidated gates, 498 configured CTests, nine hosted checks and reported manual GUI review and merge.
 
 ```bash
 ctest --preset linux-release -R '^knetsentry_authentication_patterns_contract$' --verbose --no-tests=error
