@@ -5,6 +5,7 @@
 #include <array>
 #include <iostream>
 #include <stdexcept>
+#include <string_view>
 
 namespace {
 using namespace knetsentry::detection;
@@ -14,6 +15,12 @@ using A = OcsfActivity;
 using S = OcsfStatus;
 void require(bool condition, const char* message) {
     if (!condition) { throw std::runtime_error(message); }
+}
+// Compare owned results directly, without temporary initializer-list vectors.
+bool matches_finding(const Finding& finding, std::string_view rule_id,
+    std::uint32_t version, EventId evidence_id) {
+    return finding.rule_id == rule_id && finding.rule_version == version &&
+        finding.evidence_id == evidence_id && finding.coverage == Coverage::Partial;
 }
 EventSummary fixture(MemoryEventStore& store, std::string_view cursor, std::string_view unit,
     std::string_view suffix, JournalMode mode = JournalMode::Authentication) {
@@ -59,15 +66,28 @@ void verify() {
     const auto evaluate = [&](const EventSummary& event) { return engine->evaluate(event, EvidenceTrust::VerifiedStored, Coverage::Partial); };
     const auto result = evaluate(failed);
     require(result.status == EvaluationStatus::Evaluated && result.coverage == Coverage::Partial && result.evaluated == 4 && result.indeterminate == 0 &&
-        result.findings == std::vector<Finding>{{"a-ssh-failure", 1, failed.id, Coverage::Partial}, {"z-failure", 3, failed.id, Coverage::Partial}}, "failure findings");
+        result.findings.size() == 2 &&
+        matches_finding(result.findings[0], "a-ssh-failure", 1, failed.id) &&
+        matches_finding(result.findings[1], "z-failure", 3, failed.id), "failure findings");
     require(result == reversed->evaluate(failed, EvidenceTrust::VerifiedStored, Coverage::Partial), "input order affected findings");
     for (int i = 0; i < 1000; ++i) { require(evaluate(failed) == result, "repeat mismatch"); }
-    require(evaluate(other_failed).findings == std::vector<Finding>{{"z-failure", 3, other_failed.id, Coverage::Partial}}, "exact source isolation");
-    require(evaluate(accepted).findings == std::vector<Finding>{{"b-success", 2, accepted.id, Coverage::Partial}}, "success match");
-    require(evaluate(session).findings.empty() && evaluate(session).indeterminate == 3 && evaluate(session).evaluated == 1, "unknown outcome");
-    require(evaluate(preauth).findings.empty() && evaluate(preauth).indeterminate == 4, "unknown activity and outcome");
-    require(evaluate(generic).findings == std::vector<Finding>{{"z-failure", 3, generic.id, Coverage::Partial}} && evaluate(generic).indeterminate == 1, "partial known evidence");
-    require(evaluate(closed).findings == std::vector<Finding>{{"c-logoff", 1, closed.id, Coverage::Partial}}, "logoff match");
+    const auto other_result = evaluate(other_failed);
+    require(other_result.findings.size() == 1 &&
+        matches_finding(other_result.findings.front(), "z-failure", 3, other_failed.id), "exact source isolation");
+    const auto accepted_result = evaluate(accepted);
+    require(accepted_result.findings.size() == 1 &&
+        matches_finding(accepted_result.findings.front(), "b-success", 2, accepted.id), "success match");
+    const auto session_result = evaluate(session);
+    require(session_result.findings.empty() && session_result.indeterminate == 3 && session_result.evaluated == 1, "unknown outcome");
+    const auto preauth_result = evaluate(preauth);
+    require(preauth_result.findings.empty() && preauth_result.indeterminate == 4, "unknown activity and outcome");
+    const auto generic_result = evaluate(generic);
+    require(generic_result.findings.size() == 1 &&
+        matches_finding(generic_result.findings.front(), "z-failure", 3, generic.id) &&
+        generic_result.indeterminate == 1, "partial known evidence");
+    const auto closed_result = evaluate(closed);
+    require(closed_result.findings.size() == 1 &&
+        matches_finding(closed_result.findings.front(), "c-logoff", 1, closed.id), "logoff match");
     for (const auto& event : {redacted, unclassified, metadata, audit}) {
         const auto r = evaluate(event);
         require(r.status == EvaluationStatus::Unsupported && r.findings.empty() && r.evaluated == 0 && r.indeterminate == 0, "unsupported evidence");
@@ -104,7 +124,9 @@ void verify() {
     std::vector<Rule> maximum;
     for (std::size_t i = 0; i < Engine::max_rules; ++i) { maximum.push_back({"rule-" + std::to_string(i), 1, A::Logon, S::Failure, ""}); }
     const auto bounded = Engine::create(maximum);
-    require(bounded && bounded->evaluate(failed, EvidenceTrust::VerifiedStored, Coverage::Unknown).findings.size() == Engine::max_rules, "maximum findings");
+    require(bounded.has_value(), "maximum rule activation");
+    const auto maximum_result = bounded->evaluate(failed, EvidenceTrust::VerifiedStored, Coverage::Unknown);
+    require(maximum_result.findings.size() == Engine::max_rules, "maximum findings");
     maximum.push_back({"overflow", 1, A::Logon, S::Failure, ""});
     require(!Engine::create(maximum), "rule capacity");
     const auto after = store.search({});

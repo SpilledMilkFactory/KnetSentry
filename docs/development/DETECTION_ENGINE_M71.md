@@ -63,6 +63,14 @@ production reference store, normalization, bounded search and the engine.
 It tests exact findings, independent rule order, repeatability, unknown fields,
 redaction, unsupported modes, trust, malformed summaries, malformed rules,
 duplicate IDs, configuration ownership, empty policy and maximum fanout.
+The initial Ubuntu GCC 15.2 Release build reported `-Wdangling-pointer`
+while optimizing temporary expected-finding vectors in the regression. The
+follow-up compares named evaluation results using size-guarded, field-by-field
+finding assertions, preserving exact match counts, order, identity, version,
+evidence and coverage. No warning suppression, optimization change, or
+production detection change is introduced. Target-host qualification remains
+pending.
+
 All fixtures are synthetic. The target is all seven presets and existing
 security, sanitizer and GUI regressions; no privileges or new dependency needed.
 
