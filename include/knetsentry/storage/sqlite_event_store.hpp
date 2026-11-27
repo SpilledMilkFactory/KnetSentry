@@ -13,12 +13,13 @@ enum class LegacyIntegrityPolicy { Reject, EstablishBaseline };
 class SqliteEventStore final : public EventStore {
 public:
     explicit SqliteEventStore(const std::string& directory,
-        LegacyIntegrityPolicy legacy = LegacyIntegrityPolicy::Reject);
+        LegacyIntegrityPolicy legacy = LegacyIntegrityPolicy::Reject, StoragePolicy policy = {});
     ~SqliteEventStore() override;
     SqliteEventStore(const SqliteEventStore&) = delete;
     SqliteEventStore& operator=(const SqliteEventStore&) = delete;
-    static constexpr std::size_t max_records = 128;
+    static constexpr std::size_t max_records = StoragePolicy::record_ceiling;
     [[nodiscard]] Durability durability() const noexcept override { return Durability::Durable; }
+    [[nodiscard]] ReadResult<StorageUsage> usage() const override;
     [[nodiscard]] AppendResult append(const RawInput& input) override;
     [[nodiscard]] IndexResult index(EventId id) override;
     [[nodiscard]] ReadResult<RawEvidence> raw(EventId id) const override;

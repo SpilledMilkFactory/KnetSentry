@@ -107,3 +107,6 @@ executions, 56 structural verifiers, 124 consolidated acceptance gates.
 No production deployment, threat closure, or independent security audit is
 claimed. Issues #40/#46/#50/#51 remain outstanding. Issue #54 production
 independent raw/index placement and manager integration remain outstanding.
+
+M6.7 makes the existing main database page ceiling configurable downward,
+without a schema change. See [retention and quotas](STORAGE_RETENTION_M67.md).

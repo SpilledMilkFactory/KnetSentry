@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M6.6 — Event search and filtering
 
-Issue #56. Development implementation; target-host qualification pending.
+Issue #56. Development implementation accepted (431 configured CTest executions, 128 consolidated gates and nine hosted checks); operational search remains outstanding.
 
 ## Typed query contract
 

@@ -3,6 +3,7 @@
 #include <knetsentry/storage/event_store.hpp>
 #include <algorithm>
 #include <limits>
+#include <stdexcept>
 #include <type_traits>
 #include <utility>
 
@@ -60,6 +61,48 @@ EventSummary summarize_event(const RawEvidence& raw, const agent::NormalizedEven
     return {raw.id, event.time_ms, raw.received_ms, event.class_uid, event.activity_id, event.status_id,
         event.mapping, category_of(event), event.severity_id, raw.mode, raw.unit};
 }
+bool valid_storage_policy(const StoragePolicy& p) noexcept {
+    return p.record_limit > 0 && p.record_limit <= StoragePolicy::record_ceiling &&
+        p.wire_byte_limit > 0 && p.wire_byte_limit <= StoragePolicy::wire_ceiling &&
+        p.database_page_limit >= 16 && p.database_page_limit <= StoragePolicy::page_ceiling &&
+        p.warning_percent > 0 && p.warning_percent <= 100 &&
+        p.retention_ms <= max_received_ms && p.cleanup_batch > 0 && p.cleanup_batch <= EventStore::max_page;
+}
+bool quota_warning(std::size_t used, std::size_t limit, std::size_t percent) noexcept {
+    // All callers use validated bounded policy values; avoid multiplication overflow even for arbitrary arguments.
+    if (limit == 0 || percent == 0 || percent > 100) { return false; }
+    const auto threshold = (limit / 100) * percent + ((limit % 100) * percent + 99) / 100;
+    return used >= threshold;
+}
+EventStore::EventStore(StoragePolicy policy) : policy_(policy) {
+    if (!valid_storage_policy(policy)) { throw std::invalid_argument("invalid storage policy"); }
+}
+RetentionPreview EventStore::preview_cleanup(std::uint64_t now_ms) const {
+    if (!valid_received(now_ms) || policy().retention_ms == 0) { return {}; }
+    const auto before = now_ms > policy().retention_ms ? now_ms - policy().retention_ms : 1U;
+    return preview_retention(before, policy().cleanup_batch);
+}
+RetentionResult EventStore::apply_cleanup(std::uint64_t now_ms, const RetentionPlan& plan) {
+    if (plan.ids.size() > max_page) { return {}; }
+    const auto expected = preview_cleanup(now_ms);
+    if (expected.status != StoreStatus::Ok || !expected.plan) { return {expected.status, 0}; }
+    const auto& current = *expected.plan;
+    if (plan.revision != current.revision) { return {StoreStatus::Stale, 0}; }
+    if (plan.before_received_ms != current.before_received_ms || plan.limit != current.limit || plan.ids != current.ids) { return {}; }
+    return apply_retention(plan); // Revalidates within the mutation transaction.
+}
+ReadResult<StorageUsage> MemoryEventStore::usage() const {
+    StorageUsage result;
+    result.records = entries_.size();
+    for (const auto& entry : entries_) {
+        result.wire_bytes += entry.raw.canonical_row.size();
+        if (entry.raw.held) { ++result.held; }
+        if (!entry.normalized) { ++result.pending; }
+    }
+    result.record_warning = quota_warning(result.records, policy().record_limit, policy().warning_percent);
+    result.wire_warning = quota_warning(result.wire_bytes, policy().wire_byte_limit, policy().warning_percent);
+    return {StoreStatus::Ok, result};
+}
 AppendResult MemoryEventStore::append(const RawInput& input) {
     if (!valid_received(input.received_ms) || !agent::valid_delivery_binding(input.binding)) { return {}; }
     auto parsed = agent::parse_delivery_row(input.canonical_row, input.unit, input.mode);
@@ -77,7 +120,9 @@ AppendResult MemoryEventStore::append(const RawInput& input) {
         }
         return {StoreStatus::Conflict, 0, Durability::None};
     }
-    if (entries_.size() >= max_records) { return {StoreStatus::Capacity, 0, Durability::None}; }
+    const auto used = usage().value->wire_bytes;
+    if (entries_.size() >= policy().record_limit || used >= policy().wire_byte_limit ||
+        input.canonical_row.size() > policy().wire_byte_limit - used) { return {StoreStatus::Capacity, 0, Durability::None}; }
     if (next_id_ == max_id || revision_ == max_id) { return {StoreStatus::Exhausted, 0, Durability::None}; }
     RawEvidence raw{next_id_, std::string(input.binding), std::string(input.unit), std::string(input.canonical_row),
         input.mode, input.received_ms, false};

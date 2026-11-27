@@ -209,3 +209,7 @@ trust anchors and production raw/index placement remain outstanding.
 M6.6 extends C-13 with bounded typed search, exact configured source filters,
 normalized categories and severity filtering, stable ID pagination and schema-v4
 indexes. No new manager or GUI query authority. See [M6.6](../development/EVENT_SEARCH_M66.md).
+
+M6.7 extends C-13 with immutable development storage policy, quota admission,
+aggregate pressure warnings and explicitly reviewed age-based cleanup.
+See [M6.7](../development/STORAGE_RETENTION_M67.md). No operational deletion authority is added.

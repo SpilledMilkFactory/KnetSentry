@@ -552,3 +552,10 @@ target_link_libraries(knetsentry_event_search_test PRIVATE KnetSentry::SqliteSto
 knetsentry_apply_project_options(knetsentry_event_search_test)
 add_test(NAME knetsentry_event_search_contract COMMAND $<TARGET_FILE:knetsentry_event_search_test>)
 set_tests_properties(knetsentry_event_search_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M6.7: policy quotas, explicit retention, rollback and SQLite page reuse.
+add_executable(knetsentry_storage_retention_test storage_retention_m67.cpp)
+target_link_libraries(knetsentry_storage_retention_test PRIVATE KnetSentry::SqliteStorage SQLite::SQLite3)
+knetsentry_apply_project_options(knetsentry_storage_retention_test)
+add_test(NAME knetsentry_storage_retention_contract COMMAND $<TARGET_FILE:knetsentry_storage_retention_test>)
+set_tests_properties(knetsentry_storage_retention_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)

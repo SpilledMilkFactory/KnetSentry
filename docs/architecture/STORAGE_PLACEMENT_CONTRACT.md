@@ -116,3 +116,9 @@ See [integrity model](../development/EVIDENCE_INTEGRITY_M65.md).
 M6.6 adds source/mode/time indexes and verifies existing evidence during schema
 migration; independent approved raw/index placement remains outstanding.
 See [search contract](../development/EVENT_SEARCH_M66.md).
+
+M6.7 bounds logical admission and the SQLite main-file page allocation using
+caller-supplied limits, exposes warnings and reusable pages, and preserves
+explicit retention/holds. This does not establish a total per-volume disk quota
+or independent production placement and reserve enforcement.
+See [retention contract](../development/STORAGE_RETENTION_M67.md).

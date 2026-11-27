@@ -259,3 +259,9 @@ The [M6.6 search contract](../development/EVENT_SEARCH_M66.md) contributes parti
 TB-07 and TV-10/TV-25/TV-26/TV-30 evidence for bounded typed queries, fixed SQL
 with bound values, index migration and integrity refusal even outside the
 filter. No query authorization or production throughput qualification is claimed.
+
+The [M6.7 contract](../development/STORAGE_RETENTION_M67.md) contributes partial
+TB-07, TV-10/TV-25/TV-26/TV-30 evidence: quota refusal without eviction,
+receiver-time cleanup, holds/pending protection, revision checking, real SQLite
+page-limit and failed-cleanup-commit rollback, and integrity refusal. No threat
+closure or production volume/reserve qualification is claimed.

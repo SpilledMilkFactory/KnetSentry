@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **66 CTest tests**, including
+The Release desktop suite currently contains **67 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **60 CTests**, including the
+The full sanitizer suite currently contains **61 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **53 CTests**) and `linux-sanitize-core-only` for **54**.
+C++ test (currently **54 CTests**) and `linux-sanitize-core-only` for **55**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -446,4 +446,8 @@ Run `ctest --preset linux-release -R '^knetsentry_(evidence_integrity_contract|s
 
 ### M6.6 event search
 
-Run `ctest --preset linux-release -R '^knetsentry_(event_search_contract|evidence_integrity_contract|sqlite_storage_contract)$' --verbose --no-tests=error`. See [M6.6](EVENT_SEARCH_M66.md). Current inventories: desktop 66/60, core-only 53/54 (normal/sanitized). No new dependencies or real telemetry required.
+Run `ctest --preset linux-release -R '^knetsentry_(event_search_contract|evidence_integrity_contract|sqlite_storage_contract)$' --verbose --no-tests=error`. See [M6.6](EVENT_SEARCH_M66.md). Accepted inventories: desktop 66/60, core-only 53/54 (normal/sanitized). No new dependencies or real telemetry required.
+
+### M6.7 retention and quotas
+
+Run `ctest --preset linux-release -R '^knetsentry_storage_retention_contract$' --verbose --no-tests=error`. See [M6.7](STORAGE_RETENTION_M67.md). Current inventories: desktop 67/61, core-only 54/55 (normal/sanitized). Synthetic disposable stores only.

@@ -107,6 +107,30 @@ struct RetentionResult {
     StoreStatus status{StoreStatus::Invalid};
     std::size_t removed{};
 };
+// Immutable caller-supplied development policy. Zero age disables policy cleanup.
+struct StoragePolicy {
+    static constexpr std::size_t record_ceiling = 128;
+    static constexpr std::size_t wire_ceiling = record_ceiling * 2048;
+    static constexpr std::size_t page_ceiling = 2048;
+    static constexpr std::size_t page_bytes = 4096;
+    std::size_t record_limit{record_ceiling};
+    std::size_t wire_byte_limit{wire_ceiling};
+    std::size_t database_page_limit{page_ceiling};
+    std::size_t warning_percent{80};
+    std::uint64_t retention_ms{};
+    std::size_t cleanup_batch{32};
+};
+struct DiskUsage {
+    std::size_t allocated_pages{}, reusable_pages{};
+    bool warning{};
+};
+struct StorageUsage {
+    std::size_t records{}, wire_bytes{}, held{}, pending{};
+    bool record_warning{}, wire_warning{};
+    std::optional<DiskUsage> disk; // Absent for volatile storage.
+};
+[[nodiscard]] bool valid_storage_policy(const StoragePolicy& policy) noexcept;
+[[nodiscard]] bool quota_warning(std::size_t used, std::size_t limit, std::size_t percent) noexcept;
 // Single serialized trusted service owner. Authorization, clock acquisition and
 // durable ACK adaptation belong to the caller. IDs/revisions are backend-scoped;
 // never reuse a cursor or retention plan with another backend instance.
@@ -115,6 +139,11 @@ class EventStore {
 public:
     static constexpr std::size_t max_page = 32;
     virtual ~EventStore() = default;
+    [[nodiscard]] const StoragePolicy& policy() const noexcept { return policy_; }
+    [[nodiscard]] virtual ReadResult<StorageUsage> usage() const = 0;
+    // Both calls require the same trusted clock snapshot. No implicit deletion.
+    [[nodiscard]] RetentionPreview preview_cleanup(std::uint64_t now_ms) const;
+    [[nodiscard]] RetentionResult apply_cleanup(std::uint64_t now_ms, const RetentionPlan& plan);
     [[nodiscard]] virtual Durability durability() const noexcept = 0;
     [[nodiscard]] virtual AppendResult append(const RawInput& input) = 0;
     [[nodiscard]] virtual IndexResult index(EventId id) = 0;
@@ -127,15 +156,20 @@ public:
     [[nodiscard]] virtual RetentionPreview preview_retention(std::uint64_t before_received_ms,
         std::size_t limit) const = 0;
     [[nodiscard]] virtual RetentionResult apply_retention(const RetentionPlan& plan) = 0;
+protected:
+    explicit EventStore(StoragePolicy policy);
+private:
+    const StoragePolicy policy_;
 };
 // Reference backend only: never a durable ReceiptSink, no disk or network IO.
 class MemoryEventStore final : public EventStore {
 public:
-    static constexpr std::size_t max_records = 128;
-    MemoryEventStore() = default;
+    static constexpr std::size_t max_records = StoragePolicy::record_ceiling;
+    explicit MemoryEventStore(StoragePolicy policy = {}) : EventStore(policy) {}
     MemoryEventStore(const MemoryEventStore&) = delete;
     MemoryEventStore& operator=(const MemoryEventStore&) = delete;
     [[nodiscard]] Durability durability() const noexcept override { return Durability::Volatile; }
+    [[nodiscard]] ReadResult<StorageUsage> usage() const override;
     [[nodiscard]] AppendResult append(const RawInput& input) override;
     [[nodiscard]] IndexResult index(EventId id) override;
     [[nodiscard]] ReadResult<RawEvidence> raw(EventId id) const override;
