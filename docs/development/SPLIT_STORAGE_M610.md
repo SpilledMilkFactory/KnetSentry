@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M6.10 — Independently approved raw and indexed storage
 
-Issue #148; bounded opt-in library foundation, target qualification pending.
+Issue #148; bounded opt-in library foundation, target qualification accepted.
 This does not replace the M6.4 development database or operational receipt sink.
 
 ## Configuration and trust
@@ -124,4 +124,4 @@ No actual volume is formatted, mounted or filled by that mode.
 Target CTest inventory: 477 across seven presets, 62 structural verifiers;
 137 consolidated gates when the mount fixture and preceding privileged gates
 are explicitly requested. Genuine mount and distinct-filesystem qualification
-are pending. No production deployment or complete issue closure is claimed.
+passed on the maintainer host. The 137 consolidated gates, 477 configured CTests, 140 repeated Release and 70 repeated sanitized executions, clean analysis-build diagnostic inspection and nine hosted checks passed. GUI verification and merge were reported successful. Persistent cross-boot approval and operational integration remain outstanding. No production deployment or complete issue closure is claimed.

@@ -178,3 +178,7 @@ state and reconnect scheduling. No operational ingestion authority is granted.
 [Desktop enrollment management](../development/DESKTOP_AGENT_MANAGEMENT_M47.md)
 publishes a bounded pin-free registry snapshot through authenticated local IPC.
 No operational agent session or administrative mutation interface is exposed.
+
+### M7.1 development boundary
+
+[I-12 development engine](../development/DETECTION_ENGINE_M71.md) consumes one minimized EventSummary from a bounded caller-selected page and explicit caller-provided trust and coverage metadata. Findings reference a store-scoped ID and rule revision; neither the engine nor its output grants I-13 persistence or response authority.

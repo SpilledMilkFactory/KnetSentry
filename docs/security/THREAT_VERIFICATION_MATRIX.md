@@ -280,4 +280,8 @@ independent integrity trust anchor or threat closure is claimed.
 
 ### M6.10 independently approved split storage
 
-The [M6.10 foundation](../development/SPLIT_STORAGE_M610.md) contributes partial TB-07/TV-10/TV-25/TV-26/TV-30 evidence for boot-scoped mount identity, descriptor-relative raw publication, independent minimized projection, bounded refusal and committed-prefix validation. Persistent UUID validation, real mount qualification, independent trust anchors and operational authorization remain open.
+The [M6.10 foundation](../development/SPLIT_STORAGE_M610.md) contributes partial TB-07/TV-10/TV-25/TV-26/TV-30 evidence for boot-scoped mount identity, descriptor-relative raw publication, independent minimized projection, bounded refusal and committed-prefix validation. Real private mount detachment/replacement and distinct local filesystem qualification passed. Persistent UUID validation, independent trust anchors and operational authorization remain open.
+
+## M7.1 deterministic detection
+
+The [M7.1 contract](../development/DETECTION_ENGINE_M71.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for bounded typed rule evaluation, explicit unknown handling, immutable evidence references and caller-provided trust. No rule administration, suppression authorization, operational coverage or response authority is qualified.
