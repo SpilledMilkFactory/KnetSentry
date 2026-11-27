@@ -4,6 +4,7 @@
 #include <knetsentry/agent/delivery.hpp>
 #include <knetsentry/core/enrollment.hpp>
 #include <knetsentry/core/agent_health.hpp>
+#include <knetsentry/storage/sqlite_event_store.hpp>
 #include <filesystem>
 #include <chrono>
 #include <thread>
@@ -118,9 +119,11 @@ bool connect(Session& a, Session& m) {
     throw std::runtime_error("fixture handshake budget");
 }
 struct Store {
-    std::array<char, 32> path{'/','t','m','p','/','k','s','-','m','4','4','-','X','X','X','X','X','X','\0'};
+    std::array<char, 32> path{};
     int fd{-1};
-    Store() {
+    explicit Store(std::string_view pattern = "/tmp/ks-m44-XXXXXX") {
+        require(pattern.size() < path.size(), "fixture path length");
+        std::copy(pattern.begin(), pattern.end(), path.begin());
         require(mkdtemp(path.data()) != nullptr, "private fixture directory");
         fd = open(path.data(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
         if (fd < 0) { (void)rmdir(path.data()); throw std::runtime_error("fixture directory open"); }
@@ -1146,6 +1149,101 @@ void ingestion_pipeline(Fixture& f) {
     }
     std::cout << "M6.1 authenticated ingestion, invalid rejection, bounded admission, timeout/release, durable retry and disposition counters: PASS\n";
 }
+// Test-only adapter: exercise authenticated ingestion against actual SQLite
+// durability outcomes. No production ReceiptSink integration is introduced.
+class RecoverySink final : public telemetry::ReceiptSink {
+public:
+    explicit RecoverySink(knetsentry::storage::EventStore& store) : store_(store) {}
+    bool commit(const enroll::EndpointId&, std::string_view binding, std::string_view row) noexcept override {
+        using namespace knetsentry::storage;
+        ++attempts;
+        try {
+            last = store_.append({binding, "fixture.service", row, telemetry::JournalMode::Metadata, received});
+            return (last.status == StoreStatus::Ok || last.status == StoreStatus::ExactRetry) && last.durability == Durability::Durable;
+        } catch (...) { return false; }
+    }
+    std::size_t attempts{};
+    std::uint64_t received{100};
+    knetsentry::storage::AppendResult last;
+private:
+    knetsentry::storage::EventStore& store_;
+};
+void ingestion_recovery(Fixture& f) {
+    static_cast<void>(umask(0077));
+    using namespace knetsentry::storage;
+    using O = telemetry::IngestOutcome;
+    Store registry, database("/var/tmp/ks-m69-XXXXXX");
+    enroll::EndpointId id{}; id[0] = 9;
+    require(enroll::initialize(registry.fd) == E::Ok && enroll::approve(registry.fd, id, f.agent_pin) == E::Ok, "recovery registry");
+    const auto binding = telemetry::delivery_binding(id, f.manager_pin);
+    const auto tail = "\t50\t" + std::string(32, 'a') + '\t' + std::string(32, 'b') + "\tfixture.service\n";
+    const auto row = "cursor-1\t1" + tail;
+    const auto extra = "cursor-2\t1" + tail;
+    const auto conflict = "cursor-1\t2" + tail;
+    StoragePolicy policy; policy.record_limit = 1;
+    const auto exercise = [&](SqliteEventStore& store, bool restart) {
+        RecoverySink sink(store);
+        telemetry::IngestionPipeline pipeline(id, f.manager_pin, telemetry::JournalMode::Metadata, "fixture.service", sink);
+        const auto exchange = [&](std::string_view payload, D expected) {
+            auto a = Session::create(f.a(Protocol::Telemetry)); auto m = Session::create(f.m(Protocol::Telemetry));
+            require(a && m && connect(*a, *m), "recovery TLS handshake");
+            telemetry::DeliveryReceiver receiver(*m, registry.fd, pipeline);
+            std::string wire{"KSTD\1\1", 6};
+            wire += static_cast<char>(payload.size() >> 8);
+            wire += static_cast<char>(payload.size() & 255);
+            wire += payload;
+            const std::span<const unsigned char> bytes(reinterpret_cast<const unsigned char*>(wire.data()), wire.size());
+            require(a->write(bytes).status == Status::Ok, "recovery fixture write");
+            pump(*a, *m);
+            require(receiver.step(true, 1) == expected && pipeline.active() == 0, "recovery disposition and slot release");
+            const auto& event = receiver.normalized_event();
+            require(event.has_value() == (expected == D::Complete), "normalization before durable receipt");
+            if (event) {
+                require(event->canonical_row == row && event->source.realtime_usec == 1 && event->time_ms == 0, "recovery provenance");
+                // Drain the genuine TLS ACK before the receiver destroys its session.
+                pump(*m, *a);
+                std::array<unsigned char, max_plaintext> ack{};
+                const auto result = a->read(ack);
+                std::array<unsigned char, 32> digest{}; std::size_t size{};
+                require(EVP_Q_digest(nullptr, "SHA256", nullptr, payload.data(), payload.size(), digest.data(), &size) == 1 && size == digest.size(), "fixture ACK digest");
+                require(result.status == Status::Ok && result.bytes == 40 &&
+                    std::string_view(reinterpret_cast<const char*>(ack.data()), 8) == std::string_view("KSTD\1\2\0\x20", 8) &&
+                    std::equal(digest.begin(), digest.end(), ack.begin() + 8), "authenticated ACK payload");
+            }
+            if (expected == D::Failed) { require(m->state() == State::Failed, "rejected receiver did not abort TLS"); }
+        };
+        if (restart) { sink.received = 999; }
+        exchange(binding + "malformed\n", D::Failed);
+        exchange(binding + "cursor-1\t0" + tail, D::Failed);
+        exchange(binding + "cursor-1\t36028797018963968" + tail, D::Failed);
+        require(sink.attempts == 0 && pipeline.count(O::Invalid) == 3, "malformed data reached SQLite");
+        if (!restart) {
+            require(chmod(database.path.data(), 0755) == 0, "fixture permissions");
+            exchange(binding + row, D::Failed);
+            require(sink.last.status == StoreStatus::Unavailable && pipeline.count(O::Acknowledged) == 0, "unavailable storage acknowledged");
+            require(chmod(database.path.data(), 0700) == 0, "restore fixture permissions");
+        }
+        exchange(binding + row, D::Complete);
+        require(sink.last.status == (restart ? StoreStatus::ExactRetry : StoreStatus::Ok) && sink.last.id == 1, "durable receipt ID");
+        const auto before = store.search({});
+        require(before.status == StoreStatus::Ok && before.events.empty(), "pending record prematurely searchable");
+        exchange(binding + conflict, D::Failed);
+        require(sink.last.status == StoreStatus::Conflict, "conflicting retry accepted");
+        exchange(binding + extra, D::Failed);
+        require(sink.last.status == StoreStatus::Capacity, "quota refusal not propagated");
+        exchange(binding + row, D::Complete);
+        require(sink.last.status == StoreStatus::ExactRetry && sink.last.id == 1 && pipeline.count(O::Acknowledged) == 2 &&
+            pipeline.count(O::StorageRejected) == (restart ? 2U : 3U), "retry or rejection accounting");
+        const auto after = store.search({}); const auto raw = store.raw(1);
+        require(after.status == StoreStatus::Ok && after.revision == before.revision && raw.value && raw.value->integrity &&
+            raw.value->canonical_row == row && raw.value->received_ms == 100, "failed/retried receipt mutated evidence");
+        require(store.pending(0, {}, 32).ids == std::vector<EventId>{1}, "pending receipt cardinality");
+        if (restart) { require(store.index(1).status == StoreStatus::Ok && store.search({}).events.size() == 1, "recovered index publication"); }
+    };
+    { SqliteEventStore store(database.path.data(), LegacyIntegrityPolicy::Reject, policy); exercise(store, false); }
+    { SqliteEventStore store(database.path.data(), LegacyIntegrityPolicy::Reject, policy); exercise(store, true); }
+    std::cout << "M6.9 authenticated ingestion, actual durable SQLite refusal, retry and pending-index restart: PASS\n";
+}
 } // namespace
 int main(int argc, char** argv) {
     try {
@@ -1158,6 +1256,8 @@ int main(int argc, char** argv) {
             authentication_transport(fixture);
         } else if (argc == 2 && std::string_view(argv[1]) == "--ingestion") {
             ingestion_pipeline(fixture);
+        } else if (argc == 2 && std::string_view(argv[1]) == "--ingestion-recovery") {
+            ingestion_recovery(fixture);
         } else if (argc == 2 && std::string_view(argv[1]) == "--telemetry-delivery") {
             telemetry_delivery(fixture);
         } else if (argc == 1) {

@@ -267,3 +267,13 @@ page-limit and failed-cleanup-commit rollback, and integrity refusal. No threat
 closure or production volume/reserve qualification is claimed.
 
 The [M6.8 contract](../development/EVENT_EXPLORER_M68.md) contributes partial TB-05/TB-07 and TV-10/TV-25 evidence for authenticated same-UID/GID, explicitly opted-in audited query access, bounded response validation, snapshot invalidation and integrity refusal. This is not independent analyst authorization, raw-volume isolation or operational ingestion qualification.
+
+### M6.9 ingestion and storage recovery
+
+The [M6.9 regressions](../development/STORAGE_RECOVERY_M69.md) contribute partial
+TB-04/TB-06/TB-07 and TV-06/TV-07/TV-10/TV-13/TV-25/TV-26/TV-30 evidence for
+malformed input refusal, authenticated durable acceptance and retry, source
+versus receiver time, interruption recovery, bounded allocation and migration
+rollback. All evidence is synthetic. The receipt adapter is test-only; no
+production ACK authority, physical disk-exhaustion or power-loss qualification,
+independent integrity trust anchor or threat closure is claimed.

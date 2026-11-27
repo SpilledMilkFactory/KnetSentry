@@ -411,7 +411,7 @@ set_tests_properties(knetsentry_tls_contract PROPERTIES LABELS "integration;secu
 
 # M4.4: persistent approvals, genuine TLS admission, and offline admin CLI.
 add_executable(knetsentry_enrollment_test enrollment_m44.cpp)
-target_link_libraries(knetsentry_enrollment_test PRIVATE KnetSentry::AgentHealth KnetSentry::AgentDelivery)
+target_link_libraries(knetsentry_enrollment_test PRIVATE KnetSentry::AgentHealth KnetSentry::AgentDelivery KnetSentry::SqliteStorage)
 knetsentry_apply_project_options(knetsentry_enrollment_test)
 add_test(NAME knetsentry_enrollment_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test>)
 set_tests_properties(knetsentry_enrollment_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 30)
@@ -577,3 +577,12 @@ if(KNETSENTRY_BUILD_DESKTOP AND NOT KNETSENTRY_ENABLE_SANITIZERS)
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
         LABELS "qt;desktop;qml;integration;ipc;security;regression;privacy" TIMEOUT 75)
 endif()
+
+# M6.9: actual SQLite recovery and authenticated test-only receipt composition.
+add_executable(knetsentry_storage_recovery_test storage_recovery_m69.cpp)
+target_link_libraries(knetsentry_storage_recovery_test PRIVATE KnetSentry::SqliteStorage SQLite::SQLite3)
+knetsentry_apply_project_options(knetsentry_storage_recovery_test)
+add_test(NAME knetsentry_storage_recovery_contract COMMAND $<TARGET_FILE:knetsentry_storage_recovery_test>)
+set_tests_properties(knetsentry_storage_recovery_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+add_test(NAME knetsentry_ingestion_recovery_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --ingestion-recovery)
+set_tests_properties(knetsentry_ingestion_recovery_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
