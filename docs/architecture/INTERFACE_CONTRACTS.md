@@ -194,3 +194,7 @@ The [authentication pattern scan](../development/AUTHENTICATION_PATTERNS_M73.md)
 ### M7.4 system integrity boundary
 
 The [Audit detection scan](../development/SYSTEM_INTEGRITY_M74.md) uses policy-approved numeric record types projected from validated stored evidence, exact endpoint scope and a revision-bound snapshot. It emits bounded evidence-linked findings without inferring operation outcome, expanding OCSF mappings, changing GUI IPC, or granting operational authority.
+
+### M7.5 scheduling boundary
+
+The [scheduler](../development/RULE_SCHEDULING_M75.md) composes the validated M7.2 engine with bounded exact-scope stored snapshots and a private state checkpoint. A durable pending generation is replayed until the caller acknowledges it. Scheduling does not confer store authorization, alert publication, response authority or live monitoring.

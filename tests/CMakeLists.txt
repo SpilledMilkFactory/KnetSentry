@@ -621,3 +621,10 @@ target_link_libraries(knetsentry_system_integrity_test PRIVATE KnetSentry::Detec
 knetsentry_apply_project_options(knetsentry_system_integrity_test)
 add_test(NAME knetsentry_system_integrity_contract COMMAND $<TARGET_FILE:knetsentry_system_integrity_test>)
 set_tests_properties(knetsentry_system_integrity_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)
+
+# M7.5: protected persistent scheduling state, suppression and restart replay.
+add_executable(knetsentry_scheduler_test scheduler_m75.cpp)
+target_link_libraries(knetsentry_scheduler_test PRIVATE KnetSentry::Detection KnetSentry::SqliteStorage)
+knetsentry_apply_project_options(knetsentry_scheduler_test)
+add_test(NAME knetsentry_scheduler_contract COMMAND $<TARGET_FILE:knetsentry_scheduler_test>)
+set_tests_properties(knetsentry_scheduler_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)

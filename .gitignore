@@ -33,3 +33,7 @@ telemetry-m55.v1
 telemetry-m55.pending
 telemetry-inbox-m55.v1
 telemetry-inbox-m55.pending
+
+# Private M7.5 scheduler checkpoints and interrupted transactions.
+schedule-m75.v1
+schedule-m75.pending
