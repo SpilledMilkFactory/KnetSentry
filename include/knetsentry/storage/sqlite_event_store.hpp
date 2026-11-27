@@ -9,9 +9,11 @@ namespace knetsentry::storage {
 // supply a dedicated, trusted, private local directory; not a production raw-volume
 // selector or ReceiptSink. Serialized owner only. Opening failures throw a
 // generic runtime_error; operation failures return typed storage outcomes.
+enum class LegacyIntegrityPolicy { Reject, EstablishBaseline };
 class SqliteEventStore final : public EventStore {
 public:
-    explicit SqliteEventStore(const std::string& directory);
+    explicit SqliteEventStore(const std::string& directory,
+        LegacyIntegrityPolicy legacy = LegacyIntegrityPolicy::Reject);
     ~SqliteEventStore() override;
     SqliteEventStore(const SqliteEventStore&) = delete;
     SqliteEventStore& operator=(const SqliteEventStore&) = delete;

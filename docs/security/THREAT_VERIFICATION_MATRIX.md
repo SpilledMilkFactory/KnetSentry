@@ -244,3 +244,11 @@ and query processing, checked numeric mode decoding, and protected file
 activation. Production independent raw-volume durability, hostile storage
 integrity, mount-race safety, complete retention authority and threat closure
 remain outstanding.
+
+## M6.5 original evidence integrity
+
+The [M6.5 integrity model](../development/EVIDENCE_INTEGRITY_M65.md) contributes
+partial TB-07, TV-10/TV-25/TV-26/TV-30 evidence via immutable record commitments,
+explicit legacy baselines, bounded transactional verification, mismatch refusal
+and retention consistency. Unkeyed same-database digests do not establish
+authenticity, complete tamper resistance, anti-rollback or threat closure.
