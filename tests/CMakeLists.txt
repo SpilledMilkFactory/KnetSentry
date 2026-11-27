@@ -586,3 +586,10 @@ add_test(NAME knetsentry_storage_recovery_contract COMMAND $<TARGET_FILE:knetsen
 set_tests_properties(knetsentry_storage_recovery_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
 add_test(NAME knetsentry_ingestion_recovery_contract COMMAND $<TARGET_FILE:knetsentry_enrollment_test> --ingestion-recovery)
 set_tests_properties(knetsentry_ingestion_recovery_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M6.10: same-filesystem synthetic placement and real write failure regression.
+add_executable(knetsentry_split_storage_test split_storage_m610.cpp)
+target_link_libraries(knetsentry_split_storage_test PRIVATE KnetSentry::SplitStorage SQLite::SQLite3)
+knetsentry_apply_project_options(knetsentry_split_storage_test)
+add_test(NAME knetsentry_split_storage_contract COMMAND $<TARGET_FILE:knetsentry_split_storage_test>)
+set_tests_properties(knetsentry_split_storage_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)

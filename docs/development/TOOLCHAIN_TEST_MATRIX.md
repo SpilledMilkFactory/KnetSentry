@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.8 event explorer accepted; M6.9 ingestion and storage recovery qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.9 ingestion and storage recovery accepted; M6.10 split storage qualification pending; issues #40/#46/#50/#51 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 72 Release/Debug/Clazy/analysis, 65 full ASan/UBSan,
-58 core-only and 59 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 73 Release/Debug/Clazy/analysis, 66 full ASan/UBSan,
+59 core-only and 60 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -412,4 +412,8 @@ The [M6.8 contract](EVENT_EXPLORER_M68.md) registers two mandatory core tests an
 
 ### M6.9 ingestion and storage recovery
 
-The [M6.9 regressions](STORAGE_RECOVERY_M69.md) add two mandatory native tests to all seven configurations. Target inventories: 470 CTest executions, 61 structural verifiers and 134 consolidated gates. Actual hot-journal recovery, child-local file-write limit, page exhaustion, busy-writer and migration refusal, malformed input, timestamp anomalies and test-only authenticated SQLite receipts are tested. Official Ubuntu qualification remains pending.
+The [M6.9 regressions](STORAGE_RECOVERY_M69.md) add two mandatory native tests to all seven configurations. Target inventories: 470 CTest executions, 61 structural verifiers and 134 consolidated gates. Actual hot-journal recovery, child-local file-write limit, page exhaustion, busy-writer and migration refusal, malformed input, timestamp anomalies and test-only authenticated SQLite receipts are tested. Official Ubuntu qualification passed (M6.9 accepted).
+
+### M6.10 split storage
+
+The [M6.10 contract](SPLIT_STORAGE_M610.md) adds one mandatory native test across all seven presets. Target inventories: 477 CTest executions, 62 structural verifiers and 137 consolidated gates with explicit private mount fixture. Actual distinct-volume testing and production integration remain separate.

@@ -277,3 +277,7 @@ versus receiver time, interruption recovery, bounded allocation and migration
 rollback. All evidence is synthetic. The receipt adapter is test-only; no
 production ACK authority, physical disk-exhaustion or power-loss qualification,
 independent integrity trust anchor or threat closure is claimed.
+
+### M6.10 independently approved split storage
+
+The [M6.10 foundation](../development/SPLIT_STORAGE_M610.md) contributes partial TB-07/TV-10/TV-25/TV-26/TV-30 evidence for boot-scoped mount identity, descriptor-relative raw publication, independent minimized projection, bounded refusal and committed-prefix validation. Persistent UUID validation, real mount qualification, independent trust anchors and operational authorization remain open.

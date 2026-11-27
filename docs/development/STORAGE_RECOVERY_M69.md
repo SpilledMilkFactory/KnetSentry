@@ -57,3 +57,7 @@ Maintain preceding ingestion, delivery, normalization, storage, integrity,
 search, retention and explorer regressions. The official Ubuntu matrix, analyzer,
 GUI non-regression, installed-systemd checks and hosted CI remain maintainer
 acceptance gates. Do not treat structural registration as runtime evidence.
+
+## Maintainer acceptance
+
+M6.9 was qualified and merged on 2026-11-27: 134 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED; 470 configured CTest executions; 130 repeated Release and 65 repeated sanitized executions; clean analysis diagnostics and nine green hosted checks. Manual GUI review was reported successful.

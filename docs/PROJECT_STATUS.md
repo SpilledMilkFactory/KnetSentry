@@ -5,14 +5,14 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M6.8 — Event Explorer GUI.**
+**Accepted baseline: M6.9 — Ingestion, storage and recovery regressions.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
 M4.8 and M5.1–M5.8 are merged (M5.5 offline foundation only). M5.9 local aggregate agent status in Dashboard and Assets is qualified and merged. Multi-endpoint authenticated status integration remains outstanding (#50).
 Issue #46 operational network/manager integration remains outstanding.
 M6.1 bounded offline authenticated event ingestion is qualified and merged; operational and generic envelope integration (#51) remain outstanding.
 M6.2 typed OCSF-aligned normalization of the KSTD subset is qualified and merged.
-M6.3–M6.8 storage, integrity, search, quotas, explicit cleanup and opt-in manager-mediated stored event exploration foundations are qualified and merged. M6.9 adds composed ingestion and storage failure-recovery regressions; target qualification is pending.
+M6.3–M6.8 storage, integrity, search, quotas, explicit cleanup and opt-in manager-mediated stored event exploration foundations are qualified and merged. M6.9 composed failure-recovery regressions are qualified and merged. M6.10 adds an independent split-storage library foundation; target and real-volume qualification remain pending.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
@@ -43,6 +43,8 @@ rules. Monitoring is unavailable, and no operational remote telemetry transport,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M6.9 maintainer acceptance (2026-11-27 UTC, applied working tree based on `87a5c87`) recorded 134 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 470 configured CTest executions, 61 structural verifiers, 130 repeated Release and 65 repeated sanitized executions, zero warning/error diagnostics in the analysis build section, and nine green hosted checks (`5518bef`). Direct recovery, authenticated ingestion and preceding transport checks passed; manual GUI review and merge were reported successful.
 
 M6.8 maintainer acceptance (2026-11-27 UTC, applied working tree based on
 `10359f9`) recorded 132 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED, all 456 configured
@@ -286,7 +288,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
-| M5–M7 — functional SIEM foundations | M6.8 stored event explorer accepted; M6.9 ingestion and storage recovery qualification pending; operational integration outstanding |
+| M5–M7 — functional SIEM foundations | M6.9 recovery accepted; M6.10 split-storage foundation pending target qualification; operational integration outstanding |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |

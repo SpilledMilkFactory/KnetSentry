@@ -38,3 +38,9 @@ add_library(knetsentry_sqlite_storage STATIC sqlite_event_store.cpp)
 add_library(KnetSentry::SqliteStorage ALIAS knetsentry_sqlite_storage)
 target_link_libraries(knetsentry_sqlite_storage PUBLIC KnetSentry::EventStorage PRIVATE SQLite::SQLite3 OpenSSL::Crypto)
 knetsentry_apply_project_options(knetsentry_sqlite_storage)
+
+# M6.10: independently approved raw segments and bounded SQLite projection.
+add_library(knetsentry_split_storage STATIC split_event_store.cpp)
+add_library(KnetSentry::SplitStorage ALIAS knetsentry_split_storage)
+target_link_libraries(knetsentry_split_storage PUBLIC KnetSentry::EventStorage PRIVATE SQLite::SQLite3 OpenSSL::Crypto)
+knetsentry_apply_project_options(knetsentry_split_storage)
