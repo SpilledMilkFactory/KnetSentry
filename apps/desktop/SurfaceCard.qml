@@ -8,7 +8,8 @@ import org.kde.kirigami as Kirigami
 // Theme-aware informational card; never implies availability or live readings.
 Rectangle {
     id: card
-    DesignTokens { id: tokens }
+    property real textScale: 1.0
+    DesignTokens { id: tokens; textScale: card.textScale }
     property string heading: ""
     property string description: ""
     property string iconName: "dialog-information"

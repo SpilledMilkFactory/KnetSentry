@@ -10,6 +10,32 @@ import io.github.spilledmilkfactory.KnetSentry
 // M2.6: read-only daemon health; no live SIEM telemetry sources.
 Kirigami.ApplicationWindow {
     id: window
+    // Session-only magnification of the platform font, not a security setting.
+    required property int platformFontPixels
+    property int textScalePercent: 100
+    readonly property real effectiveTextScale: font.pixelSize / 14.0
+    function applyTextScale(percent: int): void {
+        if (percent === 100 || percent === 125 || percent === 150)
+            textScalePercent = percent
+    }
+    font.pixelSize: Math.round(platformFontPixels * textScalePercent / 100.0)
+    readonly property alias navigationFocusControl: navigationButton
+    readonly property int scaledBodySize: designTokens.bodySize
+    onActiveFocusItemChanged: {
+        if (currentSectionPage && activeFocusItem)
+            currentSectionPage.revealKeyboardFocus(activeFocusItem)
+    }
+    Shortcut {
+        sequence: "F6"
+        onActivated: {
+            if (window.currentSectionPage)
+                window.currentSectionPage.focusPrimary()
+        }
+    }
+    Shortcut {
+        sequence: "Shift+F6"
+        onActivated: navigationButton.forceActiveFocus(Qt.BacktabFocusReason)
+    }
     required property TimelineModel timelineModel
     SearchViews { id: savedSearchViews }
     readonly property Controls.Button timelineRefreshButton: currentSectionPage ? currentSectionPage.timelineRefreshButton : null
@@ -65,7 +91,7 @@ Kirigami.ApplicationWindow {
     minimumHeight: 480
     visible: true
 
-    DesignTokens { id: designTokens }
+    DesignTokens { id: designTokens; textScale: window.effectiveTextScale }
     readonly property string visualSystemVersion: designTokens.version
     readonly property bool visualTokensValid: designTokens.spaceXs < designTokens.spaceS
                                               && designTokens.spaceS < designTokens.spaceL
@@ -178,6 +204,7 @@ Kirigami.ApplicationWindow {
             return false
         }
         activeSection = sectionId
+        nextPage.focusPrimary()
         // Only the decorative title accent moves. Page replacement and
         // snapshot clearing above are synchronous and never animated here.
         if (window.motionAllowed)
@@ -254,6 +281,9 @@ Kirigami.ApplicationWindow {
             eventModel: window.eventModel
             alertModel: window.alertModel
             searchViews: savedSearchViews
+            textScale: window.effectiveTextScale
+            textScalePercent: window.textScalePercent
+            onTextScaleRequested: function(percent) { window.applyTextScale(percent) }
             onSearchDestinationRequested: function(destination) { window.navigateTo(destination) }
         }
     }
@@ -261,6 +291,9 @@ Kirigami.ApplicationWindow {
     pageStack.initialPage: SectionPage {
         sectionId: "dashboard"
         searchViews: savedSearchViews
+        textScale: window.effectiveTextScale
+        textScalePercent: window.textScalePercent
+        onTextScaleRequested: function(percent) { window.applyTextScale(percent) }
         onSearchDestinationRequested: function(destination) { window.navigateTo(destination) }
         timelineModel: window.timelineModel
         workspaceModel: window.workspaceModel
@@ -346,6 +379,7 @@ Kirigami.ApplicationWindow {
             Controls.CheckBox {
                 id: motionToggle
                 text: qsTr("Reduce motion")
+                Accessible.name: text
                 checked: window.reduceMotion
                 onToggled: window.reduceMotion = checked
                 Controls.ToolTip.visible: hovered
@@ -470,9 +504,9 @@ Kirigami.ApplicationWindow {
                 Controls.Label {
                     text: qsTr("Monitoring is not active — daemon health is not security coverage")
                     Layout.fillWidth: true
-                    elide: Text.ElideRight
+                    wrapMode: Text.WordWrap
                 }
-                Controls.Label { text: qsTr("M8.6 development") }
+                Controls.Label { text: qsTr("M8.7 development") }
             }
             RowLayout {
                 Layout.fillWidth: true
@@ -483,7 +517,7 @@ Kirigami.ApplicationWindow {
                     textFormat: Text.PlainText
                     Accessible.name: text
                     Layout.fillWidth: true
-                    elide: Text.ElideRight
+                    wrapMode: Text.WordWrap
                 }
                 RowLayout {
                     id: requestFeedback
@@ -508,6 +542,8 @@ Kirigami.ApplicationWindow {
                     }
                     Controls.Label {
                         id: requestLabel
+                        Layout.maximumWidth: Math.max(120, window.width / 3)
+                        wrapMode: Text.WordWrap
                         text: qsTr("Stored request in progress…")
                         textFormat: Text.PlainText
                         Accessible.name: text

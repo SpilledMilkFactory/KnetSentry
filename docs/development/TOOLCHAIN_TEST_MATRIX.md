@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns accepted; M7.4 Audit detection foundation accepted (#63 remains open); M7.5 scheduling foundation accepted (#64 remains open); M7.6 alert ledger accepted (#65 remains open); M7.7 alert interface foundation accepted (#66 remains open); M7.8 regression accepted; M7.9 mapping accepted (#68); M8.1 dashboard foundation accepted (#69 remaining scope); M8.2 visualizations accepted (#70 remaining scope); M8.3 workspace accepted (#71 remaining scope); M8.4 timeline accepted (#72 remaining scope); M8.5 motion and feedback accepted (#73 remaining scope); M8.6 search and filtering qualification pending (#74); issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns accepted; M7.4 Audit detection foundation accepted (#63 remains open); M7.5 scheduling foundation accepted (#64 remains open); M7.6 alert ledger accepted (#65 remains open); M7.7 alert interface foundation accepted (#66 remains open); M7.8 regression accepted; M7.9 mapping accepted (#68); M8.1 dashboard foundation accepted (#69 remaining scope); M8.2 visualizations accepted (#70 remaining scope); M8.3 workspace accepted (#71 remaining scope); M8.4 timeline accepted (#72 remaining scope); M8.5 motion and feedback accepted (#73 remaining scope); M8.6 search and filtering accepted (#74 remaining scope); M8.7 keyboard accessibility qualification pending (#75); issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
 CTest inventories are 90 Release/Debug/Clazy/analysis, 79 full ASan/UBSan,
 72 core-only and 73 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
@@ -484,3 +484,13 @@ Events and Alerts integrations, retaining the native IPC tests. Target: 584
 configured CTests, 77 structural verifiers, 162 consolidated gates. All four
 non-sanitized desktop configurations execute the extended rendered tests.
 Target-host qualification pending.
+
+### M8.7 keyboard navigation and accessibility
+
+The [M8.7 contract](ACCESSIBILITY_M87.md) strengthens existing visual-system,
+Events, Alerts and Investigation rendered tests. Configured CTest inventories
+are unchanged. Actual Qt key events exercise list navigation and inspection;
+manual keyboard-only use and platform assistive-technology review remain
+separate. The local-only consolidated runner additionally checks exact suite
+counts, repeated regressions, compiler diagnostics, native GUI independence
+and installed manager equality without requiring repeated terminal commands.

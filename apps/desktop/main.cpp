@@ -17,6 +17,9 @@
 #include <QMetaObject>
 #include <unistd.h>
 #include <QGuiApplication>
+#include <QFontInfo>
+#include <QKeyEvent>
+#include <QQuickItem>
 #include <QEventLoop>
 #include <QQmlEngine>
 #include <QTimer>
@@ -99,6 +102,39 @@ bool apply_search_preset(const QObject& root, const char* name, int index) {
 bool search_index_matches(const QObject& root, const char* name, int expected) {
     const auto* control = search_control(root, name);
     return control && control->property("currentIndex").toInt() == expected;
+}
+
+// Exercise the focused Qt Quick item's real key path. No model mutation here.
+void send_key(QQuickWindow& window, int key) {
+    QKeyEvent press(QEvent::KeyPress, key, Qt::NoModifier);
+    QKeyEvent release(QEvent::KeyRelease, key, Qt::NoModifier);
+    QCoreApplication::sendEvent(&window, &press);
+    QCoreApplication::sendEvent(&window, &release);
+}
+
+bool focus_control(QObject* control) {
+    auto* item = qobject_cast<QQuickItem*>(control);
+    if (!item || !item->isEnabled() || !item->isVisible()) { return false; }
+    item->forceActiveFocus(Qt::TabFocusReason);
+    return item->hasActiveFocus();
+}
+
+bool keyboard_inspect(QQuickWindow& window, const QObject& root, const char* name, int index) {
+    auto* list = search_control(root, name);
+    if (!list || index < 0 || index >= list->property("count").toInt() ||
+        !focus_control(list) || !list->setProperty("currentIndex", 0)) { return false; }
+    send_key(window, Qt::Key_Up);
+    if (list->property("currentIndex").toInt() != 0) { return false; }
+    if (list->property("count").toInt() > 1) {
+        send_key(window, Qt::Key_Down);
+        if (list->property("currentIndex").toInt() != 1) { return false; }
+        send_key(window, Qt::Key_Up);
+        if (list->property("currentIndex").toInt() != 0) { return false; }
+    }
+    for (int step = 0; step < index; ++step) { send_key(window, Qt::Key_Down); }
+    if (list->property("currentIndex").toInt() != index) { return false; }
+    send_key(window, Qt::Key_Return);
+    return true;
 }
 
 bool requests_text_only(int argc, char *argv[]) {
@@ -232,7 +268,9 @@ int main(int argc, char *argv[]) {
     QQmlEngine::setObjectOwnership(&events, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&health, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&control, QQmlEngine::CppOwnership);
-    engine.setInitialProperties({{QStringLiteral("timelineModel"), QVariant::fromValue(&timeline)},
+    const int platformFontPixels = QFontInfo(app.font()).pixelSize();
+    engine.setInitialProperties({{QStringLiteral("platformFontPixels"), platformFontPixels > 0 ? platformFontPixels : 14},
+                                 {QStringLiteral("timelineModel"), QVariant::fromValue(&timeline)},
                                  {QStringLiteral("workspaceModel"), QVariant::fromValue(&workspace)},
                                  {QStringLiteral("dashboardModel"), QVariant::fromValue(&dashboard)},
                                  {QStringLiteral("alertModel"), QVariant::fromValue(&alerts)},
@@ -351,6 +389,26 @@ int main(int argc, char *argv[]) {
             !root->property("reduceMotion").toBool() || root->property("motionDuration").toInt() != 0 ||
             root->property("navigationAnimationRunning").toBool() || root->property("loadingAnimationRunning").toBool() ||
             root->property("displayedHealthPulse").toBool()) { return 1; }
+        const int base = root->property("scaledBodySize").toInt();
+        if (base < 1 || root->property("textScalePercent").toInt() != 100 || !apply_search_preset(*root, "textScaleControl", 2) ||
+            root->property("textScalePercent").toInt() != 150 ||
+            root->property("scaledBodySize").toInt() <= base ||
+            !root->setProperty("navigationRequest", QStringLiteral("events")) ||
+            root->property("textScalePercent").toInt() != 150 ||
+            !focus_control(search_control(*root, "keyboardContent")) ||
+            !root->setProperty("navigationRequest", QStringLiteral("settings")) ||
+            !search_index_matches(*root, "textScaleControl", 2) ||
+            !apply_search_preset(*root, "textScaleControl", 0) ||
+            root->property("scaledBodySize").toInt() != base ||
+            !focus_control(root->property("navigationFocusControl").value<QObject*>())) { return 1; }
+        if (!apply_search_preset(*root, "textScaleControl", 2)) { return 1; }
+        window->resize(700, 600);
+        QEventLoop scaleLayout;
+        QTimer::singleShot(200, &scaleLayout, &QEventLoop::quit);
+        scaleLayout.exec();
+        if (!root->property("currentPageCompact").toBool() ||
+            !apply_search_preset(*root, "textScaleControl", 0)) { return 1; }
+        std::cout << "M8.7 rendered text scale and focus targets: PASS\n";
         std::cout << "M8.5 motion opt-in, bounded navigation and immediate cancellation: PASS\n";
         std::cout << "KnetSentry M1.5 visual system: PASS (platform palette; no telemetry)\n";
         return 0;
@@ -430,11 +488,11 @@ int main(int argc, char *argv[]) {
                 if (root->property("currentTimelineCount").toInt() != 16 || timeline.entries().size() != 16 ||
                     !timeline.entries().at(0).startsWith(QStringLiteral("1005 | Event #5")) ||
                     !timeline.entries().at(8).startsWith(QStringLiteral("1013 | Alert 1/2"))) { loop.exit(1); return; }
-                timeline.select(0);
+                if (!keyboard_inspect(*window, *root, "timelineKeyboardList", 0)) { loop.exit(1); return; }
                 if (timeline.related().isEmpty() || !root->property("currentTimelineDetail").toString().contains(QStringLiteral("Receiver time (Unix ms): 1005"))) { loop.exit(1); return; }
                 timeline.follow(0);
                 if (timeline.evidence().isEmpty() || !root->property("currentTimelineDetail").toString().startsWith(QStringLiteral("Alert"))) { loop.exit(1); return; }
-                timeline.select(8); // first alert references event #1 outside returned event page
+                if (!keyboard_inspect(*window, *root, "timelineKeyboardList", 8)) { loop.exit(1); return; } // first alert references off-page evidence
                 timeline.verifyEvidence(-1);
                 if (timeline.busy() || timeline.evidence().isEmpty()) { loop.exit(1); return; }
                 timeline.verifyEvidence(0); stage = 1; return;
@@ -446,7 +504,10 @@ int main(int argc, char *argv[]) {
         });
         deadline.start(12000); check.start(25);
         const int result = loop.exec();
-        if (result == 0) { std::cout << "M8.4 rendered timeline and evidence lifecycle: PASS\n"; }
+        if (result == 0) {
+            if (mode == QStringLiteral("read")) { std::cout << "M8.7 timeline keyboard inspection: PASS\n"; }
+            std::cout << "M8.4 rendered timeline and evidence lifecycle: PASS\n";
+        }
         return result;
     }
     if (parser.isSet(dashboard_smoke_test) || parser.isSet(dashboard_denied_test)) {
@@ -574,7 +635,7 @@ int main(int argc, char *argv[]) {
             if (stage == 0) {
                 if (count != 8 || !events.more() || !events.status().contains(QStringLiteral("More matching records available.")) ||
                     !events.data(events.index(0, 0), Qt::DisplayRole).toString().startsWith(QStringLiteral("#1 ·"))) { loop.exit(1); return; }
-                events.select(0);
+                if (!keyboard_inspect(*window, *root, "eventKeyboardList", 0)) { loop.exit(1); return; }
                 if (!root->property("currentEventDetail").toString().startsWith(QStringLiteral("Event ID: 1\n")) ||
                     !root->property("currentEventStatus").toString().contains(QStringLiteral("stored snapshot")) ||
                     !QMetaObject::invokeMethod(next_button, "clicked")) { loop.exit(1); return; }
@@ -600,6 +661,7 @@ int main(int argc, char *argv[]) {
             } else {
                 if (count != 0 || events.more() || !root->property("currentEventStatus").toString().startsWith(QStringLiteral("No matching stored events")) ||
                     !root->setProperty("navigationRequest", QStringLiteral("dashboard")) || events.rowCount() != 0 || !events.detail().isEmpty()) { loop.exit(1); return; }
+                std::cout << "M8.7 event keyboard inspection: PASS\n";
                 std::cout << "M8.6 rendered event presets, saved views and cross-view clearing: PASS\n";
                 std::cout << "M6.8 rendered event explorer: PASS\n";
                 loop.exit(0);
@@ -634,7 +696,7 @@ int main(int argc, char *argv[]) {
             if (alerts.busy()) { return; }
             if (stage == 0) {
                 if (root->property("currentAlertCount").toInt() != 8 || !alerts.more()) { loop.exit(1); return; }
-                alerts.select(1); // First alert already acknowledged by the native IPC regression.
+                if (!keyboard_inspect(*window, *root, "alertKeyboardList", 1)) { loop.exit(1); return; } // first alert already acknowledged
                 if (!root->property("currentAlertDetail").toString().contains(QStringLiteral("Alert 1/3")) || !alerts.canAcknowledge()) { loop.exit(1); return; }
                 alerts.inspectEvidence(0); ++stage;
             } else if (stage == 1) {
@@ -664,6 +726,7 @@ int main(int argc, char *argv[]) {
                 ++stage;
             } else {
                 if (alerts.rowCount() != 0 || !alerts.status().startsWith(QStringLiteral("No matching")) || !root->setProperty("navigationRequest",QStringLiteral("dashboard")) || alerts.rowCount() != 0 || !alerts.detail().isEmpty()) { loop.exit(1); return; }
+                std::cout << "M8.7 alert keyboard inspection: PASS\n";
                 std::cout << "M8.6 rendered alert presets, saved views and cross-view clearing: PASS\n";
                 std::cout << "M7.7 rendered alert interface: PASS\n"; loop.exit(0);
             }

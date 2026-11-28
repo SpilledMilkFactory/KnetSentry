@@ -14,10 +14,11 @@ QtObject {
     readonly property int spaceXl: 28
     readonly property int radiusS: 6
     readonly property int radiusM: 10
-    readonly property int titleSize: 27
-    readonly property int sectionSize: 17
-    readonly property int bodySize: 14
-    readonly property int captionSize: 12
+    property real textScale: 1.0
+    readonly property int titleSize: Math.round(27 * textScale)
+    readonly property int sectionSize: Math.round(17 * textScale)
+    readonly property int bodySize: Math.round(14 * textScale)
+    readonly property int captionSize: Math.round(12 * textScale)
     readonly property int touchTarget: 40
     readonly property int compactBreakpoint: 820
     // Motion is deliberately opt-in for future transitions. No animated

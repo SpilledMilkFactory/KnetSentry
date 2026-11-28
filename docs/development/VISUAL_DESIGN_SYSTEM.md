@@ -161,3 +161,10 @@ No theme preference persistence, user custom palette, font zoom control,
 readable high-contrast accessibility audit, animation framework, telemetry,
 active system status, or KDE incubation acceptance is claimed for M1.5.
 These require later implementation and real platform qualification.
+
+## M8.7 keyboard and text magnification
+
+See the [keyboard accessibility contract](ACCESSIBILITY_M87.md). Use the
+startup platform font as the baseline, offer session-only 100/125/150 percent
+text magnification, keep semantic contrast pairs and use native control
+palettes for keyboard focus. Never delay security state changes for motion.

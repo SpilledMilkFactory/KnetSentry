@@ -532,3 +532,13 @@ See [M8.6](SEARCH_FILTERING_M86.md). Run `ctest --preset linux-release -R
 (one command). Verify presets, one saved categorical view per interface, explicit
 submission, cross-view clearing and exact authorization counts. Test only with
 disposable synthetic fixtures. Desktop inventories remain 90/79, core-only 72/73.
+
+### M8.7 keyboard navigation and accessibility
+
+See [M8.7](ACCESSIBILITY_M87.md). Existing rendered visual, Events, Alerts and
+Investigation tests qualify text magnification, focus targets and keyboard
+record inspection. Use the maintained untracked local acceptance runner when
+available; `--full` explicitly requests all customary privileged fixtures,
+and optional `--gui-review` launches a disposable read-only visual fixture
+after successful automated qualification. Only the human visual verdict and
+hosted CI remain separate. Never run the desktop or the entire runner as root.

@@ -63,7 +63,7 @@ ColumnLayout {
             }
             Controls.Label {
                 text: String(barRow.count)
-                Accessible.name: qsTr("%1 records").arg(barRow.count)
+                Accessible.name: qsTr("%1: %2 records").arg(barRow.index < chart.labels.length ? chart.labels[barRow.index] : "").arg(barRow.count)
             }
         }
     }
