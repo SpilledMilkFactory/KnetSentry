@@ -635,3 +635,21 @@ target_link_libraries(knetsentry_alerts_test PRIVATE KnetSentry::Detection KnetS
 knetsentry_apply_project_options(knetsentry_alerts_test)
 add_test(NAME knetsentry_alerts_contract COMMAND $<TARGET_FILE:knetsentry_alerts_test>)
 set_tests_properties(knetsentry_alerts_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M7.7: scoped persistent alerts, manager IPC and rendered desktop.
+add_executable(knetsentry_alert_interface_test alert_interface_m77.cpp)
+target_link_libraries(knetsentry_alert_interface_test PRIVATE KnetSentry::Service KnetSentry::Detection KnetSentry::SqliteStorage Threads::Threads)
+knetsentry_apply_project_options(knetsentry_alert_interface_test)
+add_test(NAME knetsentry_alert_interface_contract COMMAND $<TARGET_FILE:knetsentry_alert_interface_test>)
+set_tests_properties(knetsentry_alert_interface_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+add_test(NAME knetsentry_alert_interface_runtime COMMAND "${Python3_EXECUTABLE}" -B
+    "${PROJECT_SOURCE_DIR}/tests/alert_interface_runtime_m77.py" $<TARGET_FILE:knetsentryd> $<TARGET_FILE:knetsentry_alert_interface_test>)
+set_tests_properties(knetsentry_alert_interface_runtime PROPERTIES LABELS "integration;ipc;security;regression;privacy" TIMEOUT 75)
+if(KNETSENTRY_BUILD_DESKTOP AND NOT KNETSENTRY_ENABLE_SANITIZERS)
+    add_test(NAME knetsentry_gui_alert_interface_runtime COMMAND "${Python3_EXECUTABLE}" -B
+        "${PROJECT_SOURCE_DIR}/tests/alert_interface_runtime_m77.py" $<TARGET_FILE:knetsentryd>
+        $<TARGET_FILE:knetsentry_alert_interface_test> $<TARGET_FILE:knetsentry>)
+    set_tests_properties(knetsentry_gui_alert_interface_runtime PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+        LABELS "qt;desktop;qml;integration;ipc;security;regression;privacy" TIMEOUT 75)
+endif()

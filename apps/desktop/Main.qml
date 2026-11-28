@@ -11,6 +11,7 @@ import io.github.spilledmilkfactory.KnetSentry
 Kirigami.ApplicationWindow {
     id: window
     required property ServiceHealthModel healthModel
+    required property AlertModel alertModel
     required property EventExplorerModel eventModel
     required property DaemonControl daemonControl
     readonly property alias toolbarStartButton: startButton
@@ -41,6 +42,8 @@ Kirigami.ApplicationWindow {
     // integration test to exercise exactly the same routing as drawer actions.
     property string activeSection: "dashboard"
     onActiveSectionChanged: {
+        if (window.alertModel && activeSection !== "alerts")
+            window.alertModel.clear()
         if (window.eventModel && activeSection !== "events")
             window.eventModel.clear()
     }
@@ -69,6 +72,11 @@ Kirigami.ApplicationWindow {
     readonly property string currentPageScopeNetworks: currentSectionPage ? currentSectionPage.displayedScopeNetworks : ""
     readonly property string currentPageScopeInterfaces: currentSectionPage ? currentSectionPage.displayedScopeInterfaces : ""
     readonly property string currentPageScopeDenials: currentSectionPage ? currentSectionPage.displayedScopeDenials : ""
+    readonly property int currentAlertCount: currentSectionPage ? currentSectionPage.alertCount : 0
+    readonly property string currentAlertDetail: currentSectionPage ? currentSectionPage.alertDetail : ""
+    readonly property string currentAlertEvidence: currentSectionPage ? currentSectionPage.alertEvidence : ""
+    readonly property Controls.Button currentAlertRefreshButton: currentSectionPage ? currentSectionPage.alertRefreshButton : null
+    readonly property Controls.Button currentAlertAckButton: currentSectionPage ? currentSectionPage.alertAckButton : null
     readonly property int currentEventCount: currentSectionPage ? currentSectionPage.eventCount : 0
     readonly property string currentEventStatus: currentSectionPage ? currentSectionPage.eventStatus : ""
     readonly property string currentEventDetail: currentSectionPage ? currentSectionPage.eventDetail : ""
@@ -182,13 +190,14 @@ Kirigami.ApplicationWindow {
 
     Component {
         id: sectionPageComponent
-        SectionPage { healthModel: window.healthModel; eventModel: window.eventModel }
+        SectionPage { healthModel: window.healthModel; eventModel: window.eventModel; alertModel: window.alertModel }
     }
 
     pageStack.initialPage: SectionPage {
         sectionId: "dashboard"
         healthModel: window.healthModel
         eventModel: window.eventModel
+        alertModel: window.alertModel
     }
 
     header: Controls.ToolBar {

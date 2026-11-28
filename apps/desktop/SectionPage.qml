@@ -13,7 +13,13 @@ Kirigami.Page {
     objectName: "knetSentrySectionPage"
     required property string sectionId
     required property ServiceHealthModel healthModel
+    required property AlertModel alertModel
     required property EventExplorerModel eventModel
+    readonly property int alertCount: alertList.count
+    readonly property string alertDetail: alertDetailLabel.text
+    readonly property string alertEvidence: alertEvidenceLabel.text
+    readonly property alias alertRefreshButton: refreshAlertsButton
+    readonly property alias alertAckButton: ackAlertButton
     readonly property int eventCount: eventList.count
     readonly property string eventStatus: eventStatusLabel.text
     readonly property string eventDetail: eventDetailLabel.text
@@ -68,7 +74,7 @@ Kirigami.Page {
         case "detections":
             return qsTr("Deterministic detection rules and their evidence will appear here after the detection engine is implemented.")
         case "alerts":
-            return qsTr("Verified security findings and alert triage will appear here when detection and alert management are implemented.")
+            return qsTr("Inspect explicitly approved stored alerts and linked evidence. Live detection is unavailable.")
         case "investigations":
             return qsTr("Investigation timelines, incident cases, and preserved evidence will appear here after the incident workflow is implemented.")
         case "settings":
@@ -116,7 +122,7 @@ Kirigami.Page {
             Kirigami.InlineMessage {
                 type: Kirigami.MessageType.Information
                 visible: true
-                text: qsTr("Not operational — local aggregate status and approved stored event snapshots may be shown; live remote telemetry is unavailable.")
+                text: qsTr("Not operational — local aggregate status and approved stored events and alerts may be shown; live remote telemetry is unavailable.")
                 Layout.fillWidth: true
             }
             Controls.Label {
@@ -132,6 +138,107 @@ Kirigami.Page {
                 color: Kirigami.Theme.textColor
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
+            }
+
+            ColumnLayout {
+                visible: page.sectionId === "alerts"
+                Layout.fillWidth: true
+                spacing: tokens.spaceS
+                Controls.Label {
+                    text: qsTr("Alerts — stored detection results")
+                    font.pixelSize: tokens.sectionSize
+                    Layout.fillWidth: true
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Controls.ComboBox {
+                        id: alertSeverity
+                        Layout.fillWidth: true
+                        model: [qsTr("All severities"), qsTr("Unspecified"), qsTr("Informational"), qsTr("Low"), qsTr("Medium"), qsTr("High"), qsTr("Critical")]
+                        Accessible.name: qsTr("Alert severity filter")
+                        enabled: !page.alertModel.busy
+                        onActivated: page.alertModel.clear()
+                    }
+                    Controls.Button {
+                        id: refreshAlertsButton
+                        text: qsTr("Refresh / first page")
+                        enabled: !page.alertModel.busy
+                        onClicked: page.alertModel.search(alertSeverity.currentIndex - 1)
+                    }
+                    Controls.Button {
+                        text: qsTr("Next page")
+                        enabled: page.alertModel.more && !page.alertModel.busy
+                        onClicked: page.alertModel.next()
+                    }
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: page.alertModel.status
+                    textFormat: Text.PlainText
+                    wrapMode: Text.WordWrap
+                }
+                ListView {
+                    id: alertList
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 220
+                    clip: true
+                    reuseItems: true
+                    model: page.alertModel
+                    Controls.ScrollBar.vertical: Controls.ScrollBar {}
+                    delegate: Controls.ItemDelegate {
+                        id: alertRow
+                        required property int index
+                        required property string alertLabel
+                        width: alertList.width
+                        enabled: !page.alertModel.busy
+                        contentItem: Controls.Label {
+                            text: alertRow.alertLabel
+                            textFormat: Text.PlainText
+                            elide: Text.ElideRight
+                        }
+                        onClicked: page.alertModel.select(alertRow.index)
+                    }
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    id: alertDetailLabel
+                    text: page.alertModel.detail.length > 0 ? page.alertModel.detail : qsTr("Select an alert to inspect its metadata and evidence links.")
+                    textFormat: Text.PlainText
+                    wrapMode: Text.WrapAnywhere
+                }
+                Controls.Button {
+                    id: ackAlertButton
+                    text: qsTr("Acknowledge selected alert")
+                    enabled: page.alertModel.canAcknowledge
+                    onClicked: page.alertModel.acknowledge()
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Controls.ComboBox {
+                        id: linkedEvidence
+                        Layout.fillWidth: true
+                        model: page.alertModel.evidence
+                        Accessible.name: qsTr("Linked evidence identifier")
+                        enabled: !page.alertModel.busy && count > 0
+                    }
+                    Controls.Button {
+                        text: qsTr("Inspect linked evidence")
+                        enabled: !page.alertModel.busy && linkedEvidence.currentIndex >= 0
+                        onClicked: page.alertModel.inspectEvidence(linkedEvidence.currentIndex)
+                    }
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    id: alertEvidenceLabel
+                    text: page.alertModel.evidenceDetail
+                    textFormat: Text.PlainText
+                    wrapMode: Text.WrapAnywhere
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: qsTr("Acknowledgement is analyst disposition, not remediation. Refresh after each update. Eight alerts per page; snapshots expire after 30 seconds.")
+                    wrapMode: Text.WordWrap
+                }
             }
 
             ColumnLayout {

@@ -39,7 +39,7 @@ struct AlertSnapshot {
 // This is a private single-scope offline ledger, not a service or authorization boundary.
 inline constexpr std::size_t max_alerts = 128, max_alert_notes = 8, max_alert_note_bytes = 256;
 [[nodiscard]] bool initialize_alerts(const SchedulePolicy& policy, std::string_view directory, bool authorized);
-[[nodiscard]] AlertSnapshot read_alerts(const SchedulePolicy& policy, std::string_view directory, bool authorized);
+[[nodiscard]] AlertSnapshot read_alerts(const SchedulePolicy& policy, std::string_view directory, bool authorized, bool recover_pending = true);
 // Read committed scheduler batch directly, not a caller-fabricated report. No ACK is performed.
 // After Ok/ExactRetry the caller may acknowledge precisely the returned input generation.
 [[nodiscard]] AlertResult consume_alerts(const SchedulePolicy& policy, std::string_view directory,

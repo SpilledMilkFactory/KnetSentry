@@ -112,7 +112,7 @@ constexpr std::string_view agents_prefix = "KSIPC/1 AGENTS ";
 bool authorize_local_peer(uid_t peer_uid, gid_t peer_gid,
     uid_t service_uid, gid_t service_gid, IpcAction action) noexcept {
     return peer_uid == service_uid && peer_gid == service_gid &&
-        (action == IpcAction::Status || action == IpcAction::Health || action == IpcAction::Agents || action == IpcAction::Events);
+        (action == IpcAction::Status || action == IpcAction::Health || action == IpcAction::Agents || action == IpcAction::Events || action == IpcAction::Alerts || action == IpcAction::AlertAcknowledge);
 }
 
 LocalIpcServer::~LocalIpcServer() noexcept { close_all(); }
@@ -212,10 +212,17 @@ bool LocalIpcServer::set_event_store(const storage::EventStore& store) noexcept 
     event_store_ = &store; return true;
 }
 
+bool LocalIpcServer::set_alert_scope(detection::SchedulePolicy policy, std::string_view directory, bool writable) {
+    if (alert_policy_ || !event_store_ || !valid_directory(directory) ||
+        detection::read_alerts(policy,directory,true,false).result != detection::AlertResult::Ok) { return false; }
+    alert_directory_ = directory; alert_policy_ = std::move(policy); alert_writable_ = writable;
+    return true;
+}
+
 void LocalIpcServer::handle_client(int client, const Lifecycle& lifecycle,
     HealthTracker& health, AuditLog& audit) noexcept {
     // Authenticate before reading untrusted bytes; operation authorization
-    // follows strict framing. No administrative action is permitted.
+    // follows strict framing. General administrative actions remain denied.
     struct ucred peer{};
     socklen_t length = sizeof(peer);
     const bool identified = ::getsockopt(client, SOL_SOCKET, SO_PEERCRED, &peer, &length) == 0 &&
@@ -256,6 +263,31 @@ void LocalIpcServer::handle_client(int client, const Lifecycle& lifecycle,
         return;
     }
     const std::string_view payload(request.data(), size);
+    constexpr std::string_view alerts_prefix = "KSIPC/1 ALERTS ";
+    if (payload.starts_with(alerts_prefix)) {
+        const auto id = payload.substr(alerts_prefix.size(), 16);
+        try {
+            const auto q = decode_alert_request(payload,id);
+            if (!q || !alert_policy_ || !event_store_ || !audit.persistent()) {
+                report(HealthError::Rejected, AuditEvent::RequestRejected); return;
+            }
+            const bool mutation = q->operation == AlertQuery::Operation::Acknowledge;
+            const auto action = mutation ? IpcAction::AlertAcknowledge : IpcAction::Alerts;
+            if (!authorize_local_peer(peer.uid,peer.gid,::geteuid(),::getegid(),action) || (mutation && !alert_writable_)) {
+                report(HealthError::Rejected, AuditEvent::RequestRejected); return;
+            }
+            if (!audit.record(mutation ? AuditEvent::AlertAcknowledgeAuthorized : AuditEvent::AlertsAuthorized,actor)) { return; }
+            const auto clock = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            if (clock <= 0) { report(HealthError::Sampling, AuditEvent::SamplingFailed); return; }
+            const auto response = query_alerts(*alert_policy_,alert_directory_,*event_store_,
+                std::string_view(event_session_.data(),event_session_.size()),*q,id,alert_writable_,"uid-" + std::to_string(peer.uid),static_cast<std::uint64_t>(clock));
+            const auto decoded = decode_alert_page(response,id,*q);
+            if (!decoded) { report(HealthError::Sampling, AuditEvent::SamplingFailed); return; }
+            if (mutation && decoded->result == "OK" && !audit.record(AuditEvent::AlertAcknowledged,actor)) { return; }
+            if (!send_frame(client,response,max_alert_response)) { report(HealthError::Transport, AuditEvent::TransportFailed); }
+        } catch (...) { report(HealthError::Sampling, AuditEvent::SamplingFailed); }
+        return;
+    }
     constexpr std::string_view events_prefix = "KSIPC/1 EVENTS ";
     if (payload.starts_with(events_prefix)) {
         const auto id = payload.substr(events_prefix.size(), 16);

@@ -41,3 +41,6 @@ schedule-m75.pending
 # Private M7.6 alert ledger, analyst notes and interrupted transactions.
 alerts-m76.v1
 alerts-m76.pending
+
+# Private M7.7 alert scope identities.
+alert-scope-m77.v1
