@@ -12,6 +12,37 @@ Kirigami.Page {
     id: page
     objectName: "knetSentrySectionPage"
     required property string sectionId
+    required property SearchViews searchViews
+    signal searchDestinationRequested(string destination)
+    readonly property alias eventPresetControl: eventPreset
+    readonly property alias eventSaveControl: saveEventsView
+    readonly property alias eventRestoreControl: restoreEventsView
+    readonly property alias eventForgetControl: forgetEventsView
+    readonly property alias eventSourceControl: eventSource
+    readonly property alias eventCollectorControl: eventMode
+    readonly property alias eventOutcomeControl: eventOutcome
+    readonly property alias eventOrderControl: eventOrder
+    readonly property alias alertPresetControl: alertPreset
+    readonly property alias alertSaveControl: saveAlertsView
+    readonly property alias alertRestoreControl: restoreAlertsView
+    readonly property alias alertForgetControl: forgetAlertsView
+    readonly property alias alertSeverityControl: alertSeverity
+    readonly property alias searchEventsRoute: openEventsView
+    readonly property alias searchAlertsRoute: openAlertsView
+    readonly property alias searchTimelineRoute: openTimelineView
+
+    function setEventFilters(collector: int, outcome: int, descending: bool): void {
+        page.eventModel.clear()
+        eventSource.text = ""
+        eventMode.currentIndex = collector
+        eventOutcome.currentIndex = outcome
+        eventOrder.currentIndex = descending ? 1 : 0
+    }
+
+    function setAlertFilter(severity: int): void {
+        page.alertModel.clear()
+        alertSeverity.currentIndex = severity
+    }
     required property TimelineModel timelineModel
     readonly property alias timelineRefreshButton: timelineRefresh
     readonly property int timelineCount: timelineList.count
@@ -165,6 +196,38 @@ Kirigami.Page {
             }
 
             ColumnLayout {
+                visible: page.sectionId === "dashboard" || page.sectionId === "events"
+                         || page.sectionId === "alerts" || page.sectionId === "investigations"
+                Layout.fillWidth: true
+                spacing: tokens.spaceS
+                Controls.Label {
+                    text: qsTr("Evidence views — open a destination, then explicitly request its data. No record or authority is transferred.")
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                }
+                RowLayout {
+                    Controls.Button {
+                        id: openEventsView
+                        text: qsTr("Open Events")
+                        enabled: page.sectionId !== "events"
+                        onClicked: page.searchDestinationRequested("events")
+                    }
+                    Controls.Button {
+                        id: openAlertsView
+                        text: qsTr("Open Alerts")
+                        enabled: page.sectionId !== "alerts"
+                        onClicked: page.searchDestinationRequested("alerts")
+                    }
+                    Controls.Button {
+                        id: openTimelineView
+                        text: qsTr("Open Investigations")
+                        enabled: page.sectionId !== "investigations"
+                        onClicked: page.searchDestinationRequested("investigations")
+                    }
+                }
+            }
+
+            ColumnLayout {
                 visible: page.sectionId === "investigations"
                 Layout.fillWidth: true
                 spacing: tokens.spaceS
@@ -277,6 +340,53 @@ Kirigami.Page {
                     font.pixelSize: tokens.sectionSize
                     Layout.fillWidth: true
                 }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Presets and saved severity views change filters only. Select Refresh to query approved storage. Saved views are session-only.")
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Controls.ComboBox {
+                        id: alertPreset
+                        displayText: qsTr("Apply preset…")
+                        Layout.fillWidth: true
+                        model: [qsTr("All alerts"), qsTr("Medium severity"), qsTr("High severity"), qsTr("Critical severity")]
+                        Accessible.name: qsTr("Alert search preset")
+                        enabled: !page.alertModel.busy
+                        onActivated: function(index) {
+                            switch (index) {
+                            case 0: page.setAlertFilter(0); break
+                            case 1: page.setAlertFilter(4); break
+                            case 2: page.setAlertFilter(5); break
+                            case 3: page.setAlertFilter(6); break
+                            }
+                        }
+                    }
+                    Controls.Button {
+                        id: saveAlertsView
+                        text: qsTr("Save severity view")
+                        enabled: !page.alertModel.busy && alertSeverity.currentIndex >= 0
+                        onClicked: page.searchViews.saveAlerts(alertSeverity.currentIndex)
+                    }
+                    Controls.Button {
+                        id: restoreAlertsView
+                        text: qsTr("Restore view")
+                        enabled: !page.alertModel.busy && page.searchViews.alertSaved
+                        onClicked: page.setAlertFilter(page.searchViews.alertSeverity)
+                    }
+                    Controls.Button {
+                        id: forgetAlertsView
+                        text: qsTr("Forget view")
+                        enabled: page.searchViews.alertSaved
+                        onClicked: page.searchViews.forgetAlerts()
+                    }
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: page.searchViews.alertSaved ? qsTr("One severity view saved for this session.") : qsTr("No saved severity view.")
+                    wrapMode: Text.WordWrap
+                }
                 RowLayout {
                     Layout.fillWidth: true
                     Controls.ComboBox {
@@ -379,8 +489,56 @@ Kirigami.Page {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
                 }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Presets and saved categorical views change filters only. Select Search to query approved storage. Exact source text is never saved; applying a view clears it.")
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Controls.ComboBox {
+                        id: eventPreset
+                        displayText: qsTr("Apply preset…")
+                        Layout.fillWidth: true
+                        model: [qsTr("All events (lowest ID first)"), qsTr("Authentication failures (highest ID first)"), qsTr("Authentication successes (highest ID first)"), qsTr("Audit (highest ID first)")]
+                        Accessible.name: qsTr("Event search preset")
+                        enabled: !page.eventModel.busy
+                        onActivated: function(index) {
+                            switch (index) {
+                            case 0: page.setEventFilters(0, 0, false); break
+                            case 1: page.setEventFilters(2, 3, true); break
+                            case 2: page.setEventFilters(2, 2, true); break
+                            case 3: page.setEventFilters(3, 0, true); break
+                            }
+                        }
+                    }
+                    Controls.Button {
+                        id: saveEventsView
+                        text: qsTr("Save categorical view")
+                        enabled: !page.eventModel.busy && eventMode.currentIndex >= 0 && eventOutcome.currentIndex >= 0
+                        onClicked: page.searchViews.saveEvents(eventMode.currentIndex, eventOutcome.currentIndex, eventOrder.currentIndex === 1)
+                    }
+                    Controls.Button {
+                        id: restoreEventsView
+                        text: qsTr("Restore view")
+                        enabled: !page.eventModel.busy && page.searchViews.eventSaved
+                        onClicked: page.setEventFilters(page.searchViews.eventCollector, page.searchViews.eventOutcome, page.searchViews.eventDescending)
+                    }
+                    Controls.Button {
+                        id: forgetEventsView
+                        text: qsTr("Forget view")
+                        enabled: page.searchViews.eventSaved
+                        onClicked: page.searchViews.forgetEvents()
+                    }
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: page.searchViews.eventSaved ? qsTr("One categorical view saved for this session.") : qsTr("No saved categorical view.")
+                    wrapMode: Text.WordWrap
+                }
                 Controls.TextField {
                     id: eventSource
+                    enabled: !page.eventModel.busy
                     Layout.fillWidth: true
                     maximumLength: 128
                     placeholderText: qsTr("Exact source (e.g. ssh.service), or empty for all")
@@ -391,6 +549,7 @@ Kirigami.Page {
                     Layout.fillWidth: true
                     Controls.ComboBox {
                         id: eventMode
+                        enabled: !page.eventModel.busy
                         Layout.fillWidth: true
                         model: [qsTr("All collectors"), qsTr("Journal"), qsTr("Authentication"), qsTr("Audit")]
                         Accessible.name: qsTr("Collector filter")
@@ -398,6 +557,7 @@ Kirigami.Page {
                     }
                     Controls.ComboBox {
                         id: eventOutcome
+                        enabled: !page.eventModel.busy
                         Layout.fillWidth: true
                         model: [qsTr("All outcomes"), qsTr("Unknown"), qsTr("Success"), qsTr("Failure")]
                         Accessible.name: qsTr("Outcome filter")
@@ -408,6 +568,7 @@ Kirigami.Page {
                     Layout.fillWidth: true
                     Controls.ComboBox {
                         id: eventOrder
+                        enabled: !page.eventModel.busy
                         Layout.fillWidth: true
                         model: [qsTr("ID ascending"), qsTr("ID descending")]
                         Accessible.name: qsTr("Storage identifier sort order")

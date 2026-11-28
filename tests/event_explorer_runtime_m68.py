@@ -84,9 +84,16 @@ def main():
             require(exchange(REQUEST.replace(b' A ', b' X ')) == b'', 'unknown sort accepted')
             require(exchange(REQUEST.replace(b' A ', b' D ')).splitlines()[1].startswith(b'20 '), 'descending order')
             if desktop:
+                def query_count():
+                    return sum(json.loads(line)['event'] == 'events_authorized'
+                               for line in (audit / 'service-audit.jsonl').read_text().splitlines())
+                before = query_count()
                 result = invoke(desktop, '--ipc-dir', ipc, '--self-test-events')
                 require(result.returncode == 0 and b'M6.8 rendered event explorer: PASS' in result.stdout,
                         'rendered explorer contract failed')
+                require(b'M8.6 rendered event presets, saved views and cross-view clearing: PASS' in result.stdout, 'M8.6 rendered controls')
+                require(query_count() - before == 4, 'M8.6 unexpected authorized query count')
+                print('M8.6 rendered event presets, saved views and cross-view clearing: PASS')
             # Existing developer store must not be mutated by these searches.
             require(db.read_bytes() == original, 'query altered database bytes')
         finally:

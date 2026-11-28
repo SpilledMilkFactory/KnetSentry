@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M8.5 — Application animations and visual feedback
 
-Issue #73. Candidate pending target qualification. Presentation-only motion,
+Issue #73. Implemented foundation qualified and merged; broader operational performance and accessibility scope remains outstanding. Presentation-only motion,
 loading feedback and non-modal status notifications. The default is reduced
 motion; the toolbar checkbox allows session-only opt-in. The preference is not
 persisted and does not modify the M8.3 layout schema. Startup remains windowed
@@ -59,3 +59,10 @@ result/expiry/navigation clearing in both motion modes, minimize/restore, and
 repeat rapid navigation. All seven presets, strict QML, manual visual checks
 and hosted CI remain required. Production-scale performance and comprehensive
 cross-desktop accessibility qualification are not established by these tests.
+
+### Maintainer qualification
+
+Reported 161 consolidated gates, 584 configured CTests, 76 structural
+verifiers, 40 repeated rendered integrations, 200 repeated Release and 100
+repeated sanitized executions, strict QML and diagnostic review, nine hosted
+checks and successful manual qualification. See [project status](../PROJECT_STATUS.md).
