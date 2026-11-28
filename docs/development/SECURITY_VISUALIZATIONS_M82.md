@@ -32,3 +32,7 @@ The initial Ubuntu 26.04 analysis build failed in the Qt-generated `knetsentry_S
 ## Remaining scope
 
 Refs #70: deployment-wide histogram queries, live trends, broader visual filtering, and target operational workload responsiveness qualification remain outstanding. Refs #69 and earlier operational limitations remain. No release readiness or operational monitoring is claimed.
+
+## Maintainer qualification
+
+The combined M8.2 implementation and follow-up qualified on Ubuntu 26.04: 158 consolidated gates, 562 configured CTest executions, 73 structural verifiers, 180 repeated Release and 90 repeated sanitized native executions, ten rendered dashboard repetitions, manual synthetic chart verification, and nine hosted checks. The maintainer confirmed merge of the PR containing corrective commit `4eef955`. Issue #70 remains open for operational-scale qualification.

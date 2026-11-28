@@ -12,6 +12,15 @@ Kirigami.Page {
     id: page
     objectName: "knetSentrySectionPage"
     required property string sectionId
+    required property WorkspaceModel workspaceModel
+    readonly property alias workspaceEvidenceButton: evidencePreset
+    readonly property alias workspaceSaveButton: saveWorkspace
+    readonly property alias workspaceResizeControl: workspaceRatio
+    readonly property bool workspaceHealthVisible: healthPanel.visible
+    readonly property bool workspaceChartsVisible: chartPanel.visible
+    readonly property int workspaceColumns: workspaceGrid.columns
+    readonly property real workspaceOverviewWidth: overviewPanel.width
+    readonly property real workspaceChartWidth: chartPanel.width
     required property DashboardModel dashboardModel
     required property ServiceHealthModel healthModel
     readonly property string dashboardEvents: dashboardEventCard.description
@@ -356,120 +365,212 @@ Kirigami.Page {
             ColumnLayout {
                 visible: page.sectionId === "dashboard"
                 Layout.fillWidth: true
-                spacing: tokens.spaceM
+                spacing: tokens.spaceS
                 Controls.Label {
-                    text: qsTr("SOC overview")
+                    text: qsTr("Analyst workspace")
                     font.pixelSize: tokens.sectionSize
-                    font.weight: Font.DemiBold
                     Layout.fillWidth: true
                     Accessible.role: Accessible.Heading
                 }
                 GridLayout {
                     Layout.fillWidth: true
-                    columns: page.compactLayout ? 1 : 2
-                    columnSpacing: tokens.spaceM
-                    rowSpacing: tokens.spaceM
-                    SurfaceCard {
-                        Layout.fillWidth: true
-                        heading: qsTr("Security status")
-                        description: qsTr("Monitoring unavailable — security posture unknown. No safety verdict.")
+                    columns: page.compactLayout ? 1 : 3
+                    Controls.Button {
+                        text: qsTr("Balanced / reset")
+                        onClicked: page.workspaceModel.configure(50, true, true, true)
                     }
-                    SurfaceCard {
-                        Layout.fillWidth: true
-                        heading: qsTr("Asset coverage and registry")
-                        description: page.healthModel.dashboardRegistry
+                    Controls.Button {
+                        id: evidencePreset
+                        text: qsTr("Evidence focus")
+                        onClicked: page.workspaceModel.configure(40, true, false, false)
                     }
-                    SurfaceCard {
-                        id: dashboardEventCard
-                        Layout.fillWidth: true
-                        heading: qsTr("Stored event activity — latest admission page")
-                        description: page.dashboardModel.eventSummary
-                    }
-                    SurfaceCard {
-                        id: dashboardAlertCard
-                        Layout.fillWidth: true
-                        heading: qsTr("Active stored alerts — first page")
-                        description: page.dashboardModel.alertSummary
-                    }
-                    SurfaceCard {
-                        id: dashboardDetectionCard
-                        Layout.fillWidth: true
-                        Layout.columnSpan: page.compactLayout ? 1 : 2
-                        heading: qsTr("Stored detection summary — first alert page")
-                        description: page.dashboardModel.detectionSummary
+                    Controls.Button {
+                        text: qsTr("Operations focus")
+                        onClicked: page.workspaceModel.configure(60, false, true, true)
                     }
                 }
                 Controls.Label {
+                    text: qsTr("Overview panel width (%) — applies in wide two-panel mode")
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
-                    text: qsTr("Stored summaries require explicit manager authorization and a manual refresh. Each page holds at most eight records; counts are not global totals, incident counts or live rates. Snapshots expire within 30 seconds and are cleared when leaving Dashboard.")
+                }
+                Controls.SpinBox {
+                    id: workspaceRatio
+                    from: 30
+                    to: 70
+                    stepSize: 5
+                    value: page.workspaceModel.ratio
+                    Accessible.name: qsTr("Overview panel width percent")
+                    onValueModified: page.workspaceModel.configure(workspaceRatio.value, page.workspaceModel.charts, page.workspaceModel.health, page.workspaceModel.telemetry)
+                }
+                Controls.CheckBox {
+                    id: showCharts
+                    text: qsTr("Show stored visualizations")
+                    checked: page.workspaceModel.charts
+                    onToggled: page.workspaceModel.configure(page.workspaceModel.ratio, showCharts.checked, page.workspaceModel.health, page.workspaceModel.telemetry)
+                }
+                Controls.CheckBox {
+                    id: showHealth
+                    text: qsTr("Show detailed daemon health")
+                    checked: page.workspaceModel.health
+                    onToggled: page.workspaceModel.configure(page.workspaceModel.ratio, page.workspaceModel.charts, showHealth.checked, page.workspaceModel.telemetry)
+                }
+                Controls.CheckBox {
+                    id: showTelemetry
+                    text: qsTr("Show local endpoint telemetry")
+                    checked: page.workspaceModel.telemetry
+                    onToggled: page.workspaceModel.configure(page.workspaceModel.ratio, page.workspaceModel.charts, page.workspaceModel.health, showTelemetry.checked)
                 }
                 Controls.Button {
-                    id: dashboardRefresh
-                    text: qsTr("Refresh stored summaries")
-                    enabled: page.sectionId === "dashboard" && page.dashboardModel.configured && !page.dashboardModel.busy
-                    onClicked: page.dashboardModel.refresh()
+                    id: saveWorkspace
+                    text: qsTr("Save workspace layout")
+                    onClicked: page.workspaceModel.save()
                 }
                 Controls.Label {
-                    Layout.fillWidth: true
-                    text: qsTr("Stored security visualizations")
-                    font.pixelSize: tokens.sectionSize
-                    font.weight: Font.DemiBold
-                    Accessible.role: Accessible.Heading
-                }
-                Controls.Label {
+                    text: page.workspaceModel.status
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
-                    text: qsTr("Counts from the same returned pages only; each bar has a fixed scale of 0–8 records. Filters affect only these charts, not the stores or other views.")
                 }
-                SnapshotBars {
-                    id: eventHistogram
+            }
+
+            GridLayout {
+                id: workspaceGrid
+                visible: page.sectionId === "dashboard"
+                Layout.fillWidth: true
+                columns: content.width >= 1000 && page.workspaceModel.charts ? 2 : 1
+                columnSpacing: tokens.spaceM
+                rowSpacing: tokens.spaceM
+                ColumnLayout {
+                    id: overviewPanel
                     Layout.fillWidth: true
-                    heading: qsTr("Event histogram — outcome")
-                    labels: [qsTr("Unknown"), qsTr("Success"), qsTr("Failure")]
-                    values: page.dashboardModel.eventHistogram
+                    Layout.minimumWidth: 0
+                    Layout.alignment: Qt.AlignTop
+                    Layout.preferredWidth: workspaceGrid.columns === 2 ? (content.width - tokens.spaceM) * page.workspaceModel.ratio / 100 : content.width
+                    spacing: tokens.spaceM
+                    Controls.Label {
+                        text: qsTr("SOC overview")
+                        font.pixelSize: tokens.sectionSize
+                        font.weight: Font.DemiBold
+                        Layout.fillWidth: true
+                        Accessible.role: Accessible.Heading
+                    }
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: page.compactLayout || workspaceGrid.columns === 2 ? 1 : 2
+                        columnSpacing: tokens.spaceM
+                        rowSpacing: tokens.spaceM
+                        SurfaceCard {
+                            Layout.fillWidth: true
+                            heading: qsTr("Security status")
+                            description: qsTr("Monitoring unavailable — security posture unknown. No safety verdict.")
+                        }
+                        SurfaceCard {
+                            Layout.fillWidth: true
+                            heading: qsTr("Asset coverage and registry")
+                            description: page.healthModel.dashboardRegistry
+                        }
+                        SurfaceCard {
+                            id: dashboardEventCard
+                            Layout.fillWidth: true
+                            heading: qsTr("Stored event activity — latest admission page")
+                            description: page.dashboardModel.eventSummary
+                        }
+                        SurfaceCard {
+                            id: dashboardAlertCard
+                            Layout.fillWidth: true
+                            heading: qsTr("Active stored alerts — first page")
+                            description: page.dashboardModel.alertSummary
+                        }
+                        SurfaceCard {
+                            id: dashboardDetectionCard
+                            Layout.fillWidth: true
+                            Layout.columnSpan: page.compactLayout || workspaceGrid.columns === 2 ? 1 : 2
+                            heading: qsTr("Stored detection summary — first alert page")
+                            description: page.dashboardModel.detectionSummary
+                        }
+                    }
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        text: qsTr("Stored summaries require explicit manager authorization and a manual refresh. Each page holds at most eight records; counts are not global totals, incident counts or live rates. Snapshots expire within 30 seconds and are cleared when leaving Dashboard.")
+                    }
+                    Controls.Button {
+                        id: dashboardRefresh
+                        text: qsTr("Refresh stored summaries")
+                        enabled: page.sectionId === "dashboard" && page.dashboardModel.configured && !page.dashboardModel.busy
+                        onClicked: page.dashboardModel.refresh()
+                    }
                 }
-                Controls.Label {
+                ColumnLayout {
+                    id: chartPanel
+                    visible: page.workspaceModel.charts
                     Layout.fillWidth: true
-                    wrapMode: Text.WordWrap
-                    text: qsTr("Activity by receiver age relative to the newest receiver timestamp on this page. Oldest bin is open-ended; these are counts, not rates or a continuous timeline.")
-                }
-                Controls.ComboBox {
-                    id: activityFilterControl
-                    Layout.fillWidth: true
-                    Accessible.name: qsTr("Activity outcome filter")
-                    enabled: activityChart.available
-                    model: [qsTr("All outcomes"), qsTr("Unknown"), qsTr("Success"), qsTr("Failure")]
-                    currentIndex: page.dashboardModel.activityFilter
-                    onActivated: function(index) { page.dashboardModel.activityFilter = index }
-                }
-                SnapshotBars {
-                    id: activityChart
-                    Layout.fillWidth: true
-                    heading: qsTr("Receiver activity trend — older to newer")
-                    labels: [qsTr("3 s or more earlier"), qsTr("2 to <3 s earlier"), qsTr("1 to <2 s earlier"), qsTr("Less than 1 s earlier")]
-                    values: page.dashboardModel.activityCounts
-                }
-                Controls.ComboBox {
-                    id: severityFilterControl
-                    Layout.fillWidth: true
-                    Accessible.name: qsTr("Alert lifecycle filter")
-                    enabled: severityChart.available
-                    model: [qsTr("All stored alerts"), qsTr("Active only (open and acknowledged)")]
-                    currentIndex: page.dashboardModel.severityFilter
-                    onActivated: function(index) { page.dashboardModel.severityFilter = index }
-                }
-                SnapshotBars {
-                    id: severityChart
-                    Layout.fillWidth: true
-                    heading: qsTr("Stored alert severity distribution")
-                    labels: [qsTr("Unspecified"), qsTr("Informational"), qsTr("Low"), qsTr("Medium"), qsTr("High"), qsTr("Critical")]
-                    values: page.dashboardModel.severityCounts
+                    Layout.minimumWidth: 0
+                    Layout.alignment: Qt.AlignTop
+                    Layout.preferredWidth: workspaceGrid.columns === 2 ? (content.width - tokens.spaceM) * (100 - page.workspaceModel.ratio) / 100 : content.width
+                    spacing: tokens.spaceM
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Stored security visualizations")
+                        font.pixelSize: tokens.sectionSize
+                        font.weight: Font.DemiBold
+                        Accessible.role: Accessible.Heading
+                    }
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        text: qsTr("Counts from the same returned pages only; each bar has a fixed scale of 0–8 records. Filters affect only these charts, not the stores or other views.")
+                    }
+                    SnapshotBars {
+                        id: eventHistogram
+                        Layout.fillWidth: true
+                        heading: qsTr("Event histogram — outcome")
+                        labels: [qsTr("Unknown"), qsTr("Success"), qsTr("Failure")]
+                        values: page.dashboardModel.eventHistogram
+                    }
+                    Controls.Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                        text: qsTr("Activity by receiver age relative to the newest receiver timestamp on this page. Oldest bin is open-ended; these are counts, not rates or a continuous timeline.")
+                    }
+                    Controls.ComboBox {
+                        id: activityFilterControl
+                        Layout.fillWidth: true
+                        Accessible.name: qsTr("Activity outcome filter")
+                        enabled: activityChart.available
+                        model: [qsTr("All outcomes"), qsTr("Unknown"), qsTr("Success"), qsTr("Failure")]
+                        currentIndex: page.dashboardModel.activityFilter
+                        onActivated: function(index) { page.dashboardModel.activityFilter = index }
+                    }
+                    SnapshotBars {
+                        id: activityChart
+                        Layout.fillWidth: true
+                        heading: qsTr("Receiver activity trend — older to newer")
+                        labels: [qsTr("3 s or more earlier"), qsTr("2 to <3 s earlier"), qsTr("1 to <2 s earlier"), qsTr("Less than 1 s earlier")]
+                        values: page.dashboardModel.activityCounts
+                    }
+                    Controls.ComboBox {
+                        id: severityFilterControl
+                        Layout.fillWidth: true
+                        Accessible.name: qsTr("Alert lifecycle filter")
+                        enabled: severityChart.available
+                        model: [qsTr("All stored alerts"), qsTr("Active only (open and acknowledged)")]
+                        currentIndex: page.dashboardModel.severityFilter
+                        onActivated: function(index) { page.dashboardModel.severityFilter = index }
+                    }
+                    SnapshotBars {
+                        id: severityChart
+                        Layout.fillWidth: true
+                        heading: qsTr("Stored alert severity distribution")
+                        labels: [qsTr("Unspecified"), qsTr("Informational"), qsTr("Low"), qsTr("Medium"), qsTr("High"), qsTr("Critical")]
+                        values: page.dashboardModel.severityCounts
+                    }
                 }
             }
 
             ColumnLayout {
-                visible: page.sectionId === "dashboard"
+                id: healthPanel
+                visible: page.sectionId === "dashboard" && page.workspaceModel.health
                 Layout.fillWidth: true
                 spacing: tokens.spaceM
                 Controls.Label {
@@ -517,7 +618,7 @@ Kirigami.Page {
 
             ColumnLayout {
                 id: telemetryPanel
-                visible: page.sectionId === "assets" || page.sectionId === "dashboard"
+                visible: page.sectionId === "assets" || (page.sectionId === "dashboard" && page.workspaceModel.telemetry)
                 Layout.fillWidth: true
                 spacing: tokens.spaceM
                 Controls.Label {
