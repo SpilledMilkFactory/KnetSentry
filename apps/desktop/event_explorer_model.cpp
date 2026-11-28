@@ -108,7 +108,8 @@ void EventExplorerModel::advance() {
         beginResetModel(); rows_ = result->page.events; endResetModel();
         more_ = result->page.more;
         status_ = rows_.empty() ? QStringLiteral("No matching stored events in this snapshot.") :
-            QStringLiteral("%1 matching records on this page — stored snapshot, not live monitoring.").arg(rowCount());
+            QStringLiteral("%1 matching records on this page — stored snapshot, not live monitoring. %2")
+                .arg(rowCount()).arg(more_ ? tr("More matching records available.") : tr("End of matching results."));
         expiry_.start();
     } else if (result->page.status == storage::StoreStatus::IntegrityFailure) {
         status_ = QStringLiteral("Evidence integrity verification failed. No records displayed.");

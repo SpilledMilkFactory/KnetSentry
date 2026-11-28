@@ -524,3 +524,11 @@ See [M8.5](VISUAL_FEEDBACK_M85.md). Run `ctest --preset linux-release -R
 feedback and denial with the existing disposable fixture; verify KDE's instant
 animation setting prevents the new effects. Inventories remain 90/79 desktop,
 72/73 core-only. No new evidence access or persistent preference is introduced.
+
+### M8.6 advanced search and filtering
+
+See [M8.6](SEARCH_FILTERING_M86.md). Run `ctest --preset linux-release -R
+'^knetsentry_gui_(event_explorer|alert_interface)_runtime$' --verbose --no-tests=error`
+(one command). Verify presets, one saved categorical view per interface, explicit
+submission, cross-view clearing and exact authorization counts. Test only with
+disposable synthetic fixtures. Desktop inventories remain 90/79, core-only 72/73.

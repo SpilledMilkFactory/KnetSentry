@@ -45,7 +45,11 @@ void AlertModel::clear() {
 }
 void AlertModel::search(int filter) {
     if (busy_) { return; }
-    discard(); query_ = {}; query_.severity = filter; request(query_);
+    discard(); query_ = {};
+    if (filter < -1 || filter > 5) {
+        status_ = tr("Invalid alert severity filter."); Q_EMIT changed(); return;
+    }
+    query_.severity = filter; request(query_);
 }
 void AlertModel::next() {
     if (busy_ || !more_ || rows_.empty()) { return; }
@@ -75,7 +79,8 @@ void AlertModel::advance() {
         status_ = QStringLiteral("Linked evidence verified at request time — not live monitoring.");
     } else {
         query_.session = result->session; beginResetModel(); rows_ = result->rows; endResetModel(); more_ = result->more; writable_ = result->writable;
-        status_ = rows_.empty() ? QStringLiteral("No matching stored alerts in this scope.") : QStringLiteral("%1 stored alerts on this page — not live monitoring.").arg(rowCount());
+        status_ = rows_.empty() ? QStringLiteral("No matching stored alerts in this scope.") : QStringLiteral("%1 stored alerts on this page — not live monitoring. %2")
+            .arg(rowCount()).arg(more_ ? tr("More matching records available.") : tr("End of matching results."));
         expiry_.start();
     }
     Q_EMIT changed();

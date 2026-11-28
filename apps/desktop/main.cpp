@@ -83,6 +83,24 @@ bool scope_page_matches(const QObject& root, bool connected, bool rejected = fal
                              "Local IPC rejected requests: 0 (not network denials or incidents)."));
 }
 
+// Resolve controls from the currently displayed page, never a retired page.
+QObject* search_control(const QObject& root, const char* name) {
+    const auto* page = root.property("currentSectionPage").value<QObject*>();
+    return page ? page->property(name).value<QObject*>() : nullptr;
+}
+bool click_search_control(const QObject& root, const char* name) {
+    auto* control = search_control(root, name);
+    return control && control->property("enabled").toBool() && QMetaObject::invokeMethod(control, "clicked");
+}
+bool apply_search_preset(const QObject& root, const char* name, int index) {
+    auto* control = search_control(root, name);
+    return control && control->property("enabled").toBool() && QMetaObject::invokeMethod(control, "activated", Q_ARG(int, index));
+}
+bool search_index_matches(const QObject& root, const char* name, int expected) {
+    const auto* control = search_control(root, name);
+    return control && control->property("currentIndex").toInt() == expected;
+}
+
 bool requests_text_only(int argc, char *argv[]) {
     for (int i = 1; i < argc; ++i) {
         const std::string_view argument(argv[i]);
@@ -518,6 +536,29 @@ int main(int argc, char *argv[]) {
         QObject* root = engine.rootObjects().constFirst();
         if (!root->setProperty("navigationRequest", QStringLiteral("events"))) { return 1; }
         QCoreApplication::processEvents();
+        // Exercise the actual preset, save, cross-view and restore handlers
+        // without executing a stored request. Categorical views exclude source.
+        auto* source = search_control(*root, "eventSourceControl");
+        if (!source || !apply_search_preset(*root, "eventPresetControl", 1) ||
+            !search_index_matches(*root, "eventCollectorControl", 2) ||
+            !search_index_matches(*root, "eventOutcomeControl", 3) ||
+            !search_index_matches(*root, "eventOrderControl", 1) ||
+            !source->setProperty("text", QStringLiteral("ssh.service")) ||
+            !click_search_control(*root, "eventSaveControl") || events.busy() || events.rowCount() != 0 ||
+            !click_search_control(*root, "searchAlertsRoute") ||
+            root->property("activeSection").toString() != QStringLiteral("alerts") || alerts.busy() || alerts.rowCount() != 0 ||
+            !click_search_control(*root, "searchEventsRoute") ||
+            root->property("activeSection").toString() != QStringLiteral("events") ||
+            !click_search_control(*root, "eventRestoreControl")) { return 1; }
+        source = search_control(*root, "eventSourceControl");
+        if (!source || !source->property("text").toString().isEmpty() ||
+            !search_index_matches(*root, "eventCollectorControl", 2) ||
+            !search_index_matches(*root, "eventOutcomeControl", 3) ||
+            !search_index_matches(*root, "eventOrderControl", 1) ||
+            !click_search_control(*root, "eventForgetControl") ||
+            !apply_search_preset(*root, "eventPresetControl", 0) || events.busy() || events.rowCount() != 0) { return 1; }
+        events.search(QStringLiteral("*.service"), -1, -1, false);
+        if (events.busy() || events.rowCount() != 0 || !events.status().startsWith(QStringLiteral("Invalid"))) { return 1; }
         QObject* search_button = root->property("currentEventSearchButton").value<QObject*>();
         QObject* next_button = root->property("currentEventNextButton").value<QObject*>();
         if (!search_button || !next_button || !QMetaObject::invokeMethod(search_button, "clicked")) { return 1; }
@@ -531,7 +572,8 @@ int main(int argc, char *argv[]) {
             if (events.busy()) { return; }
             const auto count = root->property("currentEventCount").toInt();
             if (stage == 0) {
-                if (count != 8 || !events.more() || !events.data(events.index(0, 0), Qt::DisplayRole).toString().startsWith(QStringLiteral("#1 ·"))) { loop.exit(1); return; }
+                if (count != 8 || !events.more() || !events.status().contains(QStringLiteral("More matching records available.")) ||
+                    !events.data(events.index(0, 0), Qt::DisplayRole).toString().startsWith(QStringLiteral("#1 ·"))) { loop.exit(1); return; }
                 events.select(0);
                 if (!root->property("currentEventDetail").toString().startsWith(QStringLiteral("Event ID: 1\n")) ||
                     !root->property("currentEventStatus").toString().contains(QStringLiteral("stored snapshot")) ||
@@ -540,15 +582,25 @@ int main(int argc, char *argv[]) {
             } else if (stage == 1) {
                 if (count != 8 || !events.more() || !events.detail().isEmpty() ||
                     !events.data(events.index(0, 0), Qt::DisplayRole).toString().startsWith(QStringLiteral("#9 ·"))) { loop.exit(1); return; }
-                events.search(QStringLiteral("ssh.service"), 1, 2, true);
+                auto* exactSource = search_control(*root, "eventSourceControl");
+                if (!apply_search_preset(*root, "eventPresetControl", 1) || !exactSource ||
+                    !exactSource->setProperty("text", QStringLiteral("ssh.service")) ||
+                    events.busy() || events.rowCount() != 0 || events.more() ||
+                    !QMetaObject::invokeMethod(search_button, "clicked")) { loop.exit(1); return; }
                 ++stage;
             } else if (stage == 2) {
                 if (count != 8 || !events.more() || !events.data(events.index(0, 0), Qt::DisplayRole).toString().startsWith(QStringLiteral("#20 ·"))) { loop.exit(1); return; }
+                events.select(0);
+                if (events.detail().isEmpty() || !click_search_control(*root, "searchTimelineRoute") ||
+                    root->property("activeSection").toString() != QStringLiteral("investigations") ||
+                    events.rowCount() != 0 || events.more() || !events.detail().isEmpty() || timeline.busy() || !timeline.entries().isEmpty() ||
+                    !click_search_control(*root, "searchEventsRoute")) { loop.exit(1); return; }
                 events.search(QStringLiteral("fixture.service"), -1, -1, false);
                 ++stage;
             } else {
                 if (count != 0 || events.more() || !root->property("currentEventStatus").toString().startsWith(QStringLiteral("No matching stored events")) ||
                     !root->setProperty("navigationRequest", QStringLiteral("dashboard")) || events.rowCount() != 0 || !events.detail().isEmpty()) { loop.exit(1); return; }
+                std::cout << "M8.6 rendered event presets, saved views and cross-view clearing: PASS\n";
                 std::cout << "M6.8 rendered event explorer: PASS\n";
                 loop.exit(0);
             }
@@ -561,6 +613,18 @@ int main(int argc, char *argv[]) {
         QObject* root = engine.rootObjects().constFirst();
         if (!root->setProperty("navigationRequest", QStringLiteral("alerts"))) { return 1; }
         QCoreApplication::processEvents();
+        if (!apply_search_preset(*root, "alertPresetControl", 1) ||
+            !search_index_matches(*root, "alertSeverityControl", 4) ||
+            !click_search_control(*root, "alertSaveControl") || alerts.busy() || alerts.rowCount() != 0 ||
+            !click_search_control(*root, "searchTimelineRoute") ||
+            root->property("activeSection").toString() != QStringLiteral("investigations") || timeline.busy() || !timeline.entries().isEmpty() ||
+            !click_search_control(*root, "searchAlertsRoute") ||
+            root->property("activeSection").toString() != QStringLiteral("alerts") ||
+            !click_search_control(*root, "alertRestoreControl") ||
+            !search_index_matches(*root, "alertSeverityControl", 4) || alerts.busy() || alerts.rowCount() != 0 ||
+            !apply_search_preset(*root, "alertPresetControl", 0)) { return 1; }
+        alerts.search(6);
+        if (alerts.busy() || alerts.rowCount() != 0 || !alerts.status().startsWith(QStringLiteral("Invalid"))) { return 1; }
         QObject* refresh = root->property("currentAlertRefreshButton").value<QObject*>();
         QObject* ack = root->property("currentAlertAckButton").value<QObject*>();
         if (!refresh || !ack || !QMetaObject::invokeMethod(refresh,"clicked")) { return 1; }
@@ -578,16 +642,29 @@ int main(int argc, char *argv[]) {
                 ++stage;
             } else if (stage == 2) {
                 if (!alerts.status().startsWith(QStringLiteral("Acknowledgement committed"))) { loop.exit(1); return; }
-                alerts.search(3); ++stage;
+                if (!click_search_control(*root, "alertRestoreControl") ||
+                    !search_index_matches(*root, "alertSeverityControl", 4) ||
+                    !click_search_control(*root, "alertForgetControl") || alerts.busy() || alerts.rowCount() != 0 ||
+                    !QMetaObject::invokeMethod(refresh, "clicked")) { loop.exit(1); return; }
+                ++stage;
             } else if (stage == 3) {
                 alerts.select(1);
                 if (alerts.rowCount() != 8 || alerts.canAcknowledge() || !alerts.detail().contains(QStringLiteral("Acknowledged"))) { loop.exit(1); return; }
                 alerts.next(); ++stage;
             } else if (stage == 4) {
-                if (alerts.rowCount() != 3 || alerts.more()) { loop.exit(1); return; }
-                alerts.search(4); ++stage;
+                if (alerts.rowCount() != 3 || alerts.more() || !alerts.status().contains(QStringLiteral("End of matching results."))) { loop.exit(1); return; }
+                alerts.select(0);
+                if (alerts.detail().isEmpty() || !click_search_control(*root, "searchEventsRoute") ||
+                    root->property("activeSection").toString() != QStringLiteral("events") ||
+                    alerts.rowCount() != 0 || alerts.more() || !alerts.detail().isEmpty() || alerts.canAcknowledge() ||
+                    events.busy() || events.rowCount() != 0 || !click_search_control(*root, "searchAlertsRoute")) { loop.exit(1); return; }
+                auto* currentRefresh = root->property("currentAlertRefreshButton").value<QObject*>();
+                if (!apply_search_preset(*root, "alertPresetControl", 2) || alerts.busy() || alerts.rowCount() != 0 || alerts.more() ||
+                    !currentRefresh || !QMetaObject::invokeMethod(currentRefresh, "clicked")) { loop.exit(1); return; }
+                ++stage;
             } else {
                 if (alerts.rowCount() != 0 || !alerts.status().startsWith(QStringLiteral("No matching")) || !root->setProperty("navigationRequest",QStringLiteral("dashboard")) || alerts.rowCount() != 0 || !alerts.detail().isEmpty()) { loop.exit(1); return; }
+                std::cout << "M8.6 rendered alert presets, saved views and cross-view clearing: PASS\n";
                 std::cout << "M7.7 rendered alert interface: PASS\n"; loop.exit(0);
             }
         });

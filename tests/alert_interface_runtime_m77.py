@@ -81,8 +81,15 @@ def main():
             require(exchange(ack).split()[3] == b'OK' and exchange(ack).split()[3] == b'STALE', 'ack or stale revision')
             require(exchange(LIST).splitlines()[1].split()[2:5] == [b'2', b'3', b'1'], 'persisted revision/status')
             if desktop:
+                def query_count():
+                    return sum(json.loads(line)['event'] == 'alerts_authorized'
+                               for line in (audit / 'service-audit.jsonl').read_text().splitlines())
+                before = query_count()
                 result = invoke(desktop, '--ipc-dir', ipc, '--self-test-alerts')
                 require(result.returncode == 0 and b'M7.7 rendered alert interface: PASS' in result.stdout, 'rendered alert test')
+                require(b'M8.6 rendered alert presets, saved views and cross-view clearing: PASS' in result.stdout, 'M8.6 rendered controls')
+                require(query_count() - before == 5, 'M8.6 unexpected authorized query count')
+                print('M8.6 rendered alert presets, saved views and cross-view clearing: PASS')
             require((store/'events-m64.sqlite3').read_bytes() == original, 'evidence database changed')
         finally:
             stop(proc)

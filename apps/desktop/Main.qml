@@ -11,6 +11,7 @@ import io.github.spilledmilkfactory.KnetSentry
 Kirigami.ApplicationWindow {
     id: window
     required property TimelineModel timelineModel
+    SearchViews { id: savedSearchViews }
     readonly property Controls.Button timelineRefreshButton: currentSectionPage ? currentSectionPage.timelineRefreshButton : null
     readonly property int currentTimelineCount: currentSectionPage ? currentSectionPage.timelineCount : 0
     readonly property string currentTimelineDetail: currentSectionPage ? currentSectionPage.timelineDetail : ""
@@ -245,11 +246,22 @@ Kirigami.ApplicationWindow {
 
     Component {
         id: sectionPageComponent
-        SectionPage { timelineModel: window.timelineModel; workspaceModel: window.workspaceModel; dashboardModel: window.dashboardModel; healthModel: window.healthModel; eventModel: window.eventModel; alertModel: window.alertModel }
+        SectionPage {
+            timelineModel: window.timelineModel
+            workspaceModel: window.workspaceModel
+            dashboardModel: window.dashboardModel
+            healthModel: window.healthModel
+            eventModel: window.eventModel
+            alertModel: window.alertModel
+            searchViews: savedSearchViews
+            onSearchDestinationRequested: function(destination) { window.navigateTo(destination) }
+        }
     }
 
     pageStack.initialPage: SectionPage {
         sectionId: "dashboard"
+        searchViews: savedSearchViews
+        onSearchDestinationRequested: function(destination) { window.navigateTo(destination) }
         timelineModel: window.timelineModel
         workspaceModel: window.workspaceModel
         dashboardModel: window.dashboardModel
@@ -460,7 +472,7 @@ Kirigami.ApplicationWindow {
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                 }
-                Controls.Label { text: qsTr("M8.5 development") }
+                Controls.Label { text: qsTr("M8.6 development") }
             }
             RowLayout {
                 Layout.fillWidth: true
