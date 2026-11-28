@@ -696,3 +696,18 @@ if(KNETSENTRY_BUILD_DESKTOP AND NOT KNETSENTRY_ENABLE_SANITIZERS)
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
         LABELS "qt;desktop;qml;integration;security;regression;privacy" TIMEOUT 100)
 endif()
+
+# M8.4: bounded investigation timeline and read-only evidence traversal.
+add_executable(knetsentry_investigation_timeline_test investigation_timeline_m84.cpp)
+target_link_libraries(knetsentry_investigation_timeline_test PRIVATE KnetSentry::Service)
+knetsentry_apply_project_options(knetsentry_investigation_timeline_test)
+add_test(NAME knetsentry_investigation_timeline_contract COMMAND $<TARGET_FILE:knetsentry_investigation_timeline_test>)
+set_tests_properties(knetsentry_investigation_timeline_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)
+if(KNETSENTRY_BUILD_DESKTOP AND NOT KNETSENTRY_ENABLE_SANITIZERS)
+    add_test(NAME knetsentry_gui_investigation_runtime COMMAND "${Python3_EXECUTABLE}" -B
+        "${PROJECT_SOURCE_DIR}/tests/investigation_runtime_m84.py" $<TARGET_FILE:knetsentryd>
+        $<TARGET_FILE:knetsentry_alert_interface_test> $<TARGET_FILE:knetsentry>)
+    set_tests_properties(knetsentry_gui_investigation_runtime PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+        LABELS "qt;desktop;qml;integration;ipc;security;regression;privacy" TIMEOUT 75)
+endif()

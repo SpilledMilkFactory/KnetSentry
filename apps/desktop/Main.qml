@@ -10,6 +10,11 @@ import io.github.spilledmilkfactory.KnetSentry
 // M2.6: read-only daemon health; no live SIEM telemetry sources.
 Kirigami.ApplicationWindow {
     id: window
+    required property TimelineModel timelineModel
+    readonly property Controls.Button timelineRefreshButton: currentSectionPage ? currentSectionPage.timelineRefreshButton : null
+    readonly property int currentTimelineCount: currentSectionPage ? currentSectionPage.timelineCount : 0
+    readonly property string currentTimelineDetail: currentSectionPage ? currentSectionPage.timelineDetail : ""
+    readonly property string currentTimelineEvidence: currentSectionPage ? currentSectionPage.timelineEvidence : ""
     required property WorkspaceModel workspaceModel
     required property DashboardModel dashboardModel
     readonly property Controls.Button workspaceEvidenceButton: currentSectionPage ? currentSectionPage.workspaceEvidenceButton : null
@@ -54,6 +59,8 @@ Kirigami.ApplicationWindow {
     // integration test to exercise exactly the same routing as drawer actions.
     property string activeSection: "dashboard"
     onActiveSectionChanged: {
+        if (window.timelineModel && activeSection !== "investigations")
+            window.timelineModel.clear()
         if (window.dashboardModel && activeSection !== "dashboard")
             window.dashboardModel.clear()
         if (window.alertModel && activeSection !== "alerts")
@@ -213,11 +220,12 @@ Kirigami.ApplicationWindow {
 
     Component {
         id: sectionPageComponent
-        SectionPage { workspaceModel: window.workspaceModel; dashboardModel: window.dashboardModel; healthModel: window.healthModel; eventModel: window.eventModel; alertModel: window.alertModel }
+        SectionPage { timelineModel: window.timelineModel; workspaceModel: window.workspaceModel; dashboardModel: window.dashboardModel; healthModel: window.healthModel; eventModel: window.eventModel; alertModel: window.alertModel }
     }
 
     pageStack.initialPage: SectionPage {
         sectionId: "dashboard"
+        timelineModel: window.timelineModel
         workspaceModel: window.workspaceModel
         dashboardModel: window.dashboardModel
         healthModel: window.healthModel
@@ -366,7 +374,7 @@ Kirigami.ApplicationWindow {
                 elide: Text.ElideRight
             }
             Controls.Label {
-                text: qsTr("M8.3 development")
+                text: qsTr("M8.4 development")
             }
         }
     }

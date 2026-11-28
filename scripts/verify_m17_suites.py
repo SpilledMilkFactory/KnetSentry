@@ -29,7 +29,7 @@ CORE_TESTS = {
     "knetsentry_event_storage_contract", "knetsentry_sqlite_storage_contract", "knetsentry_evidence_integrity_contract", "knetsentry_event_search_contract", "knetsentry_storage_retention_contract",
     "knetsentry_event_explorer_contract", "knetsentry_event_explorer_runtime",
     "knetsentry_storage_recovery_contract", "knetsentry_ingestion_recovery_contract",
-    "knetsentry_split_storage_contract", "knetsentry_detection_contract", "knetsentry_rule_schema_contract", "knetsentry_authentication_patterns_contract", "knetsentry_system_integrity_contract", "knetsentry_scheduler_contract", "knetsentry_alerts_contract", "knetsentry_alert_interface_contract", "knetsentry_alert_interface_runtime", "knetsentry_detection_recovery_contract", "knetsentry_technique_mappings_contract", "knetsentry_dashboard_summary_contract", "knetsentry_workspace_preferences_contract",
+    "knetsentry_split_storage_contract", "knetsentry_detection_contract", "knetsentry_rule_schema_contract", "knetsentry_authentication_patterns_contract", "knetsentry_system_integrity_contract", "knetsentry_scheduler_contract", "knetsentry_alerts_contract", "knetsentry_alert_interface_contract", "knetsentry_alert_interface_runtime", "knetsentry_detection_recovery_contract", "knetsentry_technique_mappings_contract", "knetsentry_dashboard_summary_contract", "knetsentry_workspace_preferences_contract", "knetsentry_investigation_timeline_contract",
     "knetsentry_identity_contract", "knetsentry_tls_contract",
     "knetsentry_enrollment_contract", "knetsentry_enrollment_admin",
     "knetsentry_credential_lifecycle",
@@ -58,7 +58,7 @@ NONSAN_DESKTOP_TESTS = {
     "knetsentry_navigation_qml_diagnostics", "knetsentry_visual_system",
     "knetsentry_desktop_diagnostic_lifecycle", "knetsentry_qt_application_lifecycle",
     "knetsentry_gui_health_runtime", "knetsentry_gui_daemon_toolbar",
-    "knetsentry_gui_telemetry_runtime", "knetsentry_gui_event_explorer_runtime", "knetsentry_gui_alert_interface_runtime", "knetsentry_gui_dashboard_runtime", "knetsentry_gui_workspace_runtime",
+    "knetsentry_gui_telemetry_runtime", "knetsentry_gui_event_explorer_runtime", "knetsentry_gui_alert_interface_runtime", "knetsentry_gui_dashboard_runtime", "knetsentry_gui_workspace_runtime", "knetsentry_gui_investigation_runtime",
 }
 SANITIZER_TEST = "knetsentry_lsan_negative_control"
 

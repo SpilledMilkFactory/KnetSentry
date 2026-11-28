@@ -12,6 +12,11 @@ Kirigami.Page {
     id: page
     objectName: "knetSentrySectionPage"
     required property string sectionId
+    required property TimelineModel timelineModel
+    readonly property alias timelineRefreshButton: timelineRefresh
+    readonly property int timelineCount: timelineList.count
+    readonly property string timelineDetail: timelineDetailLabel.text
+    readonly property string timelineEvidence: timelineEvidenceLabel.text
     required property WorkspaceModel workspaceModel
     readonly property alias workspaceEvidenceButton: evidencePreset
     readonly property alias workspaceSaveButton: saveWorkspace
@@ -95,7 +100,7 @@ Kirigami.Page {
         case "alerts":
             return qsTr("Inspect explicitly approved stored alerts and linked evidence. Live detection is unavailable.")
         case "investigations":
-            return qsTr("Investigation timelines, incident cases, and preserved evidence will appear here after the incident workflow is implemented.")
+            return qsTr("Inspect related stored events and alerts through explicit evidence references. Incident cases and verified asset mapping remain unavailable.")
         case "settings":
             return qsTr("Inspect LAN scope and network authorization below. Changes and other system settings require future authorized management APIs.")
         default:
@@ -157,6 +162,110 @@ Kirigami.Page {
                 color: Kirigami.Theme.textColor
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
+            }
+
+            ColumnLayout {
+                visible: page.sectionId === "investigations"
+                Layout.fillWidth: true
+                spacing: tokens.spaceS
+                Controls.Label {
+                    text: qsTr("Investigation timeline — stored pages")
+                    font.pixelSize: tokens.sectionSize
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: qsTr("Oldest to newest by event receiver time and alert creation time (Unix ms). Different clock semantics; not proof of causality. At most eight records per store, not an atomic or complete timeline. Asset identity is unavailable.")
+                    wrapMode: Text.WordWrap
+                }
+                Controls.Button {
+                    id: timelineRefresh
+                    text: qsTr("Refresh investigation timeline")
+                    enabled: page.timelineModel.configured && !page.timelineModel.busy
+                    onClicked: page.timelineModel.refresh()
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: page.timelineModel.status
+                    textFormat: Text.PlainText
+                    wrapMode: Text.WordWrap
+                }
+                ListView {
+                    id: timelineList
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 300
+                    clip: true
+                    model: page.timelineModel.entries
+                    Controls.ScrollBar.vertical: Controls.ScrollBar {}
+                    delegate: Controls.ItemDelegate {
+                        id: timelineRow
+                        required property int index
+                        required property string modelData
+                        width: timelineList.width
+                        enabled: !page.timelineModel.busy
+                        contentItem: Controls.Label {
+                            text: timelineRow.modelData
+                            textFormat: Text.PlainText
+                            elide: Text.ElideRight
+                        }
+                        onClicked: page.timelineModel.select(timelineRow.index)
+                    }
+                }
+                Controls.Label {
+                    id: timelineDetailLabel
+                    Layout.fillWidth: true
+                    text: page.timelineModel.detail
+                    textFormat: Text.PlainText
+                    wrapMode: Text.WrapAnywhere
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: qsTr("Related records on these pages (stored ID, authentication collector and source unit; not a verified asset link)")
+                    wrapMode: Text.WordWrap
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Controls.ComboBox {
+                        id: timelineRelated
+                        Layout.fillWidth: true
+                        model: page.timelineModel.related
+                        Accessible.name: qsTr("Related timeline record")
+                        enabled: !page.timelineModel.busy && count > 0
+                    }
+                    Controls.Button {
+                        text: qsTr("Open related record")
+                        enabled: !page.timelineModel.busy && timelineRelated.currentIndex >= 0
+                        onClicked: page.timelineModel.follow(timelineRelated.currentIndex)
+                    }
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Controls.ComboBox {
+                        id: timelineEvidence
+                        Layout.fillWidth: true
+                        model: page.timelineModel.evidence
+                        Accessible.name: qsTr("Selected alert evidence identifier")
+                        enabled: !page.timelineModel.busy && count > 0
+                    }
+                    Controls.Button {
+                        text: qsTr("Verify linked evidence")
+                        enabled: !page.timelineModel.busy && timelineEvidence.currentIndex >= 0
+                        onClicked: page.timelineModel.verifyEvidence(timelineEvidence.currentIndex)
+                    }
+                }
+                Controls.Label {
+                    id: timelineEvidenceLabel
+                    Layout.fillWidth: true
+                    text: page.timelineModel.evidenceDetail
+                    textFormat: Text.PlainText
+                    wrapMode: Text.WrapAnywhere
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: qsTr("Evidence references may be outside the returned event page. Verification is explicit and revision-bound. Snapshots expire 30 seconds after refresh; no raw evidence or incident state is exposed.")
+                    wrapMode: Text.WordWrap
+                }
             }
 
             ColumnLayout {

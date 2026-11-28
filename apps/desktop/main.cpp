@@ -6,6 +6,7 @@
 #include "alert_model.hpp"
 #include "dashboard_model.hpp"
 #include "workspace_model.hpp"
+#include "timeline_model.hpp"
 #include "daemon_control.hpp"
 #include "knetsentry/core/diagnostics.hpp"
 
@@ -165,6 +166,9 @@ int main(int argc, char *argv[]) {
     const QCommandLineOption workspace_test(QStringLiteral("self-test-workspace"),
         QStringLiteral("Exercise workspace persistence against an isolated configuration root."), QStringLiteral("mode"));
     parser.addOption(workspace_test);
+    const QCommandLineOption timeline_test(QStringLiteral("self-test-timeline"),
+        QStringLiteral("Verify rendered timeline against an isolated fixture."), QStringLiteral("mode"));
+    parser.addOption(timeline_test);
     parser.process(app);
     bool persistent = true;
     const auto options = parser.optionNames();
@@ -197,14 +201,21 @@ int main(int argc, char *argv[]) {
             dashboard.clear();
         }
     });
+    knetsentry::desktop::TimelineModel timeline(parser.value(QStringLiteral("ipc-dir")));
+    QObject::connect(&health, &knetsentry::desktop::ServiceHealthModel::changed, &timeline, [&] {
+        const auto state = health.queryState();
+        if (state == knetsentry::service::HealthQueryState::Unavailable || state == knetsentry::service::HealthQueryState::Invalid) { timeline.clear(); }
+    });
     QQmlApplicationEngine engine;
+    QQmlEngine::setObjectOwnership(&timeline, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&workspace, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&dashboard, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&alerts, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&events, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&health, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&control, QQmlEngine::CppOwnership);
-    engine.setInitialProperties({{QStringLiteral("workspaceModel"), QVariant::fromValue(&workspace)},
+    engine.setInitialProperties({{QStringLiteral("timelineModel"), QVariant::fromValue(&timeline)},
+                                 {QStringLiteral("workspaceModel"), QVariant::fromValue(&workspace)},
                                  {QStringLiteral("dashboardModel"), QVariant::fromValue(&dashboard)},
                                  {QStringLiteral("alertModel"), QVariant::fromValue(&alerts)},
                                  {QStringLiteral("eventModel"), QVariant::fromValue(&events)},
@@ -353,6 +364,47 @@ int main(int argc, char *argv[]) {
         std::cout << "M3.8 Settings scope visibility and unavailable state: PASS\n";
         std::cout << "KnetSentry M1.4 primary navigation: PASS (7 sections; no telemetry)\n";
         return 0;
+    }
+    if (parser.isSet(timeline_test)) {
+        const auto mode = parser.value(timeline_test);
+        if (!timeline.configured() || (mode != QStringLiteral("read") && mode != QStringLiteral("denied"))) { return 1; }
+        QObject* root = engine.rootObjects().constFirst();
+        if (!root->setProperty("navigationRequest", QStringLiteral("investigations"))) { return 1; }
+        auto* refresh = root->property("timelineRefreshButton").value<QObject*>();
+        if (refresh == nullptr || !QMetaObject::invokeMethod(refresh, "clicked")) { return 1; }
+        QEventLoop loop;
+        QTimer check, deadline;
+        int stage = 0;
+        deadline.setSingleShot(true);
+        QObject::connect(&deadline, &QTimer::timeout, &loop, [&loop] { loop.exit(1); });
+        QObject::connect(&check, &QTimer::timeout, &loop, [&] {
+            if (timeline.busy()) { return; }
+            if (mode == QStringLiteral("denied")) {
+                loop.exit(timeline.entries().isEmpty() && timeline.status().startsWith(QStringLiteral("Unavailable")) &&
+                    root->property("currentTimelineCount").toInt() == 0 ? 0 : 1); return;
+            }
+            if (stage == 0) {
+                if (root->property("currentTimelineCount").toInt() != 16 || timeline.entries().size() != 16 ||
+                    !timeline.entries().at(0).startsWith(QStringLiteral("1005 | Event #5")) ||
+                    !timeline.entries().at(8).startsWith(QStringLiteral("1013 | Alert 1/2"))) { loop.exit(1); return; }
+                timeline.select(0);
+                if (timeline.related().isEmpty() || !root->property("currentTimelineDetail").toString().contains(QStringLiteral("Receiver time (Unix ms): 1005"))) { loop.exit(1); return; }
+                timeline.follow(0);
+                if (timeline.evidence().isEmpty() || !root->property("currentTimelineDetail").toString().startsWith(QStringLiteral("Alert"))) { loop.exit(1); return; }
+                timeline.select(8); // first alert references event #1 outside returned event page
+                timeline.verifyEvidence(-1);
+                if (timeline.busy() || timeline.evidence().isEmpty()) { loop.exit(1); return; }
+                timeline.verifyEvidence(0); stage = 1; return;
+            }
+            if (!root->property("currentTimelineEvidence").toString().startsWith(QStringLiteral("Verified evidence #1")) ||
+                !root->setProperty("navigationRequest", QStringLiteral("dashboard")) || !timeline.entries().isEmpty() ||
+                !timeline.detail().isEmpty() || !timeline.evidenceDetail().isEmpty()) { loop.exit(1); return; }
+            loop.exit(0);
+        });
+        deadline.start(12000); check.start(25);
+        const int result = loop.exec();
+        if (result == 0) { std::cout << "M8.4 rendered timeline and evidence lifecycle: PASS\n"; }
+        return result;
     }
     if (parser.isSet(dashboard_smoke_test) || parser.isSet(dashboard_denied_test)) {
         if (!dashboard.configured()) { return 1; }
