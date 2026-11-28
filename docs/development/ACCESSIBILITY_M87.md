@@ -77,3 +77,16 @@ high-contrast themes. Check readable labels, contrast, reduced motion, and no
 stale evidence after navigation or expiry. If a screen reader is available,
 verify practical announcement of control names, rows and status text. Record
 any observed limitations and keep broader #75 scope open until qualified.
+
+## M8.7 qualification follow-up
+
+The first target run passed all 584 configured tests and all supplementary
+keyboard/search regressions, but strict QML analysis rejected the untyped
+`Component.createObject()` result at the call to `focusPrimary()`. The created
+page is now explicitly cast to `SectionPage` before the existing null check,
+page replacement and focus request. No warning suppression is added. The
+source verifier checks the typed creation path. The local runner moves strict
+QML analysis directly after the Release build and stops on lint failure before
+remaining qualification or privileged fixture activation. Full qualification
+of the corrected revision, including the previously skipped installed systemd
+and visual-review fixture gates, remains required.

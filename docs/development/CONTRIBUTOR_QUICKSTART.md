@@ -542,3 +542,8 @@ available; `--full` explicitly requests all customary privileged fixtures,
 and optional `--gui-review` launches a disposable read-only visual fixture
 after successful automated qualification. Only the human visual verdict and
 hosted CI remain separate. Never run the desktop or the entire runner as root.
+
+The M8.7 follow-up runner checks strict QML lint immediately after the Release
+build and stops on lint failure rather than running the remaining lengthy
+regressions or privileged fixtures. The successful full-run inventory is
+unchanged.

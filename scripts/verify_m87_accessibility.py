@@ -19,6 +19,7 @@ def main():
     cpp = (ROOT / 'apps/desktop/main.cpp').read_text()
     tokens = (ROOT / 'apps/desktop/DesignTokens.qml').read_text()
     for marker in ('sequence: "F6"', 'sequence: "Shift+F6"',
+                   'const nextPage = sectionPageComponent.createObject(null, { "sectionId": sectionId }) as SectionPage',
                    'nextPage.focusPrimary()', 'onActiveFocusItemChanged:',
                    'property int textScalePercent: 100', 'percent === 100 || percent === 125 || percent === 150',
                    'window.applyTextScale(percent)', 'property bool reduceMotion: true',

@@ -194,7 +194,8 @@ Kirigami.ApplicationWindow {
         // when PageRow itself instantiates a Component. Construct the Page
         // explicitly and let PageRow adopt the actual object. No warning
         // filters or global QML logging overrides are necessary.
-        const nextPage = sectionPageComponent.createObject(null, { "sectionId": sectionId })
+        // Component.createObject returns QObject to QML static analysis.
+        const nextPage = sectionPageComponent.createObject(null, { "sectionId": sectionId }) as SectionPage
         if (!nextPage) {
             return false
         }
