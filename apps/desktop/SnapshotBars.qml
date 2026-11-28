@@ -12,14 +12,9 @@ ColumnLayout {
     required property list<string> labels
     required property list<int> values
     readonly property bool available: labels.length > 0 && values.length === labels.length
-    readonly property string countsText: {
-        if (!available)
-            return ""
-        let result = ""
-        for (let i = 0; i < values.length; ++i)
-            result += (i === 0 ? "" : ",") + values[i]
-        return result
-    }
+    // Serialize the sequence without a JavaScript numeric indexing loop.
+    // Qt's AOT generator otherwise introduces double/qsizetype conversions.
+    readonly property string countsText: chart.available ? chart.values.join(",") : ""
     spacing: 6
     Controls.Label {
         Layout.fillWidth: true

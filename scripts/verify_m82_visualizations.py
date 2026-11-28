@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parent.parent
 def main():
     checks = {
         'apps/desktop/CMakeLists.txt': ('SnapshotBars.qml',),
+        'apps/desktop/SnapshotBars.qml': ('chart.available ? chart.values.join(",") : ""',
+                                          'required property int index'),
         'apps/desktop/SectionPage.qml': ('dashboardModel.eventHistogram', 'dashboardModel.activityCounts',
                                          'dashboardModel.severityCounts', 'dashboardModel.activityFilter',
                                          'dashboardModel.severityFilter'),
@@ -25,6 +27,9 @@ def main():
         source = (ROOT / path).read_text(encoding='utf-8')
         if not all(marker in source for marker in markers):
             raise ValueError('M8.2 missing registration: ' + path)
+    chart = (ROOT / 'apps/desktop/SnapshotBars.qml').read_text(encoding='utf-8')
+    if 'for (let i = 0; i < values.length' in chart or 'values[i]' in chart:
+        raise ValueError('M8.2 chart serialization must not restore the numeric indexing loop')
     print('M8.2 visualization registration: PASS (runtime separate)')
 
 
