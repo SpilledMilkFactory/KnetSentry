@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M8.6 — Advanced search and filtering controls
 
-Issue #74. Candidate pending target qualification. Reusable categorical search
+Issue #74. Implemented foundation qualified and merged; broader scope remains open. Reusable categorical search
 presets and session-saved views for existing manager-mediated Events and Alerts
 interfaces. Dashboard and Investigations provide explicit cross-view routes.
 No operational monitoring or new data authority is enabled.

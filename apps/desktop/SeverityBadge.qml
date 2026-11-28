@@ -6,7 +6,8 @@ import QtQuick.Controls as Controls
 // Only for explicit severity levels. Settings shows sample tokens, not alerts.
 Rectangle {
     id: badge
-    DesignTokens { id: tokens }
+    property real textScale: 1.0
+    DesignTokens { id: tokens; textScale: badge.textScale }
     property string level: "unknown"
     readonly property string displayLabel: {
         switch (level) {

@@ -87,6 +87,8 @@ def main():
                 before = query_count()
                 result = invoke(desktop, '--ipc-dir', ipc, '--self-test-alerts')
                 require(result.returncode == 0 and b'M7.7 rendered alert interface: PASS' in result.stdout, 'rendered alert test')
+                require(b'M8.7 alert keyboard inspection: PASS' in result.stdout, 'M8.7 keyboard inspection')
+                print('M8.7 alert keyboard inspection: PASS')
                 require(b'M8.6 rendered alert presets, saved views and cross-view clearing: PASS' in result.stdout, 'M8.6 rendered controls')
                 require(query_count() - before == 5, 'M8.6 unexpected authorized query count')
                 print('M8.6 rendered alert presets, saved views and cross-view clearing: PASS')

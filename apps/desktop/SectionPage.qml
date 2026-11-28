@@ -12,6 +12,38 @@ Kirigami.Page {
     id: page
     objectName: "knetSentrySectionPage"
     required property string sectionId
+    required property real textScale
+    required property int textScalePercent
+    signal textScaleRequested(int percent)
+    readonly property alias keyboardContent: scroller
+    readonly property alias eventKeyboardList: eventList
+    readonly property alias alertKeyboardList: alertList
+    readonly property alias timelineKeyboardList: timelineList
+    readonly property alias textScaleControl: scaleControl
+    font.pixelSize: Math.round(14 * textScale)
+
+    function focusPrimary(): void {
+        scroller.forceActiveFocus(Qt.TabFocusReason)
+    }
+
+    // Only scroll for focus inside this page's content, never for popup or
+    // toolbar focus. Map coordinates rather than assuming immediate parents.
+    function revealKeyboardFocus(item: Item): void {
+        let ancestor = item
+        while (ancestor && ancestor !== content)
+            ancestor = ancestor.parent
+        if (!ancestor || item === content)
+            return
+        const position = item.mapToItem(scroller.contentItem, 0, 0)
+        const top = position.y
+        const bottom = top + item.height
+        if (top < scroller.contentY)
+            scroller.contentY = Math.max(0, top - tokens.spaceS)
+        else if (bottom > scroller.contentY + scroller.height)
+            scroller.contentY = Math.min(Math.max(0, scroller.contentHeight - scroller.height),
+                                         Math.max(0, Math.min(top, bottom - scroller.height + tokens.spaceS)))
+    }
+
     required property SearchViews searchViews
     signal searchDestinationRequested(string destination)
     readonly property alias eventPresetControl: eventPreset
@@ -101,9 +133,9 @@ Kirigami.Page {
     readonly property string displayedScopeInterfaces: scopeInterfacesCard.description
     readonly property string displayedScopeDenials: scopeDenialsCard.description
     title: sectionTitle
-    DesignTokens { id: tokens }
+    DesignTokens { id: tokens; textScale: page.textScale }
     readonly property string visualSystemVersion: tokens.version
-    readonly property bool compactLayout: width < tokens.compactBreakpoint
+    readonly property bool compactLayout: width < tokens.compactBreakpoint * Math.max(1, page.textScale)
 
     readonly property string sectionTitle: {
         switch (sectionId) {
@@ -147,6 +179,17 @@ Kirigami.Page {
         contentHeight: content.implicitHeight + tokens.spaceL * 2
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        activeFocusOnTab: true
+        Accessible.name: qsTr("%1 page content").arg(page.sectionTitle)
+        Keys.onPressed: function(event) {
+            if (event.key === Qt.Key_PageDown) {
+                scroller.contentY = Math.min(Math.max(0, scroller.contentHeight - scroller.height), scroller.contentY + scroller.height)
+                event.accepted = true
+            } else if (event.key === Qt.Key_PageUp) {
+                scroller.contentY = Math.max(0, scroller.contentY - scroller.height)
+                event.accepted = true
+            }
+        }
         Controls.ScrollBar.vertical: Controls.ScrollBar {}
 
         ColumnLayout {
@@ -155,6 +198,12 @@ Kirigami.Page {
             y: tokens.spaceL
             width: Math.max(0, scroller.width - tokens.spaceL * 2)
             spacing: tokens.spaceM
+
+            Controls.Label {
+                text: qsTr("Keyboard: Tab / Shift+Tab moves focus; F6 moves to page content; Shift+F6 moves to navigation. Ctrl+1–7 opens sections. On record lists, Up / Down moves the cursor; Enter inspects the highlighted row. Page Up / Page Down scrolls page content.")
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+            }
 
             Controls.Label {
                 text: page.sectionTitle
@@ -167,11 +216,13 @@ Kirigami.Page {
             }
             Controls.Label {
                 text: qsTr("Local Network Security Intelligence")
+                wrapMode: Text.WordWrap
                 font.pixelSize: tokens.bodySize
                 color: Kirigami.Theme.textColor
                 Layout.fillWidth: true
             }
             StatusBadge {
+                textScale: page.textScale
                 label: qsTr("Monitoring unavailable")
             }
             Kirigami.InlineMessage {
@@ -205,7 +256,9 @@ Kirigami.Page {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
                 }
-                RowLayout {
+                GridLayout {
+                    columns: page.compactLayout ? 1 : 3
+                    Layout.fillWidth: true
                     Controls.Button {
                         id: openEventsView
                         text: qsTr("Open Events")
@@ -256,6 +309,32 @@ Kirigami.Page {
                 }
                 ListView {
                     id: timelineList
+                    enabled: !page.timelineModel.busy && count > 0
+                    activeFocusOnTab: enabled
+                    keyNavigationEnabled: true
+                    keyNavigationWraps: false
+                    Accessible.role: Accessible.List
+                    Accessible.name: qsTr("Investigation records")
+                    Accessible.description: qsTr("Up and Down move the cursor. Enter or Space inspects the current record.")
+                    function inspectCurrent(): void {
+                        if (enabled && currentIndex >= 0 && currentIndex < count)
+                            page.timelineModel.select(currentIndex)
+                    }
+                    Keys.onReturnPressed: inspectCurrent()
+                    Keys.onEnterPressed: inspectCurrent()
+                    Keys.onSpacePressed: inspectCurrent()
+                    Keys.onUpPressed: decrementCurrentIndex()
+                    Keys.onDownPressed: incrementCurrentIndex()
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "transparent"
+                        border.width: 2
+                        border.color: Kirigami.Theme.textColor
+                        visible: timelineList.activeFocus
+                        parent: timelineList
+                        z: 2
+                        Accessible.ignored: true
+                    }
                     Layout.fillWidth: true
                     Layout.preferredHeight: 300
                     clip: true
@@ -266,13 +345,21 @@ Kirigami.Page {
                         required property int index
                         required property string modelData
                         width: timelineList.width
+                        activeFocusOnTab: false
+                        Accessible.name: timelineRow.modelData
+                        highlighted: timelineList.currentIndex === timelineRow.index && timelineList.activeFocus
                         enabled: !page.timelineModel.busy
                         contentItem: Controls.Label {
+                            color: timelineRow.highlighted ? timelineRow.palette.highlightedText : timelineRow.palette.text
                             text: timelineRow.modelData
                             textFormat: Text.PlainText
-                            elide: Text.ElideRight
+                            wrapMode: Text.WrapAnywhere
                         }
-                        onClicked: page.timelineModel.select(timelineRow.index)
+                        onClicked: {
+                            timelineList.currentIndex = timelineRow.index
+                            timelineList.forceActiveFocus(Qt.MouseFocusReason)
+                            timelineList.inspectCurrent()
+                        }
                     }
                 }
                 Controls.Label {
@@ -287,7 +374,8 @@ Kirigami.Page {
                     text: qsTr("Related records on these pages (stored ID, authentication collector and source unit; not a verified asset link)")
                     wrapMode: Text.WordWrap
                 }
-                RowLayout {
+                GridLayout {
+                    columns: page.compactLayout ? 1 : 2
                     Layout.fillWidth: true
                     Controls.ComboBox {
                         id: timelineRelated
@@ -302,7 +390,8 @@ Kirigami.Page {
                         onClicked: page.timelineModel.follow(timelineRelated.currentIndex)
                     }
                 }
-                RowLayout {
+                GridLayout {
+                    columns: page.compactLayout ? 1 : 2
                     Layout.fillWidth: true
                     Controls.ComboBox {
                         id: timelineEvidence
@@ -345,7 +434,8 @@ Kirigami.Page {
                     wrapMode: Text.WordWrap
                     text: qsTr("Presets and saved severity views change filters only. Select Refresh to query approved storage. Saved views are session-only.")
                 }
-                RowLayout {
+                GridLayout {
+                    columns: page.compactLayout ? 1 : 4
                     Layout.fillWidth: true
                     Controls.ComboBox {
                         id: alertPreset
@@ -387,7 +477,8 @@ Kirigami.Page {
                     text: page.searchViews.alertSaved ? qsTr("One severity view saved for this session.") : qsTr("No saved severity view.")
                     wrapMode: Text.WordWrap
                 }
-                RowLayout {
+                GridLayout {
+                    columns: page.compactLayout ? 1 : 3
                     Layout.fillWidth: true
                     Controls.ComboBox {
                         id: alertSeverity
@@ -417,6 +508,32 @@ Kirigami.Page {
                 }
                 ListView {
                     id: alertList
+                    enabled: !page.alertModel.busy && count > 0
+                    activeFocusOnTab: enabled
+                    keyNavigationEnabled: true
+                    keyNavigationWraps: false
+                    Accessible.role: Accessible.List
+                    Accessible.name: qsTr("Stored alert records")
+                    Accessible.description: qsTr("Up and Down move the cursor. Enter or Space inspects the current record.")
+                    function inspectCurrent(): void {
+                        if (enabled && currentIndex >= 0 && currentIndex < count)
+                            page.alertModel.select(currentIndex)
+                    }
+                    Keys.onReturnPressed: inspectCurrent()
+                    Keys.onEnterPressed: inspectCurrent()
+                    Keys.onSpacePressed: inspectCurrent()
+                    Keys.onUpPressed: decrementCurrentIndex()
+                    Keys.onDownPressed: incrementCurrentIndex()
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "transparent"
+                        border.width: 2
+                        border.color: Kirigami.Theme.textColor
+                        visible: alertList.activeFocus
+                        parent: alertList
+                        z: 2
+                        Accessible.ignored: true
+                    }
                     Layout.fillWidth: true
                     Layout.preferredHeight: 220
                     clip: true
@@ -428,13 +545,21 @@ Kirigami.Page {
                         required property int index
                         required property string alertLabel
                         width: alertList.width
+                        activeFocusOnTab: false
+                        Accessible.name: alertRow.alertLabel
+                        highlighted: alertList.currentIndex === alertRow.index && alertList.activeFocus
                         enabled: !page.alertModel.busy
                         contentItem: Controls.Label {
+                            color: alertRow.highlighted ? alertRow.palette.highlightedText : alertRow.palette.text
                             text: alertRow.alertLabel
                             textFormat: Text.PlainText
-                            elide: Text.ElideRight
+                            wrapMode: Text.WrapAnywhere
                         }
-                        onClicked: page.alertModel.select(alertRow.index)
+                        onClicked: {
+                            alertList.currentIndex = alertRow.index
+                            alertList.forceActiveFocus(Qt.MouseFocusReason)
+                            alertList.inspectCurrent()
+                        }
                     }
                 }
                 Controls.Label {
@@ -450,7 +575,8 @@ Kirigami.Page {
                     enabled: page.alertModel.canAcknowledge
                     onClicked: page.alertModel.acknowledge()
                 }
-                RowLayout {
+                GridLayout {
+                    columns: page.compactLayout ? 1 : 2
                     Layout.fillWidth: true
                     Controls.ComboBox {
                         id: linkedEvidence
@@ -494,7 +620,8 @@ Kirigami.Page {
                     wrapMode: Text.WordWrap
                     text: qsTr("Presets and saved categorical views change filters only. Select Search to query approved storage. Exact source text is never saved; applying a view clears it.")
                 }
-                RowLayout {
+                GridLayout {
+                    columns: page.compactLayout ? 1 : 4
                     Layout.fillWidth: true
                     Controls.ComboBox {
                         id: eventPreset
@@ -545,7 +672,8 @@ Kirigami.Page {
                     Accessible.name: qsTr("Exact event source")
                     onTextEdited: page.eventModel.clear()
                 }
-                RowLayout {
+                GridLayout {
+                    columns: page.compactLayout ? 1 : 2
                     Layout.fillWidth: true
                     Controls.ComboBox {
                         id: eventMode
@@ -564,7 +692,8 @@ Kirigami.Page {
                         onActivated: page.eventModel.clear()
                     }
                 }
-                RowLayout {
+                GridLayout {
+                    columns: page.compactLayout ? 1 : 3
                     Layout.fillWidth: true
                     Controls.ComboBox {
                         id: eventOrder
@@ -597,6 +726,32 @@ Kirigami.Page {
                 }
                 ListView {
                     id: eventList
+                    enabled: !page.eventModel.busy && count > 0
+                    activeFocusOnTab: enabled
+                    keyNavigationEnabled: true
+                    keyNavigationWraps: false
+                    Accessible.role: Accessible.List
+                    Accessible.name: qsTr("Stored event records")
+                    Accessible.description: qsTr("Up and Down move the cursor. Enter or Space inspects the current record.")
+                    function inspectCurrent(): void {
+                        if (enabled && currentIndex >= 0 && currentIndex < count)
+                            page.eventModel.select(currentIndex)
+                    }
+                    Keys.onReturnPressed: inspectCurrent()
+                    Keys.onEnterPressed: inspectCurrent()
+                    Keys.onSpacePressed: inspectCurrent()
+                    Keys.onUpPressed: decrementCurrentIndex()
+                    Keys.onDownPressed: incrementCurrentIndex()
+                    Rectangle {
+                        anchors.fill: parent
+                        color: "transparent"
+                        border.width: 2
+                        border.color: Kirigami.Theme.textColor
+                        visible: eventList.activeFocus
+                        parent: eventList
+                        z: 2
+                        Accessible.ignored: true
+                    }
                     Layout.fillWidth: true
                     Layout.preferredHeight: 220
                     clip: true
@@ -608,14 +763,22 @@ Kirigami.Page {
                         required property int index
                         required property string eventLabel
                         width: eventList.width
+                        activeFocusOnTab: false
+                        Accessible.name: eventRow.eventLabel
+                        highlighted: eventList.currentIndex === eventRow.index && eventList.activeFocus
                         text: eventRow.eventLabel
                         contentItem: Controls.Label {
+                            color: eventRow.highlighted ? eventRow.palette.highlightedText : eventRow.palette.text
                             text: eventRow.eventLabel
                             textFormat: Text.PlainText
-                            elide: Text.ElideRight
+                            wrapMode: Text.WrapAnywhere
                             verticalAlignment: Text.AlignVCenter
                         }
-                        onClicked: page.eventModel.select(eventRow.index)
+                        onClicked: {
+                            eventList.currentIndex = eventRow.index
+                            eventList.forceActiveFocus(Qt.MouseFocusReason)
+                            eventList.inspectCurrent()
+                        }
                     }
                 }
                 Controls.Label {
@@ -710,7 +873,7 @@ Kirigami.Page {
                 id: workspaceGrid
                 visible: page.sectionId === "dashboard"
                 Layout.fillWidth: true
-                columns: content.width >= 1000 && page.workspaceModel.charts ? 2 : 1
+                columns: content.width >= 1000 * Math.max(1, page.textScalePercent / 100.0) && page.workspaceModel.charts ? 2 : 1
                 columnSpacing: tokens.spaceM
                 rowSpacing: tokens.spaceM
                 ColumnLayout {
@@ -733,28 +896,33 @@ Kirigami.Page {
                         columnSpacing: tokens.spaceM
                         rowSpacing: tokens.spaceM
                         SurfaceCard {
+                            textScale: page.textScale
                             Layout.fillWidth: true
                             heading: qsTr("Security status")
                             description: qsTr("Monitoring unavailable — security posture unknown. No safety verdict.")
                         }
                         SurfaceCard {
+                            textScale: page.textScale
                             Layout.fillWidth: true
                             heading: qsTr("Asset coverage and registry")
                             description: page.healthModel.dashboardRegistry
                         }
                         SurfaceCard {
+                            textScale: page.textScale
                             id: dashboardEventCard
                             Layout.fillWidth: true
                             heading: qsTr("Stored event activity — latest admission page")
                             description: page.dashboardModel.eventSummary
                         }
                         SurfaceCard {
+                            textScale: page.textScale
                             id: dashboardAlertCard
                             Layout.fillWidth: true
                             heading: qsTr("Active stored alerts — first page")
                             description: page.dashboardModel.alertSummary
                         }
                         SurfaceCard {
+                            textScale: page.textScale
                             id: dashboardDetectionCard
                             Layout.fillWidth: true
                             Layout.columnSpan: page.compactLayout || workspaceGrid.columns === 2 ? 1 : 2
@@ -854,6 +1022,7 @@ Kirigami.Page {
                     Accessible.role: Accessible.Heading
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: managerCard
                     objectName: "managerHealthCard"
                     Layout.fillWidth: true
@@ -867,6 +1036,7 @@ Kirigami.Page {
                     Layout.fillWidth: true
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     Layout.fillWidth: true
                     Layout.preferredHeight: implicitHeight
                     id: componentCard
@@ -874,6 +1044,7 @@ Kirigami.Page {
                     description: page.healthModel.components
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     Layout.fillWidth: true
                     Layout.preferredHeight: implicitHeight
                     id: resourceCard
@@ -881,6 +1052,7 @@ Kirigami.Page {
                     description: page.healthModel.resources
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     Layout.fillWidth: true
                     Layout.preferredHeight: implicitHeight
                     id: errorCard
@@ -909,36 +1081,42 @@ Kirigami.Page {
                     Layout.fillWidth: true
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: telemetryStatusCard
                     Layout.fillWidth: true
                     heading: qsTr("Local report stream")
                     description: page.healthModel.telemetryStatus
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: telemetryCollectorCard
                     Layout.fillWidth: true
                     heading: qsTr("Selected collector")
                     description: page.healthModel.telemetryCollector
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: telemetryHealthCard
                     Layout.fillWidth: true
                     heading: qsTr("Collection health")
                     description: page.healthModel.telemetryHealth
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: telemetryRateCard
                     Layout.fillWidth: true
                     heading: qsTr("Local observation rate — not incidents")
                     description: page.healthModel.telemetryRate
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: telemetryQueueCard
                     Layout.fillWidth: true
                     heading: qsTr("Offline telemetry buffer")
                     description: page.healthModel.telemetryQueue
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: telemetryFailureCard
                     Layout.fillWidth: true
                     heading: qsTr("Collection failure status")
@@ -966,39 +1144,46 @@ Kirigami.Page {
                     Layout.fillWidth: true
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: agentRegistryCard
                     Layout.fillWidth: true
                     heading: qsTr("Enrollment registry")
                     description: page.healthModel.agentRegistryStatus
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     Layout.fillWidth: true
                     heading: qsTr("Pending enrollments")
                     description: qsTr("Unavailable — no enrollment request collection is active. Unknown agents are not automatically enrolled.")
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: approvedAgentsCard
                     Layout.fillWidth: true
                     heading: qsTr("Approved endpoint identities")
                     description: page.healthModel.approvedAgents
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: revokedAgentsCard
                     Layout.fillWidth: true
                     heading: qsTr("Revoked endpoint identities")
                     description: page.healthModel.revokedAgents
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     Layout.fillWidth: true
                     heading: qsTr("Certificate status")
                     description: qsTr("Unavailable — registry approval does not establish current certificate validity. No live certificate observations are published.")
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     Layout.fillWidth: true
                     heading: qsTr("Agent connection health")
                     description: qsTr("Unavailable — the manager does not host operational agent sessions. The global daemon heartbeat is local service health only.")
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     Layout.fillWidth: true
                     heading: qsTr("Administrative actions")
                     description: qsTr("Approval, rotation and revocation require the authorized offline enrollment tool. This desktop connection has read-only authority; no administrative actions are available here.")
@@ -1025,6 +1210,7 @@ Kirigami.Page {
                     Layout.fillWidth: true
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: scopeStateCard
                     Layout.fillWidth: true
                     Layout.preferredHeight: implicitHeight
@@ -1033,6 +1219,7 @@ Kirigami.Page {
                     iconName: "security-high"
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: scopeNetworksCard
                     Layout.fillWidth: true
                     Layout.preferredHeight: implicitHeight
@@ -1041,6 +1228,7 @@ Kirigami.Page {
                     iconName: "network-wired"
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: scopeInterfacesCard
                     Layout.fillWidth: true
                     Layout.preferredHeight: implicitHeight
@@ -1049,6 +1237,7 @@ Kirigami.Page {
                     iconName: "network-wired"
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     id: scopeDenialsCard
                     Layout.fillWidth: true
                     Layout.preferredHeight: implicitHeight
@@ -1057,6 +1246,7 @@ Kirigami.Page {
                     iconName: "dialog-information"
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     Layout.fillWidth: true
                     Layout.preferredHeight: implicitHeight
                     heading: qsTr("Policy requirements — not active approvals")
@@ -1076,6 +1266,7 @@ Kirigami.Page {
                 Layout.fillWidth: true
                 Layout.preferredHeight: childrenRect.height
                 SurfaceCard {
+                    textScale: page.textScale
                     width: cards.width > tokens.compactBreakpoint
                            ? (cards.width - cards.spacing) / 2 : cards.width
                     heading: qsTr("Implementation status")
@@ -1083,6 +1274,7 @@ Kirigami.Page {
                     iconName: "dialog-information"
                 }
                 SurfaceCard {
+                    textScale: page.textScale
                     width: cards.width > tokens.compactBreakpoint
                            ? (cards.width - cards.spacing) / 2 : cards.width
                     heading: qsTr("Monitoring coverage")
@@ -1095,6 +1287,26 @@ Kirigami.Page {
                 visible: page.sectionId === "settings"
                 Layout.fillWidth: true
                 spacing: tokens.spaceS
+                Controls.Label {
+                    text: qsTr("Accessibility — text size")
+                    font.pixelSize: tokens.sectionSize
+                    font.weight: Font.DemiBold
+                    Accessible.role: Accessible.Heading
+                    Layout.fillWidth: true
+                }
+                Controls.Label {
+                    text: qsTr("Magnify the startup platform font for this session. Reduced motion remains available in the toolbar.")
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                }
+                Controls.ComboBox {
+                    id: scaleControl
+                    Accessible.name: qsTr("Application text size")
+                    Layout.fillWidth: true
+                    model: [qsTr("100% — platform default"), qsTr("125%"), qsTr("150%")]
+                    currentIndex: page.textScalePercent === 150 ? 2 : page.textScalePercent === 125 ? 1 : 0
+                    onActivated: function(index) { page.textScaleRequested(index === 2 ? 150 : index === 1 ? 125 : 100) }
+                }
                 Controls.Label {
                     text: qsTr("Visual system reference — examples only")
                     font.pixelSize: tokens.sectionSize
@@ -1111,11 +1323,11 @@ Kirigami.Page {
                     spacing: tokens.spaceS
                     Layout.fillWidth: true
                     Layout.preferredHeight: childrenRect.height
-                    SeverityBadge { level: "critical" }
-                    SeverityBadge { level: "high" }
-                    SeverityBadge { level: "medium" }
-                    SeverityBadge { level: "low" }
-                    SeverityBadge { level: "unknown" }
+                    SeverityBadge { textScale: page.textScale; level: "critical" }
+                    SeverityBadge { textScale: page.textScale; level: "high" }
+                    SeverityBadge { textScale: page.textScale; level: "medium" }
+                    SeverityBadge { textScale: page.textScale; level: "low" }
+                    SeverityBadge { textScale: page.textScale; level: "unknown" }
                 }
                 Controls.Label {
                     text: qsTr("Severity is distinct from monitoring availability and source confidence. No alerts are loaded.")

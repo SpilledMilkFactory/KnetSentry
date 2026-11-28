@@ -532,3 +532,26 @@ See [M8.6](SEARCH_FILTERING_M86.md). Run `ctest --preset linux-release -R
 (one command). Verify presets, one saved categorical view per interface, explicit
 submission, cross-view clearing and exact authorization counts. Test only with
 disposable synthetic fixtures. Desktop inventories remain 90/79, core-only 72/73.
+
+### M8.7 keyboard navigation and accessibility
+
+See [M8.7](ACCESSIBILITY_M87.md). Existing rendered visual, Events, Alerts and
+Investigation tests qualify text magnification, focus targets and keyboard
+record inspection. Use the maintained untracked local acceptance runner when
+available; `--full` explicitly requests all customary privileged fixtures,
+and optional `--gui-review` launches a disposable read-only visual fixture
+after successful automated qualification. Only the human visual verdict and
+hosted CI remain separate. Never run the desktop or the entire runner as root.
+
+The M8.7 follow-up runner checks strict QML lint immediately after the Release
+build and stops on lint failure rather than running the remaining lengthy
+regressions or privileged fixtures. The successful full-run inventory is
+unchanged.
+
+The second M8.7 follow-up also checks installed systemd unit readiness before
+any builds or administrator authentication when `--full` or `--systemd` is
+requested. An unsuitable unit produces a property-specific failure and stops
+qualification early; see [M2.7](SYSTEMD_SERVICE_M27.md) for the approved host
+preconditions. The runner does not modify existing service state to satisfy this
+check. The mandatory live verifier repeats the preflight and retains all
+confinement checks. The expected full gate count increases by one.

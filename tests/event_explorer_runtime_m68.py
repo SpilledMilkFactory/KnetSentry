@@ -91,6 +91,8 @@ def main():
                 result = invoke(desktop, '--ipc-dir', ipc, '--self-test-events')
                 require(result.returncode == 0 and b'M6.8 rendered event explorer: PASS' in result.stdout,
                         'rendered explorer contract failed')
+                require(b'M8.7 event keyboard inspection: PASS' in result.stdout, 'M8.7 keyboard inspection')
+                print('M8.7 event keyboard inspection: PASS')
                 require(b'M8.6 rendered event presets, saved views and cross-view clearing: PASS' in result.stdout, 'M8.6 rendered controls')
                 require(query_count() - before == 4, 'M8.6 unexpected authorized query count')
                 print('M8.6 rendered event presets, saved views and cross-view clearing: PASS')

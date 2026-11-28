@@ -8,7 +8,8 @@ import org.kde.kirigami as Kirigami
 // Availability is explicitly NOT threat severity.
 Rectangle {
     id: badge
-    DesignTokens { id: tokens }
+    property real textScale: 1.0
+    DesignTokens { id: tokens; textScale: badge.textScale }
     property string label: qsTr("Not operational")
     implicitWidth: badgeRow.implicitWidth + tokens.spaceM * 2
     implicitHeight: Math.max(tokens.touchTarget, badgeRow.implicitHeight + tokens.spaceS * 2)

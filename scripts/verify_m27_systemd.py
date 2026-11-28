@@ -36,6 +36,83 @@ def require(ok: bool, reason: str) -> None:
         raise ValueError(reason)
 
 
+# Shared by the read-only early preflight and the privileged live verifier.
+LIVE_UNIT_EXPECTED = {
+    'LoadState': 'loaded', 'ActiveState': 'inactive', 'UnitFileState': 'disabled',
+    'DropInPaths': '', 'NeedDaemonReload': 'no',
+    'FragmentPath': '/etc/systemd/system/knetsentry-manager.service',
+}
+
+
+def validate_live_unit_state(output: str) -> None:
+    values = {}
+    for line in output.splitlines():
+        key, separator, value = line.partition('=')
+        require(bool(separator) and key in LIVE_UNIT_EXPECTED and key not in values,
+                'malformed or duplicate systemd preflight property')
+        values[key] = value
+    missing = LIVE_UNIT_EXPECTED.keys() - values.keys()
+    require(not missing, 'missing systemd preflight properties: ' + ', '.join(sorted(missing)))
+    mismatches = []
+    for key, expected in LIVE_UNIT_EXPECTED.items():
+        actual = values[key]
+        if actual == expected:
+            continue
+        # Do not disclose arbitrary host paths or override contents in logs.
+        if key == 'DropInPaths':
+            detail = 'expected empty, got nonempty (overrides present)'
+        elif key == 'FragmentPath':
+            detail = 'expected dedicated installed unit path, got unexpected or empty path'
+        else:
+            detail = f'expected {expected!r}, got {actual[:120]!r}'
+        mismatches.append(f'{key}: {detail}')
+    require(not mismatches, 'installed unit preflight: ' + '; '.join(mismatches))
+
+
+def live_preflight_contract() -> None:
+    good = LIVE_UNIT_EXPECTED.copy()
+
+    def render(values: dict[str, str]) -> str:
+        return '\n'.join(f'{key}={value}' for key, value in values.items())
+
+    validate_live_unit_state(render(good))
+    validate_live_unit_state(render(dict(reversed(list(good.items())))))
+    mutations = {'LoadState': 'not-found', 'ActiveState': 'active', 'UnitFileState': 'enabled',
+                 'DropInPaths': '/private/override.conf', 'NeedDaemonReload': 'yes',
+                 'FragmentPath': '/private/unit.service'}
+    for key, value in mutations.items():
+        try:
+            validate_live_unit_state(render(dict(good, **{key: value})))
+        except ValueError as exc:
+            require(key + ':' in str(exc) and '/private/' not in str(exc),
+                    'missing or excessively detailed preflight diagnostic')
+        else:
+            raise ValueError('unsafe live unit state accepted: ' + key)
+    for state in ('failed', 'activating', 'deactivating'):
+        try:
+            validate_live_unit_state(render(dict(good, ActiveState=state)))
+        except ValueError:
+            pass
+        else:
+            raise ValueError('unsafe active state accepted: ' + state)
+    for bad in (render({k: v for k, v in good.items() if k != 'DropInPaths'}),
+                render(good) + '\nActiveState=inactive', render(good) + '\nmalformed', ''):
+        try:
+            validate_live_unit_state(bad)
+        except ValueError:
+            pass
+        else:
+            raise ValueError('incomplete or malformed live unit state accepted')
+    try:
+        validate_live_unit_state(render(dict(good, ActiveState='active', NeedDaemonReload='yes')))
+    except ValueError as exc:
+        require('ActiveState:' in str(exc) and 'NeedDaemonReload:' in str(exc),
+                'multiple preflight failures not reported')
+    else:
+        raise ValueError('multiple unsafe live unit states accepted')
+    print('M2.7 read-only live preflight state validation and negative controls: PASS')
+
+
 def validate_unit(text: str) -> None:
     parser = configparser.ConfigParser(interpolation=None, strict=True)
     parser.optionxform = str
@@ -96,6 +173,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         source_contract()
+        live_preflight_contract()
         if args.systemd_parser:
             parser_check()
     except (OSError, ValueError, configparser.Error, subprocess.SubprocessError) as exc:
