@@ -10,6 +10,7 @@ import io.github.spilledmilkfactory.KnetSentry
 // M2.6: read-only daemon health; no live SIEM telemetry sources.
 Kirigami.ApplicationWindow {
     id: window
+    required property DashboardModel dashboardModel
     required property ServiceHealthModel healthModel
     required property AlertModel alertModel
     required property EventExplorerModel eventModel
@@ -42,12 +43,18 @@ Kirigami.ApplicationWindow {
     // integration test to exercise exactly the same routing as drawer actions.
     property string activeSection: "dashboard"
     onActiveSectionChanged: {
+        if (window.dashboardModel && activeSection !== "dashboard")
+            window.dashboardModel.clear()
         if (window.alertModel && activeSection !== "alerts")
             window.alertModel.clear()
         if (window.eventModel && activeSection !== "events")
             window.eventModel.clear()
     }
     property string navigationRequest: ""
+    readonly property string currentDashboardEvents: currentSectionPage ? currentSectionPage.dashboardEvents : ""
+    readonly property string currentDashboardAlerts: currentSectionPage ? currentSectionPage.dashboardAlerts : ""
+    readonly property string currentDashboardDetections: currentSectionPage ? currentSectionPage.dashboardDetections : ""
+    readonly property Controls.Button dashboardRefreshButton: currentSectionPage ? currentSectionPage.dashboardRefreshButton : null
     readonly property string currentPageHealthStatus: currentSectionPage
         ? currentSectionPage.displayedHealthStatus : ""
     readonly property string currentPageHealthResources: currentSectionPage
@@ -190,11 +197,12 @@ Kirigami.ApplicationWindow {
 
     Component {
         id: sectionPageComponent
-        SectionPage { healthModel: window.healthModel; eventModel: window.eventModel; alertModel: window.alertModel }
+        SectionPage { dashboardModel: window.dashboardModel; healthModel: window.healthModel; eventModel: window.eventModel; alertModel: window.alertModel }
     }
 
     pageStack.initialPage: SectionPage {
         sectionId: "dashboard"
+        dashboardModel: window.dashboardModel
         healthModel: window.healthModel
         eventModel: window.eventModel
         alertModel: window.alertModel
@@ -341,7 +349,7 @@ Kirigami.ApplicationWindow {
                 elide: Text.ElideRight
             }
             Controls.Label {
-                text: qsTr("M4.7")
+                text: qsTr("M8.1 development")
             }
         }
     }

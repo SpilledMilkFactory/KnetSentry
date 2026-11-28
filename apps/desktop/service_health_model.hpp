@@ -29,6 +29,7 @@ class ServiceHealthModel : public QObject {
     Q_PROPERTY(QString scopeInterfaces READ scopeInterfaces NOTIFY changed FINAL)
     Q_PROPERTY(QString scopeDenials READ scopeDenials NOTIFY changed FINAL)
     Q_PROPERTY(QString agentRegistryStatus READ agentRegistryStatus NOTIFY changed FINAL)
+    Q_PROPERTY(QString dashboardRegistry READ dashboardRegistry NOTIFY changed FINAL)
     Q_PROPERTY(QString approvedAgents READ approvedAgents NOTIFY changed FINAL)
     Q_PROPERTY(QString revokedAgents READ revokedAgents NOTIFY changed FINAL)
     Q_PROPERTY(QString telemetryStatus READ telemetryStatus NOTIFY telemetryChanged FINAL)
@@ -49,6 +50,7 @@ public:
     [[nodiscard]] QString scopeInterfaces() const;
     [[nodiscard]] QString scopeDenials() const;
     [[nodiscard]] QString agentRegistryStatus() const;
+    [[nodiscard]] QString dashboardRegistry() const;
     [[nodiscard]] QString approvedAgents() const;
     [[nodiscard]] QString revokedAgents() const;
     [[nodiscard]] QString telemetryStatus() const;

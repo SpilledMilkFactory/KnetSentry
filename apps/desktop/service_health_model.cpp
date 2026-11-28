@@ -147,6 +147,19 @@ QString ServiceHealthModel::agentRegistryStatus() const {
     return tr("Verified registry snapshot — %1 endpoint identities (not live sessions)")
         .arg(decimal(agent_client_.roster()->size));
 }
+QString ServiceHealthModel::dashboardRegistry() const {
+    if (!available() || !agent_client_.roster() || agent_client_.roster()->status != enrollment::Status::Ok) {
+        return tr("Unavailable — no current verified registry snapshot. Monitored assets unavailable.");
+    }
+    const auto& roster = *agent_client_.roster();
+    std::size_t approved{};
+    for (std::size_t i = 0; i < roster.size; ++i) {
+        if (roster.entries.at(i).approved) { ++approved; }
+    }
+    return tr("%1 approved, %2 revoked registry identities (not live sessions).
+Monitored assets unavailable.")
+        .arg(decimal(approved), decimal(roster.size - approved));
+}
 namespace {
 QString roster_text(const service::HealthClient& client, bool approved) {
     if (!client.roster() || client.roster()->status != enrollment::Status::Ok) {
