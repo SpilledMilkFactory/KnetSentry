@@ -20,6 +20,10 @@ struct TechniqueMapping {
 // Returned views refer to immutable static storage. Unknown versions and identities
 // never inherit mappings. Callers must establish finding authenticity independently.
 [[nodiscard]] TechniqueMapping technique_mapping(AuthenticationPattern pattern, std::uint32_t version) noexcept;
+// Checked adapter for signed numeric values in the current native enum domain.
+// These codes are not a wire or persistence schema. Validate before narrowing.
+[[nodiscard]] TechniqueMapping technique_mapping_from_code(std::int64_t pattern_code,
+    std::uint32_t version) noexcept;
 [[nodiscard]] TechniqueMapping technique_mapping(std::string_view system_rule_id,
     std::uint32_t version, std::uint64_t audit_type) noexcept;
 // No generic RuleDefinition, ScheduleReport or AlertSnapshot mapping: custom rule IDs

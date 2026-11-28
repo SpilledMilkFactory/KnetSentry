@@ -22,10 +22,28 @@ Issue #68. Catalog revision 1, Enterprise v20 versioned references, reviewed 202
 
 No password guessing, spraying, credential stuffing, account subtype, SSH lateral movement or rootkit subclaim is inferred. No tactic execution is inferred. Benign activity can produce every mapped observation. These associations do not alter source or collection coverage or establish absence of threats. Future evidence-rich rules require separate review rather than automatic inheritance.
 
+## Checked numeric authentication lookup
+
+`technique_mapping_from_code(std::int64_t, version)` accepts a signed numeric
+value in the current native `AuthenticationPattern` domain. It compares the
+full-width input against the four supported enumerator values and dispatches
+using the corresponding named enumerator. Unknown, negative and oversized
+values return `UnknownRule` with no associations; no integer-to-enum cast or
+narrowing occurs. These native codes are not a stable wire or persistence
+schema. Callers must validate any wider or unsigned input before converting to
+this signed domain. The typed lookup remains unchanged, including its fallback
+for unrecognized values. This adapter does not establish finding authenticity.
+
+The initial M7.9 analysis build reported `EnumCastOutOfRange` for a deliberate
+`static_cast<P>(999)` test. The checked adapter replaces that fixture with
+explicit numeric rejection tests, including signed extremes and values that
+could alias supported codes if narrowed. All four known numeric codes and
+unsupported versions are also tested. No analyzer suppression is used.
+
 ## Provenance and licensing
 
 References are MITRE Enterprise ATT&CK versioned technique pages above; object version strings are the reviewed values, not a claim to mirror a full release. Only factual IDs, names, version labels and reference URLs are used; rationales and limitations are original KnetSentry text. No third-party dataset, descriptions, logos, STIX objects or analytics are copied or bundled. MITRE ATT&CK is a registered trademark of The MITRE Corporation; no affiliation or endorsement is implied. See [Terms of Use](https://attack.mitre.org/resources/terms-of-use/) and [Legal & Branding](https://attack.mitre.org/resources/legal-and-branding/). Any future dataset import/redistribution requires the separate DEP-011 approval and applicable copyright/license notices. This does not approve a feed, TAXII/STIX integration or network egress.
 
 ## Verification
 
-`knetsentry_technique_mappings_contract` independently verifies all four authentication identities, all 18 Audit identities, exact technique IDs, metadata, versions, explicit abstentions and refusal of mismatched identity/type, invalid enum, unsupported version and malformed/oversized IDs. M7.8 additionally checks mapping dispositions on actual findings from both storage backends. No real telemetry or credentials. All seven presets remain mandatory; no runtime, GUI, IPC, schema, trust or authorization changes. Issues #63–#66 remain outstanding.
+`knetsentry_technique_mappings_contract` independently verifies all four authentication identities, all 18 Audit identities, exact technique IDs, metadata, versions, explicit abstentions and refusal of mismatched identity/type, unknown numeric authentication code, unsupported version and malformed/oversized IDs. M7.8 additionally checks mapping dispositions on actual findings from both storage backends. No real telemetry or credentials. All seven presets remain mandatory; no runtime, GUI, IPC, schema, trust or authorization changes. Issues #63–#66 remain outstanding.

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #include <knetsentry/detection/technique_mappings.hpp>
 #include <array>
+#include <utility>
 
 namespace knetsentry::detection {
 namespace {
@@ -34,6 +35,18 @@ TechniqueMapping technique_mapping(AuthenticationPattern pattern, std::uint32_t 
     case AuthenticationPattern::InvalidUserObservation: return unmapped;
     }
     return {};
+}
+TechniqueMapping technique_mapping_from_code(std::int64_t pattern_code, std::uint32_t version) noexcept {
+    // Match the exact supported values before entering the typed lookup. Do not
+    // narrow or cast unrecognized integers to AuthenticationPattern.
+    using P = AuthenticationPattern;
+    switch (pattern_code) {
+    case std::to_underlying(P::RepeatedFailures): return technique_mapping(P::RepeatedFailures, version);
+    case std::to_underlying(P::SuccessAfterFailures): return technique_mapping(P::SuccessAfterFailures, version);
+    case std::to_underlying(P::UnspecifiedActivityFailure): return technique_mapping(P::UnspecifiedActivityFailure, version);
+    case std::to_underlying(P::InvalidUserObservation): return technique_mapping(P::InvalidUserObservation, version);
+    default: return {};
+    }
 }
 TechniqueMapping technique_mapping(std::string_view id, std::uint32_t version, std::uint64_t audit_type) noexcept {
     if (id.empty() || id.size() > Engine::max_rule_id || version != 1) { return {}; }

@@ -3,6 +3,7 @@
 #include <knetsentry/detection/technique_mappings.hpp>
 #include <initializer_list>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 
 namespace {
@@ -34,7 +35,23 @@ void verify() {
     check(technique_mapping(P::SuccessAfterFailures, 1), S::ContextOnly, {"T1110", "T1078"});
     check(technique_mapping(P::UnspecifiedActivityFailure, 1), S::Unmapped, {});
     check(technique_mapping(P::InvalidUserObservation, 1), S::Unmapped, {});
-    check(technique_mapping(static_cast<P>(999), 1), S::UnknownRule, {});
+    // Independently exercise the current native numeric domain, without an
+    // out-of-range enum cast or narrowing the untrusted input.
+    check(technique_mapping_from_code(0, 1), S::ContextOnly, {"T1110"});
+    check(technique_mapping_from_code(1, 1), S::ContextOnly, {"T1110", "T1078"});
+    check(technique_mapping_from_code(2, 1), S::Unmapped, {});
+    check(technique_mapping_from_code(3, 1), S::Unmapped, {});
+    constexpr std::int64_t invalid_codes[] = {
+        -1, 4, 999, 4294967296LL, 4294967297LL, -4294967296LL,
+        std::numeric_limits<std::int64_t>::min(), std::numeric_limits<std::int64_t>::max()};
+    for (const auto code : invalid_codes) {
+        check(technique_mapping_from_code(code, 1), S::UnknownRule, {});
+    }
+    for (std::int64_t code = 0; code < 4; ++code) {
+        check(technique_mapping_from_code(code, 0), S::UnknownRule, {});
+        check(technique_mapping_from_code(code, 2), S::UnknownRule, {});
+        check(technique_mapping_from_code(code, std::numeric_limits<std::uint32_t>::max()), S::UnknownRule, {});
+    }
     for (const auto pattern : {P::RepeatedFailures, P::SuccessAfterFailures, P::UnspecifiedActivityFailure, P::InvalidUserObservation}) {
         check(technique_mapping(pattern, 0), S::UnknownRule, {});
         check(technique_mapping(pattern, 2), S::UnknownRule, {});
