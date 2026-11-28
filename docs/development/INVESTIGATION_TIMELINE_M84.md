@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M8.4 — Security investigation timeline
 
-Issue #72. Candidate pending target qualification. Read-only investigation of
+Issue #72. Implemented scope accepted and merged; verified asset attribution remains outstanding. Read-only investigation of
 existing bounded stored pages; no incident mutation, asset inference or live
 monitoring. The Investigations section requests the latest eight event IDs
 (descending admission order) and the first eight alerts on explicit refresh.
@@ -60,5 +60,5 @@ LAN evidence is required. Run `ctest --preset linux-release -R
 --verbose --no-tests=error` (one command). Inspect source/receiver and alert
 creation/update values manually, follow a related record, verify an off-page
 reference, test disconnection and expiry. All seven presets, strict QML,
-manual GUI and hosted CI remain required. Asset mapping, broader chronological
+manual GUI and hosted CI passed maintainer qualification. Asset mapping, broader chronological
 queries, persistent cases and production-scale qualification remain outstanding.

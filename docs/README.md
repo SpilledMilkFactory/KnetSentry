@@ -93,6 +93,7 @@ qualification targets, not measured results.
 - [M8.2 — Interactive stored security visualizations](development/SECURITY_VISUALIZATIONS_M82.md)
 - [M8.3 — Configurable multi-panel workspace](development/WORKSPACE_M83.md)
 - [M8.4 — Security investigation timeline](development/INVESTIGATION_TIMELINE_M84.md)
+- [M8.5 — Application animations and visual feedback](development/VISUAL_FEEDBACK_M85.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)

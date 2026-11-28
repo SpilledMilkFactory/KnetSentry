@@ -515,3 +515,12 @@ See [M8.3](WORKSPACE_M83.md). Run `ctest --preset linux-release -R '^knetsentry_
 ### M8.4 investigation timeline
 
 See [M8.4](INVESTIGATION_TIMELINE_M84.md). Run `ctest --preset linux-release -R '^knetsentry_(investigation_timeline_contract|gui_investigation_runtime)$' --verbose --no-tests=error`. Target inventories: desktop 90/79, core-only 72/73. Verify explicit related-record navigation and revision-bound evidence inspection with the disposable M7.7 fixture only.
+
+### M8.5 application animations and feedback
+
+See [M8.5](VISUAL_FEEDBACK_M85.md). Run `ctest --preset linux-release -R
+'^knetsentry_(visual_system|gui_dashboard_runtime)$' --verbose --no-tests=error`
+(one command). Test motion opt-in, reduced-motion cancellation, actual request
+feedback and denial with the existing disposable fixture; verify KDE's instant
+animation setting prevents the new effects. Inventories remain 90/79 desktop,
+72/73 core-only. No new evidence access or persistent preference is introduced.
