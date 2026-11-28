@@ -4,6 +4,7 @@
 #include "service_health_model.hpp"
 #include "event_explorer_model.hpp"
 #include "alert_model.hpp"
+#include "dashboard_model.hpp"
 #include "daemon_control.hpp"
 #include "knetsentry/core/diagnostics.hpp"
 
@@ -154,6 +155,12 @@ int main(int argc, char *argv[]) {
     const QCommandLineOption alerts_smoke_test(QStringLiteral("self-test-alerts"),
         QStringLiteral("Verify rendered alert interface against a disposable M7.7 synthetic ledger."));
     parser.addOption(alerts_smoke_test);
+    const QCommandLineOption dashboard_smoke_test(QStringLiteral("self-test-dashboard"),
+        QStringLiteral("Verify rendered read-only dashboard against a disposable synthetic store."));
+    parser.addOption(dashboard_smoke_test);
+    const QCommandLineOption dashboard_denied_test(QStringLiteral("self-test-dashboard-denied"),
+        QStringLiteral("Verify dashboard refusal against a default-deny manager."));
+    parser.addOption(dashboard_denied_test);
     parser.process(app);
 
     // The model outlives QML and is not a management authority.
@@ -166,12 +173,21 @@ int main(int argc, char *argv[]) {
         QDir::cleanPath(QCoreApplication::applicationDirPath() + QStringLiteral("/../manager/knetsentryd")));
     knetsentry::desktop::EventExplorerModel events(parser.value(QStringLiteral("ipc-dir")));
     knetsentry::desktop::AlertModel alerts(parser.value(QStringLiteral("ipc-dir")));
+    knetsentry::desktop::DashboardModel dashboard(parser.value(QStringLiteral("ipc-dir")));
+    QObject::connect(&health, &knetsentry::desktop::ServiceHealthModel::changed, &dashboard, [&] {
+        const auto state = health.queryState();
+        if (state == knetsentry::service::HealthQueryState::Unavailable || state == knetsentry::service::HealthQueryState::Invalid) {
+            dashboard.clear();
+        }
+    });
     QQmlApplicationEngine engine;
+    QQmlEngine::setObjectOwnership(&dashboard, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&alerts, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&events, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&health, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&control, QQmlEngine::CppOwnership);
-    engine.setInitialProperties({{QStringLiteral("alertModel"), QVariant::fromValue(&alerts)},
+    engine.setInitialProperties({{QStringLiteral("dashboardModel"), QVariant::fromValue(&dashboard)},
+                                 {QStringLiteral("alertModel"), QVariant::fromValue(&alerts)},
                                  {QStringLiteral("eventModel"), QVariant::fromValue(&events)},
                                  {QStringLiteral("healthModel"), QVariant::fromValue(&health)},
                                  {QStringLiteral("daemonControl"), QVariant::fromValue(&control)}});
@@ -271,6 +287,41 @@ int main(int argc, char *argv[]) {
         std::cout << "M3.8 Settings scope visibility and unavailable state: PASS\n";
         std::cout << "KnetSentry M1.4 primary navigation: PASS (7 sections; no telemetry)\n";
         return 0;
+    }
+    if (parser.isSet(dashboard_smoke_test) || parser.isSet(dashboard_denied_test)) {
+        if (!dashboard.configured()) { return 1; }
+        QObject* root = engine.rootObjects().constFirst();
+        QObject* refresh = root->property("dashboardRefreshButton").value<QObject*>();
+        if (refresh == nullptr || !root->property("currentDashboardEvents").toString().startsWith(QStringLiteral("Unavailable")) ||
+            !QMetaObject::invokeMethod(refresh, "clicked")) { return 1; }
+        QEventLoop loop;
+        QTimer check, deadline;
+        deadline.setSingleShot(true);
+        QObject::connect(&deadline, &QTimer::timeout, &loop, [&loop] { loop.exit(1); });
+        QObject::connect(&check, &QTimer::timeout, &loop, [&] {
+            if (dashboard.busy()) { return; }
+            const auto eventsText = root->property("currentDashboardEvents").toString();
+            const auto alertsText = root->property("currentDashboardAlerts").toString();
+            const auto detectionText = root->property("currentDashboardDetections").toString();
+            if (parser.isSet(dashboard_denied_test)) {
+                if (!eventsText.startsWith(QStringLiteral("Unavailable")) ||
+                    !alertsText.startsWith(QStringLiteral("Unavailable")) ||
+                    !detectionText.startsWith(QStringLiteral("Unavailable"))) { loop.exit(1); return; }
+                std::cout << "M8.1 rendered denied summaries: PASS\n";
+                loop.exit(0); return;
+            }
+            if (!eventsText.startsWith(QStringLiteral("8 stored events on page; 8 failure outcomes.")) ||
+                !alertsText.startsWith(QStringLiteral("8 active stored alerts on page (8 open, 0 acknowledged)")) ||
+                !detectionText.startsWith(QStringLiteral("1 distinct rule identifiers in 8 stored alerts")) ||
+                !eventsText.contains(QStringLiteral("More records exist.")) || !alertsText.contains(QStringLiteral("More records exist.")) ||
+                !root->setProperty("navigationRequest", QStringLiteral("assets")) ||
+                !dashboard.eventSummary().startsWith(QStringLiteral("Unavailable")) ||
+                !dashboard.alertSummary().startsWith(QStringLiteral("Unavailable"))) { loop.exit(1); return; }
+            std::cout << "M8.1 rendered stored summaries and navigation clearing: PASS\n";
+            loop.exit(0);
+        });
+        check.start(25); deadline.start(10000);
+        return loop.exec();
     }
     if (parser.isSet(events_smoke_test)) {
         if (!parser.isSet(QStringLiteral("ipc-dir"))) { return 1; }
@@ -479,6 +530,8 @@ int main(int argc, char *argv[]) {
                 if (health.agentRegistryStatus().startsWith(QStringLiteral("Checking"))) { return; }
                 if (!root->property("currentPageAgentRosterVisible").toBool() ||
                     !root->property("currentPageAgentRegistry").toString().startsWith(QStringLiteral("Verified registry snapshot")) ||
+                    health.dashboardRegistry() != QStringLiteral("1 approved, 1 revoked registry identities (not live sessions).\n"
+                                                                  "Monitored assets unavailable.") ||
                     root->property("currentPageApprovedAgents").toString() != QStringLiteral("01010101010101010101010101010101") ||
                     root->property("currentPageRevokedAgents").toString() != QStringLiteral("02020202020202020202020202020202")) {
                     loop.exit(1); return;
@@ -490,6 +543,7 @@ int main(int argc, char *argv[]) {
                        health.status() == QStringLiteral("Disconnected or unavailable")) {
                 if (health.resources() != QStringLiteral("Uptime, CPU time and memory unavailable.") ||
                     health.errors() != QStringLiteral("Operational error counters unavailable.") ||
+                    !health.dashboardRegistry().startsWith(QStringLiteral("Unavailable")) ||
                     !root->property("currentPageApprovedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
                     !root->property("currentPageRevokedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
                     !root->setProperty("navigationRequest", QStringLiteral("settings"))) {
@@ -511,6 +565,7 @@ int main(int argc, char *argv[]) {
             } else if (stage == 6 && health.available()) {
                 if (health.agentRegistryStatus().startsWith(QStringLiteral("Checking"))) { return; }
                 if (!root->property("currentPageAgentRegistry").toString().startsWith(QStringLiteral("Unavailable")) ||
+                    !health.dashboardRegistry().startsWith(QStringLiteral("Unavailable")) ||
                     !root->property("currentPageApprovedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
                     !root->property("currentPageRevokedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
                     !root->setProperty("navigationRequest", QStringLiteral("dashboard"))) { loop.exit(1); return; }

@@ -6,7 +6,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 # KnetSentry — Release Objectives and Acceptance Strategy
 
 **Status:** Release criteria remain prospective; development is accepted through
-M3.8. See [current project status](../PROJECT_STATUS.md). Release success requires
+M7.9 (implemented foundations; operational requirements remain open). See [current project status](../PROJECT_STATUS.md). Release success requires
 implementation and repeatable evidence against the intended artifacts.
 
 ## 1. Release target

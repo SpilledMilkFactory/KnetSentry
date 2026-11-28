@@ -12,7 +12,12 @@ Kirigami.Page {
     id: page
     objectName: "knetSentrySectionPage"
     required property string sectionId
+    required property DashboardModel dashboardModel
     required property ServiceHealthModel healthModel
+    readonly property string dashboardEvents: dashboardEventCard.description
+    readonly property string dashboardAlerts: dashboardAlertCard.description
+    readonly property string dashboardDetections: dashboardDetectionCard.description
+    readonly property alias dashboardRefreshButton: dashboardRefresh
     required property AlertModel alertModel
     required property EventExplorerModel eventModel
     readonly property int alertCount: alertList.count
@@ -66,7 +71,7 @@ Kirigami.Page {
     readonly property string sectionDescription: {
         switch (sectionId) {
         case "dashboard":
-            return qsTr("Management daemon health is shown below. Monitoring coverage and security activity remain unavailable.")
+            return qsTr("Operational health, local observations and explicitly requested stored summaries. Live monitoring coverage remains unavailable.")
         case "assets":
             return qsTr("Inspect administrator-approved endpoint identities below. Live asset inventory and remote telemetry remain unavailable.")
         case "events":
@@ -340,6 +345,65 @@ Kirigami.Page {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
                     text: qsTr("Pages hold at most eight summaries and expire after 30 seconds. IDs are admission order, not chronological order.")
+                }
+            }
+
+            ColumnLayout {
+                visible: page.sectionId === "dashboard"
+                Layout.fillWidth: true
+                spacing: tokens.spaceM
+                Controls.Label {
+                    text: qsTr("SOC overview")
+                    font.pixelSize: tokens.sectionSize
+                    font.weight: Font.DemiBold
+                    Layout.fillWidth: true
+                    Accessible.role: Accessible.Heading
+                }
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: page.compactLayout ? 1 : 2
+                    columnSpacing: tokens.spaceM
+                    rowSpacing: tokens.spaceM
+                    SurfaceCard {
+                        Layout.fillWidth: true
+                        heading: qsTr("Security status")
+                        description: qsTr("Monitoring unavailable — security posture unknown. No safety verdict.")
+                    }
+                    SurfaceCard {
+                        Layout.fillWidth: true
+                        heading: qsTr("Asset coverage and registry")
+                        description: page.healthModel.dashboardRegistry
+                    }
+                    SurfaceCard {
+                        id: dashboardEventCard
+                        Layout.fillWidth: true
+                        heading: qsTr("Stored event activity — latest admission page")
+                        description: page.dashboardModel.eventSummary
+                    }
+                    SurfaceCard {
+                        id: dashboardAlertCard
+                        Layout.fillWidth: true
+                        heading: qsTr("Active stored alerts — first page")
+                        description: page.dashboardModel.alertSummary
+                    }
+                    SurfaceCard {
+                        id: dashboardDetectionCard
+                        Layout.fillWidth: true
+                        Layout.columnSpan: page.compactLayout ? 1 : 2
+                        heading: qsTr("Stored detection summary — first alert page")
+                        description: page.dashboardModel.detectionSummary
+                    }
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Stored summaries require explicit manager authorization and a manual refresh. Each page holds at most eight records; counts are not global totals, incident counts or live rates. Snapshots expire within 30 seconds and are cleared when leaving Dashboard.")
+                }
+                Controls.Button {
+                    id: dashboardRefresh
+                    text: qsTr("Refresh stored summaries")
+                    enabled: page.sectionId === "dashboard" && page.dashboardModel.configured && !page.dashboardModel.busy
+                    onClicked: page.dashboardModel.refresh()
                 }
             }
 
