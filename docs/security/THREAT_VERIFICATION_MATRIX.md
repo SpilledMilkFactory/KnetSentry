@@ -309,3 +309,7 @@ The [M7.6 contract](../development/ALERT_LIFECYCLE_M76.md) contributes partial T
 ## M7.7 alert interface
 
 The [M7.7 contract](../development/ALERT_INTERFACE_M77.md) contributes partial TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 evidence for bounded same-user IPC, persistent audit, revision-checked acknowledgement and exact evidence linkage. Production RBAC, stable mount identity and operational integration remain outstanding.
+
+## M7.8 deterministic detection and alert regressions
+
+The [M7.8 contract](../development/DETECTION_RECOVERY_M78.md) adds composed regression evidence for existing TB-06/TB-07 and TV-10/TV-12/TV-13/TV-25/TV-26 coverage: exact evidence links, source isolation, duplicate refusal, deterministic timing and durable lifecycle replay. No trust-boundary or privilege expansion; target qualification pending.

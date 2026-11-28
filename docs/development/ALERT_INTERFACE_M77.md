@@ -70,7 +70,7 @@ synthetic persisted evidence and scheduler-generated alerts, bounds, filtering,
 exact links, stale session/revision refusal, default denial, read-only refusal,
 acknowledgement, audit, original evidence invariance, restart and rendered GUI.
 Fixture seed accepts only new empty private directories; never seed production.
-Target host qualification pending. Remaining #66 scope: general multi-rule and
+Target host qualification passed; manual GUI review and merge reported successful. Remaining #66 scope: general multi-rule and
 multi-endpoint administration, independent analyst identity/roles, production
 manager integration, full event explorer cross-page navigation and operational
 alert creation. Existing #63/#64/#65 scope remains outstanding.

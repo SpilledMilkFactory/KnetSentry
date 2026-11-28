@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M7.6 — persistent alert lifecycle foundation.**
+**Accepted baseline: M7.7 — stored alert interface foundation.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
 M4.8 and M5.1–M5.8 are merged (M5.5 offline foundation only). M5.9 local aggregate agent status in Dashboard and Assets is qualified and merged. Multi-endpoint authenticated status integration remains outstanding (#50).
@@ -13,7 +13,7 @@ Issue #46 operational network/manager integration remains outstanding.
 M6.1 bounded offline authenticated event ingestion is qualified and merged; operational and generic envelope integration (#51) remain outstanding.
 M6.2 typed OCSF-aligned normalization of the KSTD subset is qualified and merged.
 M6.3–M6.8 storage, integrity, search, quotas, explicit cleanup and opt-in manager-mediated stored event exploration foundations are qualified and merged. M6.9 composed failure-recovery regressions are qualified and merged. M6.10 independently approved split-storage foundation is qualified and merged, including actual mount replacement and distinct local filesystem tests. Persistent cross-boot approval and operational integration remain outstanding (#148).
-M7.1 bounded offline deterministic rule evaluation is qualified and merged. M7.2 versioned rule schema and validation are qualified and merged. M7.3 bounded offline authentication-pattern detection is qualified and merged. M7.4 offline Audit record-type detection foundation is qualified and merged; remaining #63 scope open. M7.5 caller-driven persistent scheduling foundation is qualified and merged; remaining #64 scope open. M7.6 persistent alert lifecycle foundation is qualified and merged; remaining #65 scope open. M7.7 adds an opt-in same-user stored alert interface, exact linked evidence inspection and explicitly authorized acknowledgement; target qualification pending (#66). No operational detection or response authority is enabled.
+M7.1 bounded offline deterministic rule evaluation is qualified and merged. M7.2 versioned rule schema and validation are qualified and merged. M7.3 bounded offline authentication-pattern detection is qualified and merged. M7.4 offline Audit record-type detection foundation is qualified and merged; remaining #63 scope open. M7.5 caller-driven persistent scheduling foundation is qualified and merged; remaining #64 scope open. M7.6 persistent alert lifecycle foundation is qualified and merged; remaining #65 scope open. M7.7 opt-in same-user stored alert interface, exact linked evidence inspection and explicitly authorized acknowledgement are qualified and merged; remaining #66 scope open. M7.8 adds composed offline detection and alert regressions; target qualification pending (#67). No operational detection or response authority is enabled.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
@@ -45,6 +45,8 @@ rules. Monitoring is unavailable, and no operational remote telemetry transport,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M7.7 maintainer acceptance (2026-11-27 UTC, applied working tree based on `804035d`): 151 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED; 537 configured CTests, 69 structural verifiers, focused Release and analysis alert/Explorer 6/6 and composed group 15/15, 150 repeated Release and 75 repeated sanitized executions, clean Release/analysis/Clazy diagnostic inspection, installed manager equality, original evidence database unchanged across acknowledgement and restart, and nine hosted checks (`cc46b58`). Manual GUI review and merge were reported successful. Remaining #66 scope stays open.
 
 M7.6 maintainer acceptance (2026-11-27 UTC, applied working tree based on `8449e77`): 149 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED; 519 configured CTests, focused Release and analysis 13/13, installed manager equality, nine hosted checks (`804035d`), reported GUI verification and merge. Remaining #65 scope open.
 
@@ -304,7 +306,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M2 — manager, IPC, audit, health, systemd and desktop lifecycle | Complete |
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
-| M5–M7 — functional SIEM foundations | M7.6 foundation accepted; M7.7 interface qualification pending; #63/#64/#65/#66 remaining scope open; persistent volume approval and operational integration outstanding |
+| M5–M7 — functional SIEM foundations | M7.7 foundation accepted; M7.8 regression qualification pending; #63/#64/#65/#66 remaining scope open; persistent volume approval and operational integration outstanding |
 | M8–M12 — advanced security operations | Planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |

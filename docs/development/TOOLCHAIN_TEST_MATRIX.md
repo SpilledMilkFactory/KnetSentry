@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns accepted; M7.4 Audit detection foundation accepted (#63 remains open); M7.5 scheduling foundation accepted (#64 remains open); M7.6 alert ledger accepted (#65 remains open); M7.7 alert interface qualification pending (#66); issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns accepted; M7.4 Audit detection foundation accepted (#63 remains open); M7.5 scheduling foundation accepted (#64 remains open); M7.6 alert ledger accepted (#65 remains open); M7.7 alert interface foundation accepted (#66 remains open); M7.8 regression qualification pending (#67); issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 82 Release/Debug/Clazy/analysis, 74 full ASan/UBSan,
-67 core-only and 68 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 83 Release/Debug/Clazy/analysis, 75 full ASan/UBSan,
+68 core-only and 69 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -444,4 +444,8 @@ The [M7.6 contract](ALERT_LIFECYCLE_M76.md) adds one mandatory native regression
 
 ### M7.7 alerts interface
 
-The [M7.7 contract](ALERT_INTERFACE_M77.md) adds two core tests and one non-sanitized desktop test. Target: 537 configured CTests, 69 structural verifiers, 151 consolidated gates with privileged fixtures. Target qualification pending.
+The [M7.7 contract](ALERT_INTERFACE_M77.md) adds two core tests and one non-sanitized desktop test. Accepted: 537 configured CTests, 69 structural verifiers, 151 consolidated gates with privileged fixtures. Target qualification passed.
+
+### M7.8 composed detection and alert regression
+
+The [M7.8 contract](DETECTION_RECOVERY_M78.md) adds one mandatory native regression across all seven presets. Target: 544 configured CTests, 70 structural verifiers and 153 consolidated gates with privileged fixtures. Existing M7.1–M7.7 tests remain mandatory.
