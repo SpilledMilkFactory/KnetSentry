@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **83 CTest tests**, including
+The Release desktop suite currently contains **84 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **75 CTests**, including the
+The full sanitizer suite currently contains **76 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **68 CTests**) and `linux-sanitize-core-only` for **69**.
+C++ test (currently **69 CTests**) and `linux-sanitize-core-only` for **70**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -495,3 +495,7 @@ See [M7.7](ALERT_INTERFACE_M77.md). Run `ctest --preset linux-release -R 'knetse
 ### M7.8 deterministic rule and alert regressions
 
 See [M7.8](DETECTION_RECOVERY_M78.md). Run `ctest --preset linux-release -R '^knetsentry_detection_recovery_contract$' --verbose --no-tests=error`. Target inventories: desktop 83/75, core-only 68/69. No runtime or GUI changes.
+
+### M7.9 technique mappings
+
+See [M7.9](TECHNIQUE_MAPPINGS_M79.md). Run `ctest --preset linux-release -R '^knetsentry_(technique_mappings|detection_recovery)_contract$' --verbose --no-tests=error`. Target inventories: desktop 84/76, core-only 69/70. Metadata only; no live intelligence synchronization.

@@ -660,3 +660,10 @@ target_link_libraries(knetsentry_detection_recovery_test PRIVATE KnetSentry::Det
 knetsentry_apply_project_options(knetsentry_detection_recovery_test)
 add_test(NAME knetsentry_detection_recovery_contract COMMAND $<TARGET_FILE:knetsentry_detection_recovery_test>)
 set_tests_properties(knetsentry_detection_recovery_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
+
+# M7.9: conservative versioned technique mapping metadata.
+add_executable(knetsentry_technique_mappings_test technique_mappings_m79.cpp)
+target_link_libraries(knetsentry_technique_mappings_test PRIVATE KnetSentry::Detection KnetSentry::EventStorage)
+knetsentry_apply_project_options(knetsentry_technique_mappings_test)
+add_test(NAME knetsentry_technique_mappings_contract COMMAND $<TARGET_FILE:knetsentry_technique_mappings_test>)
+set_tests_properties(knetsentry_technique_mappings_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)

@@ -3,6 +3,7 @@
 #include <knetsentry/detection/alerts.hpp>
 #include <knetsentry/detection/authentication_patterns.hpp>
 #include <knetsentry/detection/system_integrity.hpp>
+#include <knetsentry/detection/technique_mappings.hpp>
 #include <knetsentry/storage/sqlite_event_store.hpp>
 #include <cstdlib>
 #include <filesystem>
@@ -73,6 +74,13 @@ void authentication_matrix(EventStore& store) {
         expected.push_back({P::InvalidUserObservation, 1, RuleSeverity::Low, coverage, {10}});
         expected.push_back({P::UnspecifiedActivityFailure, 1, RuleSeverity::Low, coverage, {11}});
         require(report.findings == expected, "auth golden timing/benign controls");
+        for (const auto& finding : report.findings) {
+            const auto mapping = technique_mapping(finding.pattern, finding.version);
+            const auto count = finding.pattern == P::RepeatedFailures ? 1U :
+                finding.pattern == P::SuccessAfterFailures ? 2U : 0U;
+            require(mapping.associations.size() == count && mapping.status == (count == 0 ?
+                TechniqueMappingStatus::Unmapped : TechniqueMappingStatus::ContextOnly), "auth mapping disposition");
+        }
         require(detect_authentication(store, key, "ssh.service", trust, coverage, {2, window}) == report, "auth replay");
     }
     const auto denied = detect_authentication(store, key, "ssh.service", EvidenceTrust::Unverified, coverage);
@@ -106,6 +114,13 @@ void audit_matrix(EventStore& store) {
     append(store, 50, 2050, "1702\t9", 'e', "audit", JournalMode::Audit);
     const auto key = binding(); const auto report = detect_system_integrity(store, key, trust, coverage);
     require(report.status == SystemDetectionStatus::Evaluated && report.observed == 23 && report.unmatched == 5 && report.findings == golden, "Audit golden catalog/negative types");
+    for (const auto& finding : report.findings) {
+        const auto mapping = technique_mapping(finding.rule_id, finding.rule_version, finding.audit_type);
+        const bool kernel = finding.audit_type == 1330;
+        require(mapping.status == (kernel ? TechniqueMappingStatus::ContextOnly : TechniqueMappingStatus::Unmapped) &&
+            mapping.associations.size() == (kernel ? 1U : 0U), "Audit mapping disposition");
+        if (kernel) { require(mapping.associations.front().id == "T1547.006", "kernel technique"); }
+    }
     require(detect_system_integrity(store, key, trust, coverage) == report, "Audit replay");
 }
 SchedulePolicy policy() {
