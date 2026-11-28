@@ -18,7 +18,7 @@ import stat
 import subprocess
 import time
 
-from verify_m27_systemd import ROOT, UNIT, require
+from verify_m27_systemd import LIVE_UNIT_EXPECTED, UNIT, require, validate_live_unit_state
 
 NAME = 'knetsentry-manager.service'
 STATE = Path('/var/lib/knetsentry')
@@ -63,6 +63,16 @@ def prop(key: str) -> str:
     return command('systemctl', 'show', NAME, '--property=' + key, '--value')
 
 
+def unit_preflight() -> None:
+    require(Path('/proc/1/comm').read_text().strip() == 'systemd',
+            'live test requires a systemd-booted host')
+    output = command('systemctl', 'show', NAME, '--all',
+                     '--property=' + ','.join(LIVE_UNIT_EXPECTED))
+    validate_live_unit_state(output)
+    require(not os.path.lexists(RUNTIME), 'existing runtime directory: inspect before testing')
+    print('M2.7 installed unit preflight: PASS (loaded, inactive, disabled, no overrides/reload; runtime absent)')
+
+
 def protected(path: Path, uid: int, gid: int, mode: int, kind) -> None:
     s = path.lstat()
     require(kind(s.st_mode) and s.st_uid == uid and s.st_gid == gid and
@@ -81,11 +91,8 @@ def installed(binary: Path) -> tuple[int, int]:
     require(uid != 0 and gid != 0 and gid == group.gr_gid and
             account.pw_shell == '/usr/sbin/nologin' and account.pw_dir == '/nonexistent' and
             set(os.getgrouplist(account.pw_name, gid)) == {gid}, 'unsafe service account')
-    require(prop('LoadState') == 'loaded' and prop('ActiveState') == 'inactive' and
-            prop('UnitFileState') == 'disabled' and not prop('DropInPaths') and prop('NeedDaemonReload') == 'no',
-            'requires inactive, disabled installed unit with no overrides or pending reload')
-    fragment = Path(prop('FragmentPath'))
-    require(fragment == Path('/etc/systemd/system') / NAME, 'unexpected installed unit path')
+    unit_preflight()
+    fragment = Path(LIVE_UNIT_EXPECTED['FragmentPath'])
     for path, src, mode in ((fragment, UNIT, 0o644),
                             (INSTALL / 'manager-launcher', UNIT.parent / 'manager-launcher', 0o755),
                             (INSTALL / 'knetsentryd', binary, 0o755)):
@@ -190,11 +197,19 @@ def run(binary: Path, outsider: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--binary', required=True, type=Path)
-    parser.add_argument('--outsider', required=True)
+    parser.add_argument('--preflight-only', action='store_true', help='read-only host state check; no service activation')
+    parser.add_argument('--binary', type=Path)
+    parser.add_argument('--outsider')
     args = parser.parse_args()
+    if args.preflight_only and (args.binary is not None or args.outsider is not None):
+        parser.error('--preflight-only does not accept --binary or --outsider')
+    if not args.preflight_only and (args.binary is None or not args.outsider):
+        parser.error('live test requires --binary and --outsider')
     try:
-        run(args.binary.resolve(), args.outsider)
+        if args.preflight_only:
+            unit_preflight()
+        else:
+            run(args.binary.resolve(), args.outsider)
     except (OSError, ValueError, KeyError, subprocess.SubprocessError) as exc:
         print('M2.7 live systemd: FAIL: ' + str(exc))
         return 1

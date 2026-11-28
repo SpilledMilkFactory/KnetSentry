@@ -90,3 +90,24 @@ QML analysis directly after the Release build and stops on lint failure before
 remaining qualification or privileged fixture activation. Full qualification
 of the corrected revision, including the previously skipped installed systemd
 and visual-review fixture gates, remains required.
+
+## Second qualification follow-up — installed service readiness
+
+The first corrected target run passed strict QML lint, all 584 configured CTests,
+all supplementary regressions and the installed manager binary comparison. The
+installed M2.7 runtime check refused the host's unit state (174 passed, one
+failed, one skipped); the read-only visual fixture was not launched. The old
+combined error did not identify which systemd property failed. This is a host
+prerequisite failure, not evidence of a new accessibility regression.
+
+The shared M2.7 read-only preflight validates the six exact installed unit
+properties, rejects incomplete or malformed results, and reports each mismatched
+property without exposing override paths. It also requires the runtime directory
+to be absent. The local runner executes it before authentication or builds, and
+the privileged live verifier repeats it before service activation. No automatic
+stop, disable, reset, reload, installation or deletion is permitted. The existing
+identity, file hashes, confinement, IPC denial, graceful stop and audit checks
+remain mandatory. The full local runner now expects 177 successful gates with
+`--full --gui-review` (176 without the visual fixture). Configured CTest counts
+are unchanged; the existing M2.7 source-policy regression now includes preflight
+negative controls. Final target and visual qualification remain pending.

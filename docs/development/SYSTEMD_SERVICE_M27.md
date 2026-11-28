@@ -150,3 +150,26 @@ IPC negative fixture explicitly establishes and verifies unsafe mode 0755;
 no daemon permission checks or test deadlines are relaxed. The live gate
 requires the Release build and its CTest suite to pass. Successful installation
 and parser verification alone remain insufficient for runtime acceptance.
+
+### Read-only installed-unit readiness preflight
+
+Before lengthy builds, the local runner invokes the following as the ordinary
+development user when live systemd acceptance is requested:
+
+```bash
+python3 -B scripts/check_m27_systemd_runtime.py --preflight-only
+```
+
+This reads the six explicit unit properties in one `systemctl show` invocation.
+The unit must be loaded, inactive, disabled, have no drop-ins or pending reload,
+and have the exact dedicated fragment path. The runtime directory must also be
+absent. A mismatch names the offending property; unexpected fragment and drop-in
+paths are not printed. Missing, duplicate or malformed properties fail closed.
+A successful read-only preflight is not proof of service confinement or an
+installed-binary match. The privileged verifier repeats the state check and
+still requires the exact protected installation, service identity, and all
+runtime confinement, IPC and audit checks. No existing service is stopped,
+disabled, reset, reloaded or reinstalled to make this preflight pass. If the
+check fails, review and resolve the actual host condition as its authorized
+administrator on the dedicated development host before restarting acceptance.
+Do not remove runtime or audit state simply to satisfy the preflight.

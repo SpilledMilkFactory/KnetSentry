@@ -547,3 +547,11 @@ The M8.7 follow-up runner checks strict QML lint immediately after the Release
 build and stops on lint failure rather than running the remaining lengthy
 regressions or privileged fixtures. The successful full-run inventory is
 unchanged.
+
+The second M8.7 follow-up also checks installed systemd unit readiness before
+any builds or administrator authentication when `--full` or `--systemd` is
+requested. An unsuitable unit produces a property-specific failure and stops
+qualification early; see [M2.7](SYSTEMD_SERVICE_M27.md) for the approved host
+preconditions. The runner does not modify existing service state to satisfy this
+check. The mandatory live verifier repeats the preflight and retains all
+confinement checks. The expected full gate count increases by one.
