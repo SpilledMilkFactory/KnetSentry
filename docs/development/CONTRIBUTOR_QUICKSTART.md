@@ -503,3 +503,7 @@ See [M7.9](TECHNIQUE_MAPPINGS_M79.md). Run `ctest --preset linux-release -R '^kn
 ### M8.1 SOC dashboard
 
 See [M8.1](SOC_DASHBOARD_M81.md). Run `ctest --preset linux-release -R '^knetsentry_(dashboard_summary_contract|gui_dashboard_runtime)$' --verbose --no-tests=error`. Target inventories: desktop 86/77, core-only 70/71. Use disposable synthetic fixtures only; no new installed-manager authority or configuration.
+
+### M8.2 interactive stored visualizations
+
+See [M8.2](SECURITY_VISUALIZATIONS_M82.md). Run `ctest --preset linux-release -R '^knetsentry_(dashboard_summary_contract|gui_dashboard_runtime)$' --verbose --no-tests=error`, and `python3 -B scripts/verify_m82_visualizations.py`. Existing inventories remain unchanged; inspect histogram, receiver-age bars and alert severity filters using the private synthetic fixture. No additional evidence query or deployment privilege is introduced.

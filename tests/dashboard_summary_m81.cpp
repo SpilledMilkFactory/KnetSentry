@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #include <knetsentry/service/dashboard_summary.hpp>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 namespace {
 using namespace knetsentry::service;
@@ -20,6 +21,25 @@ void verify() {
     events.page.events.back().received_ms = 9;
     const auto e = summarize_events(events);
     require(e && e->count == 8 && e->failures == 1 && e->newest_receiver_ms == 100, "page-local counts and receiver maximum");
+    require(e->outcomes == std::array<std::size_t, 3>{7, 0, 1}, "outcome histogram");
+    require(e->activity.at(0) == std::array<std::size_t, 4>{0, 0, 0, 7} &&
+        e->activity.at(2) == std::array<std::size_t, 4>{0, 0, 0, 1}, "receiver bins");
+    // Deliberately not in timestamp order. Check exact bin edges and full-width arithmetic.
+    const auto maximum = std::numeric_limits<std::uint64_t>::max();
+    const std::array<std::uint64_t, 8> ages{1000, 0, 3000, 999, 2000, 2999, 1999, maximum};
+    for (std::size_t i = 0; i < ages.size(); ++i) {
+        auto& row = events.page.events.at(i);
+        row.received_ms = maximum - ages.at(i);
+        row.status_id = knetsentry::agent::OcsfStatus::Success;
+    }
+    events.page.events.at(2).status_id = knetsentry::agent::OcsfStatus::Failure;
+    const auto edges = summarize_events(events);
+    require(edges && edges->newest_receiver_ms == maximum &&
+        edges->outcomes == std::array<std::size_t, 3>{0, 7, 1} &&
+        edges->activity.at(1) == std::array<std::size_t, 4>{1, 2, 2, 2} &&
+        edges->activity.at(2) == std::array<std::size_t, 4>{1, 0, 0, 0}, "receiver age boundaries and extreme timestamps");
+    require(emptyEvents->outcomes == std::array<std::size_t, 3>{} &&
+        emptyEvents->activity.at(0) == std::array<std::size_t, 4>{}, "verified empty histogram");
     events.page.events.emplace_back();
     require(!summarize_events(events), "oversized events");
     events.page.events.clear();
@@ -39,6 +59,13 @@ void verify() {
     const auto a = summarize_alerts(alerts);
     require(a && a->count == 8 && a->open == 6 && a->acknowledged == 1 && a->resolved == 1 &&
         a->distinct_rules == 2 && a->high_active == 7, "bounded lifecycle and distinct-rule counts");
+    require(a->severities == std::array<std::size_t, 6>{0, 0, 0, 0, 8, 0} &&
+        a->active_severities == std::array<std::size_t, 6>{0, 0, 0, 0, 7, 0}, "active severity distribution");
+    for (std::size_t i = 0; i < alerts.rows.size(); ++i) { alerts.rows.at(i).severity = i % 6; }
+    const auto mixed = summarize_alerts(alerts);
+    require(mixed && mixed->severities == std::array<std::size_t, 6>{2, 2, 1, 1, 1, 1} &&
+        mixed->active_severities == std::array<std::size_t, 6>{2, 2, 0, 1, 1, 1}, "all severity values and resolved exclusion");
+    require(emptyAlerts->severities == std::array<std::size_t, 6>{}, "verified empty distribution");
     alerts.rows.front().status = 3;
     require(!summarize_alerts(alerts), "unknown lifecycle");
     alerts.rows.front().status = 0;
@@ -60,6 +87,7 @@ void verify() {
 int main() try {
     verify();
     std::cout << "M8.1 bounded stored page summaries and unavailable/empty distinction: PASS\n";
+    std::cout << "M8.2 outcome histogram, receiver bins and severity distributions: PASS\n";
     return 0;
 } catch (const std::exception& e) {
     std::cerr << "M8.1 dashboard summary failure: " << e.what() << '\n';

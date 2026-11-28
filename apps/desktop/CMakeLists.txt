@@ -22,7 +22,7 @@ qt_add_qml_module(knetsentry
     URI io.github.spilledmilkfactory.KnetSentry
     VERSION 1.0
     SOURCES dashboard_model.cpp dashboard_model.hpp alert_model.cpp alert_model.hpp event_explorer_model.cpp event_explorer_model.hpp service_health_model.cpp service_health_model.hpp daemon_control.cpp daemon_control.hpp
-    QML_FILES Main.qml SectionPage.qml DesignTokens.qml StatusBadge.qml SeverityBadge.qml SurfaceCard.qml
+    QML_FILES Main.qml SectionPage.qml DesignTokens.qml StatusBadge.qml SeverityBadge.qml SurfaceCard.qml SnapshotBars.qml
     RESOURCES icons/menu.svg icons/play.svg icons/stop.svg
 )
 

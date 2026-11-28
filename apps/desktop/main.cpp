@@ -306,18 +306,53 @@ int main(int argc, char *argv[]) {
             if (parser.isSet(dashboard_denied_test)) {
                 if (!eventsText.startsWith(QStringLiteral("Unavailable")) ||
                     !alertsText.startsWith(QStringLiteral("Unavailable")) ||
-                    !detectionText.startsWith(QStringLiteral("Unavailable"))) { loop.exit(1); return; }
+                    !detectionText.startsWith(QStringLiteral("Unavailable")) ||
+                    !root->property("currentDashboardHistogramCounts").toString().isEmpty() ||
+                    !root->property("currentDashboardActivityCounts").toString().isEmpty() ||
+                    !root->property("currentDashboardSeverityCounts").toString().isEmpty()) { loop.exit(1); return; }
                 std::cout << "M8.1 rendered denied summaries: PASS\n";
                 loop.exit(0); return;
             }
+            const auto chartMatches = [root](const char* property, const char* expected) {
+                return root->property(property).toString() == QString::fromLatin1(expected);
+            };
+            QObject* outcomeFilter = root->property("dashboardActivityFilter").value<QObject*>();
+            QObject* severityFilter = root->property("dashboardSeverityFilter").value<QObject*>();
+            if (outcomeFilter == nullptr || severityFilter == nullptr ||
+                !chartMatches("currentDashboardHistogramCounts", "0,0,8") ||
+                !chartMatches("currentDashboardActivityCounts", "0,0,0,8") ||
+                !chartMatches("currentDashboardSeverityCounts", "0,0,0,8,0,0") ||
+                !QMetaObject::invokeMethod(outcomeFilter, "activated", Q_ARG(int, 2)) ||
+                !chartMatches("currentDashboardActivityCounts", "0,0,0,0") ||
+                !chartMatches("currentDashboardHistogramCounts", "0,0,8") ||
+                !QMetaObject::invokeMethod(outcomeFilter, "activated", Q_ARG(int, 3)) ||
+                !chartMatches("currentDashboardActivityCounts", "0,0,0,8") ||
+                !QMetaObject::invokeMethod(severityFilter, "activated", Q_ARG(int, 1)) ||
+                dashboard.severityFilter() != 1 || !chartMatches("currentDashboardSeverityCounts", "0,0,0,8,0,0")) {
+                loop.exit(1); return;
+            }
+            // Exercise repeated local selections without refreshing or widening the evidence query.
+            for (int iteration = 0; iteration < 64; ++iteration) {
+                const int filter = iteration % 2 == 0 ? 2 : 3;
+                if (!QMetaObject::invokeMethod(outcomeFilter, "activated", Q_ARG(int, filter)) ||
+                    !chartMatches("currentDashboardActivityCounts", filter == 2 ? "0,0,0,0" : "0,0,0,8")) {
+                    loop.exit(1); return;
+                }
+            }
+            dashboard.setActivityFilter(-1);
+            dashboard.setSeverityFilter(2);
+            if (dashboard.activityFilter() != 3 || dashboard.severityFilter() != 1 || dashboard.busy()) { loop.exit(1); return; }
             if (!eventsText.startsWith(QStringLiteral("8 stored events on page; 8 failure outcomes.")) ||
                 !alertsText.startsWith(QStringLiteral("8 active stored alerts on page (8 open, 0 acknowledged)")) ||
                 !detectionText.startsWith(QStringLiteral("1 distinct rule identifiers in 8 stored alerts")) ||
                 !eventsText.contains(QStringLiteral("More records exist.")) || !alertsText.contains(QStringLiteral("More records exist.")) ||
                 !root->setProperty("navigationRequest", QStringLiteral("assets")) ||
                 !dashboard.eventSummary().startsWith(QStringLiteral("Unavailable")) ||
-                !dashboard.alertSummary().startsWith(QStringLiteral("Unavailable"))) { loop.exit(1); return; }
+                !dashboard.alertSummary().startsWith(QStringLiteral("Unavailable")) ||
+                !dashboard.eventHistogram().isEmpty() || !dashboard.activityCounts().isEmpty() ||
+                !dashboard.severityCounts().isEmpty() || dashboard.activityFilter() != 0 || dashboard.severityFilter() != 0) { loop.exit(1); return; }
             std::cout << "M8.1 rendered stored summaries and navigation clearing: PASS\n";
+            std::cout << "M8.2 rendered chart values, local filters and clearing: PASS\n";
             loop.exit(0);
         });
         check.start(25); deadline.start(10000);

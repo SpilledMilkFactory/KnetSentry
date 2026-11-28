@@ -54,6 +54,11 @@ Kirigami.ApplicationWindow {
     readonly property string currentDashboardEvents: currentSectionPage ? currentSectionPage.dashboardEvents : ""
     readonly property string currentDashboardAlerts: currentSectionPage ? currentSectionPage.dashboardAlerts : ""
     readonly property string currentDashboardDetections: currentSectionPage ? currentSectionPage.dashboardDetections : ""
+    readonly property string currentDashboardHistogramCounts: currentSectionPage ? currentSectionPage.dashboardHistogramCounts : ""
+    readonly property string currentDashboardActivityCounts: currentSectionPage ? currentSectionPage.dashboardActivityCounts : ""
+    readonly property string currentDashboardSeverityCounts: currentSectionPage ? currentSectionPage.dashboardSeverityCounts : ""
+    readonly property Controls.ComboBox dashboardActivityFilter: currentSectionPage ? currentSectionPage.dashboardActivityFilter : null
+    readonly property Controls.ComboBox dashboardSeverityFilter: currentSectionPage ? currentSectionPage.dashboardSeverityFilter : null
     readonly property Controls.Button dashboardRefreshButton: currentSectionPage ? currentSectionPage.dashboardRefreshButton : null
     readonly property string currentPageHealthStatus: currentSectionPage
         ? currentSectionPage.displayedHealthStatus : ""
@@ -349,7 +354,7 @@ Kirigami.ApplicationWindow {
                 elide: Text.ElideRight
             }
             Controls.Label {
-                text: qsTr("M8.1 development")
+                text: qsTr("M8.2 development")
             }
         }
     }

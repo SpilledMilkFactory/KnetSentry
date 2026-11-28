@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M8.1 — Comprehensive SOC dashboard foundation
 
-Issue #69 (P1, GUI feature). Implementation-side candidate; Ubuntu 26.04 target qualification pending. The SOC overview composes actual existing health, local collection and explicitly authorized stored summaries. No production data is simulated and no new monitoring authority is created.
+Issue #69 (P1, GUI feature). Implemented foundation accepted and merged; remaining operational scope open. The SOC overview composes actual existing health, local collection and explicitly authorized stored summaries. No production data is simulated and no new monitoring authority is created.
 
 ## Sources and limits
 
@@ -30,7 +30,7 @@ Expected inventories: 86 CTests for Release/Debug/Clazy/analysis, 77 full saniti
 
 ### M8.1 qualification follow-up
 
-The initial Ubuntu 26.04 analysis build failed in `ServiceHealthModel::dashboardRegistry()` because an ordinary C++ translation string contained a physical newline before its closing quote. The follow-up uses adjacent string literals with an explicit `\n`, retaining the intended two-line text and a single translatable message. The existing Qt health model regression now checks the read-only property and unavailable text before and after an absent-endpoint refresh. The existing GUI health runtime additionally checks the exact one-approved/one-revoked summary from its synthetic registry and unavailable status after disconnect and unconfigured restart. No new CTest registration, privilege, monitoring authority, diagnostic exception or acceptance gate is introduced. Full target qualification of the combined commits remains pending.
+The initial Ubuntu 26.04 analysis build failed in `ServiceHealthModel::dashboardRegistry()` because an ordinary C++ translation string contained a physical newline before its closing quote. The follow-up uses adjacent string literals with an explicit `\n`, retaining the intended two-line text and a single translatable message. The existing Qt health model regression now checks the read-only property and unavailable text before and after an absent-endpoint refresh. The existing GUI health runtime additionally checks the exact one-approved/one-revoked summary from its synthetic registry and unavailable status after disconnect and unconfigured restart. No new CTest registration, privilege, monitoring authority, diagnostic exception or acceptance gate is introduced. Combined commits qualified: 157 consolidated gates, 562 configured CTests, 72 structural verifiers, nine hosted checks and successful manual GUI verification; maintainer reported merge. The manual fixture must use the exact IPC directory printed at creation, not a placeholder.
 
 ## Manual synthetic fixture
 
