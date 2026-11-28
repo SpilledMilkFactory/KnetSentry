@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 #include <knetsentry/service/health_client.hpp>
+#include <knetsentry/service/dashboard_summary.hpp>
+#include <QList>
 #include <QObject>
 #include <QString>
 #include <QByteArray>
@@ -17,6 +19,11 @@ class DashboardModel : public QObject {
     Q_PROPERTY(QString eventSummary READ eventSummary NOTIFY changed FINAL)
     Q_PROPERTY(QString alertSummary READ alertSummary NOTIFY changed FINAL)
     Q_PROPERTY(QString detectionSummary READ detectionSummary NOTIFY changed FINAL)
+    Q_PROPERTY(QList<int> eventHistogram READ eventHistogram NOTIFY changed FINAL)
+    Q_PROPERTY(QList<int> activityCounts READ activityCounts NOTIFY changed FINAL)
+    Q_PROPERTY(QList<int> severityCounts READ severityCounts NOTIFY changed FINAL)
+    Q_PROPERTY(int activityFilter READ activityFilter WRITE setActivityFilter NOTIFY changed FINAL)
+    Q_PROPERTY(int severityFilter READ severityFilter WRITE setSeverityFilter NOTIFY changed FINAL)
     Q_PROPERTY(bool busy READ busy NOTIFY changed FINAL)
     Q_PROPERTY(bool configured READ configured CONSTANT FINAL)
 public:
@@ -26,6 +33,13 @@ public:
     [[nodiscard]] QString detectionSummary() const { return detections_; }
     [[nodiscard]] bool busy() const noexcept { return exchange_.isActive(); }
     [[nodiscard]] bool configured() const noexcept;
+    [[nodiscard]] QList<int> eventHistogram() const;
+    [[nodiscard]] QList<int> activityCounts() const;
+    [[nodiscard]] QList<int> severityCounts() const;
+    [[nodiscard]] int activityFilter() const noexcept { return activity_filter_; }
+    [[nodiscard]] int severityFilter() const noexcept { return severity_filter_; }
+    void setActivityFilter(int filter);
+    void setSeverityFilter(int filter);
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void clear();
 Q_SIGNALS:
@@ -39,6 +53,9 @@ private:
     QTimer exchange_, expiry_;
     QString events_, alerts_, detections_;
     std::string event_session_;
+    std::optional<service::DashboardEvents> event_chart_;
+    std::optional<service::DashboardAlerts> alert_chart_;
+    int activity_filter_{}, severity_filter_{};
     bool reading_alerts_{};
 };
 } // namespace knetsentry::desktop

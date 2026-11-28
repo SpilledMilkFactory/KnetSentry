@@ -12,6 +12,12 @@ QByteArray requestId() { return QByteArray::number(QRandomGenerator::system()->g
 std::string_view view(const QByteArray& value) {
     return {value.constData(), static_cast<std::size_t>(value.size())};
 }
+template<std::size_t N>
+QList<int> counts(const std::array<std::size_t, N>& values) {
+    QList<int> result;
+    for (const auto value : values) { result.append(static_cast<int>(value)); }
+    return result;
+}
 } // namespace
 DashboardModel::DashboardModel(const QString& directory, QObject* parent)
     : QObject(parent), directory_(directory.toUtf8()) {
@@ -24,8 +30,37 @@ DashboardModel::DashboardModel(const QString& directory, QObject* parent)
     reset();
 }
 bool DashboardModel::configured() const noexcept { return !directory_.isEmpty() && ::geteuid() != 0; }
+QList<int> DashboardModel::eventHistogram() const {
+    return event_chart_ ? counts(event_chart_->outcomes) : QList<int>{};
+}
+QList<int> DashboardModel::activityCounts() const {
+    if (!event_chart_) { return {}; }
+    std::array<std::size_t, 4> values{};
+    for (std::size_t outcome = 0; outcome < event_chart_->activity.size(); ++outcome) {
+        if (activity_filter_ != 0 && static_cast<std::size_t>(activity_filter_ - 1) != outcome) { continue; }
+        for (std::size_t bin = 0; bin < values.size(); ++bin) {
+            values.at(bin) += event_chart_->activity.at(outcome).at(bin);
+        }
+    }
+    return counts(values);
+}
+QList<int> DashboardModel::severityCounts() const {
+    if (!alert_chart_) { return {}; }
+    return counts(severity_filter_ == 1 ? alert_chart_->active_severities : alert_chart_->severities);
+}
+void DashboardModel::setActivityFilter(int filter) {
+    if (!event_chart_ || filter < 0 || filter > 3 || activity_filter_ == filter) { return; }
+    activity_filter_ = filter;
+    Q_EMIT changed();
+}
+void DashboardModel::setSeverityFilter(int filter) {
+    if (!alert_chart_ || filter < 0 || filter > 1 || severity_filter_ == filter) { return; }
+    severity_filter_ = filter;
+    Q_EMIT changed();
+}
 void DashboardModel::reset() {
     exchange_.stop(); expiry_.stop(); client_.cancel(); event_session_.clear(); reading_alerts_ = false;
+    event_chart_.reset(); alert_chart_.reset(); activity_filter_ = severity_filter_ = 0;
     events_ = alerts_ = detections_ = configured() ? tr("Unavailable — no current stored snapshot. Refresh to request one.") :
         tr("Unavailable — explicit non-root manager IPC selection required.");
 }
@@ -58,6 +93,7 @@ void DashboardModel::advance() {
             const auto& result = *client_.events();
             if (const auto summary = service::summarize_events(result)) {
                 event_session_ = result.session;
+                event_chart_ = summary;
                 events_ = tr("%1 stored events on page; %2 failure outcomes. %3")
                     .arg(decimal(summary->count), decimal(summary->failures), result.page.more ? tr("More records exist.") : tr("End of returned scope."));
                 if (summary->count != 0) {
@@ -74,8 +110,10 @@ void DashboardModel::advance() {
         const auto& result = *client_.alerts();
         if (const auto summary = service::summarize_alerts(result)) {
             if (!event_session_.empty() && event_session_ != result.session) {
+                event_chart_.reset(); alert_chart_.reset(); activity_filter_ = severity_filter_ = 0;
                 events_ = alerts_ = detections_ = tr("Unavailable — manager instance changed during refresh.");
             } else {
+                alert_chart_ = summary;
                 const auto scope = result.more ? tr("More records exist.") : tr("End of returned development scope.");
                 alerts_ = tr("%1 active stored alerts on page (%2 open, %3 acknowledged); %4 resolved.\n%5 high/critical active. %6")
                     .arg(decimal(summary->open + summary->acknowledged), decimal(summary->open), decimal(summary->acknowledged),

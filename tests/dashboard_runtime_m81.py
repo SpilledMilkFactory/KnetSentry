@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2026 Chris Sutton
 # SPDX-License-Identifier: MIT
 """Rendered dashboard against an explicitly approved disposable M7.7 fixture."""
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -38,11 +39,16 @@ def main():
             result = invoke(desktop, '--ipc-dir', ipc, '--self-test-dashboard')
             require(result.returncode == 0 and b'M8.1 rendered stored summaries and navigation clearing: PASS' in result.stdout,
                     'rendered dashboard test')
+            require(b'M8.2 rendered chart values, local filters and clearing: PASS' in result.stdout,
+                    'rendered chart and filter test')
             require(database.read_bytes() == original and ledger.read_bytes() == initial, 'read-only evidence and ledger')
         finally:
             proc.terminate()
             proc.communicate(timeout=8)
         require(proc.returncode == 0, 'manager stop')
+        records = [json.loads(line) for line in (audit / 'service-audit.jsonl').read_text().splitlines()]
+        require(sum(row['event'] == 'events_authorized' for row in records) == 1 and
+                sum(row['event'] == 'alerts_authorized' for row in records) == 1, 'filters must not query stores')
         proc = start(manager, ['--ipc-dir', str(ipc)])
         try:
             ready(proc)
@@ -54,6 +60,7 @@ def main():
             proc.communicate(timeout=8)
         require(proc.returncode == 0, 'manager stop')
         print('M8.1 rendered dashboard, default denial and evidence invariance: PASS')
+        print('M8.2 rendered chart values, filters and clearing: PASS')
 
 
 if __name__ == '__main__':

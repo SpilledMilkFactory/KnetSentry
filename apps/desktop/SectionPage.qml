@@ -18,6 +18,11 @@ Kirigami.Page {
     readonly property string dashboardAlerts: dashboardAlertCard.description
     readonly property string dashboardDetections: dashboardDetectionCard.description
     readonly property alias dashboardRefreshButton: dashboardRefresh
+    readonly property string dashboardHistogramCounts: eventHistogram.countsText
+    readonly property string dashboardActivityCounts: activityChart.countsText
+    readonly property string dashboardSeverityCounts: severityChart.countsText
+    readonly property alias dashboardActivityFilter: activityFilterControl
+    readonly property alias dashboardSeverityFilter: severityFilterControl
     required property AlertModel alertModel
     required property EventExplorerModel eventModel
     readonly property int alertCount: alertList.count
@@ -404,6 +409,62 @@ Kirigami.Page {
                     text: qsTr("Refresh stored summaries")
                     enabled: page.sectionId === "dashboard" && page.dashboardModel.configured && !page.dashboardModel.busy
                     onClicked: page.dashboardModel.refresh()
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    text: qsTr("Stored security visualizations")
+                    font.pixelSize: tokens.sectionSize
+                    font.weight: Font.DemiBold
+                    Accessible.role: Accessible.Heading
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Counts from the same returned pages only; each bar has a fixed scale of 0–8 records. Filters affect only these charts, not the stores or other views.")
+                }
+                SnapshotBars {
+                    id: eventHistogram
+                    Layout.fillWidth: true
+                    heading: qsTr("Event histogram — outcome")
+                    labels: [qsTr("Unknown"), qsTr("Success"), qsTr("Failure")]
+                    values: page.dashboardModel.eventHistogram
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Activity by receiver age relative to the newest receiver timestamp on this page. Oldest bin is open-ended; these are counts, not rates or a continuous timeline.")
+                }
+                Controls.ComboBox {
+                    id: activityFilterControl
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Activity outcome filter")
+                    enabled: activityChart.available
+                    model: [qsTr("All outcomes"), qsTr("Unknown"), qsTr("Success"), qsTr("Failure")]
+                    currentIndex: page.dashboardModel.activityFilter
+                    onActivated: function(index) { page.dashboardModel.activityFilter = index }
+                }
+                SnapshotBars {
+                    id: activityChart
+                    Layout.fillWidth: true
+                    heading: qsTr("Receiver activity trend — older to newer")
+                    labels: [qsTr("3 s or more earlier"), qsTr("2 to <3 s earlier"), qsTr("1 to <2 s earlier"), qsTr("Less than 1 s earlier")]
+                    values: page.dashboardModel.activityCounts
+                }
+                Controls.ComboBox {
+                    id: severityFilterControl
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Alert lifecycle filter")
+                    enabled: severityChart.available
+                    model: [qsTr("All stored alerts"), qsTr("Active only (open and acknowledged)")]
+                    currentIndex: page.dashboardModel.severityFilter
+                    onActivated: function(index) { page.dashboardModel.severityFilter = index }
+                }
+                SnapshotBars {
+                    id: severityChart
+                    Layout.fillWidth: true
+                    heading: qsTr("Stored alert severity distribution")
+                    labels: [qsTr("Unspecified"), qsTr("Informational"), qsTr("Low"), qsTr("Medium"), qsTr("High"), qsTr("Critical")]
+                    values: page.dashboardModel.severityCounts
                 }
             }
 

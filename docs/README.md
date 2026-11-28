@@ -90,6 +90,7 @@ qualification targets, not measured results.
 - [M7.8 — Deterministic rule and alert regressions](development/DETECTION_RECOVERY_M78.md)
 - [M7.9 — MITRE ATT&CK® technique mappings](development/TECHNIQUE_MAPPINGS_M79.md)
 - [M8.1 — Comprehensive SOC dashboard foundation](development/SOC_DASHBOARD_M81.md)
+- [M8.2 — Interactive stored security visualizations](development/SECURITY_VISUALIZATIONS_M82.md)
 - [Benchmark Methodology and Acceptance Plan](development/BENCHMARK_PLAN.md)
 - [Benchmark Evidence Template](development/BENCHMARK_RESULT_TEMPLATE.md)
 - [M1.1 — Build and Source Architecture](development/BUILD_FOUNDATION.md)

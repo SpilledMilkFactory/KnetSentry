@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M7.9 — evidence-conscious technique mappings.**
+**Accepted baseline: M8.1 — bounded evidence-backed SOC dashboard foundation.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
 M4.8 and M5.1–M5.8 are merged (M5.5 offline foundation only). M5.9 local aggregate agent status in Dashboard and Assets is qualified and merged. Multi-endpoint authenticated status integration remains outstanding (#50).
@@ -13,14 +13,14 @@ Issue #46 operational network/manager integration remains outstanding.
 M6.1 bounded offline authenticated event ingestion is qualified and merged; operational and generic envelope integration (#51) remain outstanding.
 M6.2 typed OCSF-aligned normalization of the KSTD subset is qualified and merged.
 M6.3–M6.8 storage, integrity, search, quotas, explicit cleanup and opt-in manager-mediated stored event exploration foundations are qualified and merged. M6.9 composed failure-recovery regressions are qualified and merged. M6.10 independently approved split-storage foundation is qualified and merged, including actual mount replacement and distinct local filesystem tests. Persistent cross-boot approval and operational integration remain outstanding (#148).
-M7.1 bounded offline deterministic rule evaluation is qualified and merged. M7.2 versioned rule schema and validation are qualified and merged. M7.3 bounded offline authentication-pattern detection is qualified and merged. M7.4 offline Audit record-type detection foundation is qualified and merged; remaining #63 scope open. M7.5 caller-driven persistent scheduling foundation is qualified and merged; remaining #64 scope open. M7.6 persistent alert lifecycle foundation is qualified and merged; remaining #65 scope open. M7.7 opt-in same-user stored alert interface, exact linked evidence inspection and explicitly authorized acknowledgement are qualified and merged; remaining #66 scope open. M7.8 composed offline detection and alert regressions are qualified and merged. M7.9 versioned context-only technique mappings qualified and merged (#68). M8.1 read-only SOC dashboard foundation implemented; target qualification pending (#69 remains open for operational coverage). No operational detection or response authority is enabled.
+M7.1 bounded offline deterministic rule evaluation is qualified and merged. M7.2 versioned rule schema and validation are qualified and merged. M7.3 bounded offline authentication-pattern detection is qualified and merged. M7.4 offline Audit record-type detection foundation is qualified and merged; remaining #63 scope open. M7.5 caller-driven persistent scheduling foundation is qualified and merged; remaining #64 scope open. M7.6 persistent alert lifecycle foundation is qualified and merged; remaining #65 scope open. M7.7 opt-in same-user stored alert interface, exact linked evidence inspection and explicitly authorized acknowledgement are qualified and merged; remaining #66 scope open. M7.8 composed offline detection and alert regressions are qualified and merged. M7.9 versioned context-only technique mappings qualified and merged (#68). M8.1 read-only SOC dashboard foundation qualified and merged (#69 remains open for operational coverage). M8.2 bounded interactive stored visualizations implemented; target qualification pending (#70). No operational detection or response authority is enabled.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
 
 ## Available today
 
 | Area | Implemented behavior |
 | --- | --- |
-| Desktop | Seven Qt 6/Kirigami sections; global health indicator and heartbeat; owned-manager Play/Stop and cleanup; Dashboard health, read-only Settings scope and Assets enrollment roster; explicit local agent status in Dashboard/Assets; bounded stored event exploration through an explicitly selected foreground manager; opt-in stored alert inspection and acknowledgement; M8.1 candidate adds bounded operator-requested stored summaries and registry counts |
+| Desktop | Seven Qt 6/Kirigami sections; global health indicator and heartbeat; owned-manager Play/Stop and cleanup; Dashboard health, read-only Settings scope and Assets enrollment roster; explicit local agent status in Dashboard/Assets; bounded stored event exploration through an explicitly selected foreground manager; opt-in stored alert inspection and acknowledgement; M8.1 bounded operator-requested stored summaries and registry counts; M8.2 candidate adds page-local charts and filters |
 | Manager | Non-root lifecycle, strict lifecycle-only v1 configuration, opt-in same-UID/GID authenticated Unix IPC (`STATUS`, `HEALTH`, `AGENTS`, opt-in audited `EVENTS` and development `ALERTS`), bounded health and protected audit logging |
 | Deployment | Explicit development systemd deployment under a dedicated non-login identity with confinement; ordinary desktop IPC remains separate |
 | Network security | Default-deny preflight, strict IPv4/IPv6 prefixes and interface binding, Linux effective/FIB route checks, sticky authorization invalidation, optional dedicated-UID deny-all nftables profile |
@@ -45,6 +45,8 @@ rules. Monitoring is unavailable, and no operational remote telemetry transport,
 incident workflow, public feed client or AI inference is operational.
 
 ## Accepted verification snapshot
+
+M8.1 maintainer acceptance (2026-11-28 UTC, corrected working tree based on `7b91261`): 157 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED; 562 configured CTests, 72 structural verifiers, 180 repeated Release and 90 repeated sanitized executions, 15 additional Qt health repetitions, seven GUI/IPC regression contracts and installed manager equality. Nine hosted checks on `410dca6` passed. Manual synthetic dashboard verification passed after using the correct IPC directory; screenshot confirmed eight events, eight active alerts, one represented rule and explicit unavailable monitoring. Maintainer reported remaining manual checks and merge successful. Remaining #69 scope stays open.
 
 M7.7 maintainer acceptance (2026-11-27 UTC, applied working tree based on `804035d`): 151 PASS, 0 FAIL, 0 SKIPPED, 0 BLOCKED; 537 configured CTests, 69 structural verifiers, focused Release and analysis alert/Explorer 6/6 and composed group 15/15, 150 repeated Release and 75 repeated sanitized executions, clean Release/analysis/Clazy diagnostic inspection, installed manager equality, original evidence database unchanged across acknowledgement and restart, and nine hosted checks (`cc46b58`). Manual GUI review and merge were reported successful. Remaining #66 scope stays open.
 
@@ -311,7 +313,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
 | M5–M7 — functional SIEM foundations | M7.9 mapping accepted; #63/#64/#65/#66 remaining scope open; persistent volume approval and operational integration outstanding |
-| M8–M12 — advanced security operations | M8.1 dashboard foundation implemented, target qualification pending; later scope planned |
+| M8–M12 — advanced security operations | M8.1 dashboard foundation accepted; M8.2 bounded visualizations candidate, target qualification pending; later scope planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |
 
