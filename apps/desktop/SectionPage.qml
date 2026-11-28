@@ -18,9 +18,34 @@ Kirigami.Page {
     readonly property alias keyboardContent: scroller
     readonly property alias eventKeyboardList: eventList
     readonly property alias alertKeyboardList: alertList
+    readonly property alias alertPageIndicator: alertPageIndicator
+    readonly property alias notificationToggle: notificationToggle
+    readonly property alias attentionToggle: attentionToggle
+    readonly property alias clearHistoryControl: clearHistoryButton
+    readonly property string notificationHistoryText: historyLabel.text
     readonly property alias timelineKeyboardList: timelineList
     readonly property alias textScaleControl: scaleControl
     font.pixelSize: Math.round(14 * textScale)
+
+    // Keep the system palette when readable. A fully opaque matched
+    // surface and a black/white fallback protect text from poor theme pairs.
+    function linearChannel(channel: real): real {
+        return channel <= 0.04045 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4)
+    }
+    function luminance(value: color): real {
+        return 0.2126 * linearChannel(value.r) + 0.7152 * linearChannel(value.g) + 0.0722 * linearChannel(value.b)
+    }
+    function readableRecordText(preferred: color, surface: color): color {
+        const backgroundLight = luminance(surface)
+        const textLight = luminance(preferred)
+        const ratio = (Math.max(backgroundLight, textLight) + 0.05) / (Math.min(backgroundLight, textLight) + 0.05)
+        if (preferred.a === 1 && ratio >= 4.5)
+            return preferred
+        return backgroundLight >= 0.179 ? Qt.rgba(0, 0, 0, 1) : Qt.rgba(1, 1, 1, 1)
+    }
+    function opaqueRecordSurface(preferred: color): color {
+        return Qt.rgba(preferred.r, preferred.g, preferred.b, 1)
+    }
 
     function focusPrimary(): void {
         scroller.forceActiveFocus(Qt.TabFocusReason)
@@ -342,6 +367,8 @@ Kirigami.Page {
                     Controls.ScrollBar.vertical: Controls.ScrollBar {}
                     delegate: Controls.ItemDelegate {
                         id: timelineRow
+                        readonly property color recordForeground: page.readableRecordText(highlighted ? palette.highlightedText : palette.windowText, recordBackground)
+                        readonly property color recordBackground: page.opaqueRecordSurface(highlighted ? palette.highlight : palette.window)
                         required property int index
                         required property string modelData
                         width: timelineList.width
@@ -349,8 +376,14 @@ Kirigami.Page {
                         Accessible.name: timelineRow.modelData
                         highlighted: timelineList.currentIndex === timelineRow.index && timelineList.activeFocus
                         enabled: !page.timelineModel.busy
+                        // Use a matched palette pair, independent of the style's delegate background.
+                        background: Rectangle {
+                            color: timelineRow.recordBackground
+                            border.width: timelineRow.hovered ? 1 : 0
+                            border.color: timelineRow.palette.highlight
+                        }
                         contentItem: Controls.Label {
-                            color: timelineRow.highlighted ? timelineRow.palette.highlightedText : timelineRow.palette.text
+                            color: timelineRow.recordForeground
                             text: timelineRow.modelData
                             textFormat: Text.PlainText
                             wrapMode: Text.WrapAnywhere
@@ -506,6 +539,15 @@ Kirigami.Page {
                     textFormat: Text.PlainText
                     wrapMode: Text.WordWrap
                 }
+                Controls.Label {
+                    id: alertPageIndicator
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: page.alertModel.activePageCount < 0
+                        ? qsTr("Active stored alerts on current page: unavailable")
+                        : qsTr("Active stored alerts on current page: %1 (not a global total or live monitoring)").arg(page.alertModel.activePageCount)
+                    Accessible.name: text
+                }
                 ListView {
                     id: alertList
                     enabled: !page.alertModel.busy && count > 0
@@ -542,6 +584,8 @@ Kirigami.Page {
                     Controls.ScrollBar.vertical: Controls.ScrollBar {}
                     delegate: Controls.ItemDelegate {
                         id: alertRow
+                        readonly property color recordForeground: page.readableRecordText(highlighted ? palette.highlightedText : palette.windowText, recordBackground)
+                        readonly property color recordBackground: page.opaqueRecordSurface(highlighted ? palette.highlight : palette.window)
                         required property int index
                         required property string alertLabel
                         width: alertList.width
@@ -549,8 +593,14 @@ Kirigami.Page {
                         Accessible.name: alertRow.alertLabel
                         highlighted: alertList.currentIndex === alertRow.index && alertList.activeFocus
                         enabled: !page.alertModel.busy
+                        // Use a matched palette pair, independent of the style's delegate background.
+                        background: Rectangle {
+                            color: alertRow.recordBackground
+                            border.width: alertRow.hovered ? 1 : 0
+                            border.color: alertRow.palette.highlight
+                        }
                         contentItem: Controls.Label {
-                            color: alertRow.highlighted ? alertRow.palette.highlightedText : alertRow.palette.text
+                            color: alertRow.recordForeground
                             text: alertRow.alertLabel
                             textFormat: Text.PlainText
                             wrapMode: Text.WrapAnywhere
@@ -760,6 +810,8 @@ Kirigami.Page {
                     Controls.ScrollBar.vertical: Controls.ScrollBar {}
                     delegate: Controls.ItemDelegate {
                         id: eventRow
+                        readonly property color recordForeground: page.readableRecordText(highlighted ? palette.highlightedText : palette.windowText, recordBackground)
+                        readonly property color recordBackground: page.opaqueRecordSurface(highlighted ? palette.highlight : palette.window)
                         required property int index
                         required property string eventLabel
                         width: eventList.width
@@ -767,8 +819,14 @@ Kirigami.Page {
                         Accessible.name: eventRow.eventLabel
                         highlighted: eventList.currentIndex === eventRow.index && eventList.activeFocus
                         text: eventRow.eventLabel
+                        // Use a matched palette pair, independent of the style's delegate background.
+                        background: Rectangle {
+                            color: eventRow.recordBackground
+                            border.width: eventRow.hovered ? 1 : 0
+                            border.color: eventRow.palette.highlight
+                        }
                         contentItem: Controls.Label {
-                            color: eventRow.highlighted ? eventRow.palette.highlightedText : eventRow.palette.text
+                            color: eventRow.recordForeground
                             text: eventRow.eventLabel
                             textFormat: Text.PlainText
                             wrapMode: Text.WrapAnywhere
@@ -1287,6 +1345,49 @@ Kirigami.Page {
                 visible: page.sectionId === "settings"
                 Layout.fillWidth: true
                 spacing: tokens.spaceS
+                Controls.Label {
+                    text: qsTr("Notifications — current session")
+                    font.pixelSize: tokens.sectionSize
+                    font.weight: Font.DemiBold
+                    Accessible.role: Accessible.Heading
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                }
+                Controls.CheckBox {
+                    id: notificationToggle
+                    text: qsTr("Keep session notification history")
+                    Accessible.name: text
+                    checked: page.alertModel.notificationsEnabled
+                    onToggled: page.alertModel.notificationsEnabled = checked
+                    Layout.fillWidth: true
+                }
+                Controls.CheckBox {
+                    id: attentionToggle
+                    text: qsTr("Allow desktop window attention")
+                    Accessible.name: text
+                    checked: page.alertModel.attentionEnabled
+                    onToggled: page.alertModel.attentionEnabled = checked
+                    Layout.fillWidth: true
+                }
+                Controls.Label {
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: qsTr("Both are off by default and reset at restart. Window attention is optional and platform-dependent; no desktop notification content is sent. History holds at most eight generic notices, not alert results or evidence. Disabling history clears it.")
+                }
+                Controls.Label {
+                    id: historyLabel
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    textFormat: Text.PlainText
+                    text: page.alertModel.notificationCount > 0 ? page.alertModel.notificationHistoryText : qsTr("No retained notices.")
+                    Accessible.name: text
+                }
+                Controls.Button {
+                    id: clearHistoryButton
+                    text: qsTr("Clear notification history")
+                    enabled: page.alertModel.notificationCount > 0
+                    onClicked: page.alertModel.clearNotificationHistory()
+                }
                 Controls.Label {
                     text: qsTr("Accessibility — text size")
                     font.pixelSize: tokens.sectionSize

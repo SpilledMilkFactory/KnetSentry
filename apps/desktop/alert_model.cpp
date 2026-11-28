@@ -64,8 +64,32 @@ void AlertModel::request(const service::AlertQuery& q) {
     if (busy_) { exchange_.start(); } else { discard(); }
     Q_EMIT changed();
 }
+int AlertModel::activePageCount() const noexcept {
+    if (busy_ || !expiry_.isActive()) { return -1; }
+    int count = 0;
+    for (const auto& row : rows_) {
+        if (row.status == 0 || row.status == 1) { ++count; }
+    }
+    return count;
+}
+void AlertModel::setNotificationsEnabled(bool enabled) {
+    if (notifications_enabled_ == enabled) { return; }
+    notifications_enabled_ = enabled;
+    if (!enabled) { notification_history_.clear(); }
+    Q_EMIT notificationsChanged();
+}
+void AlertModel::setAttentionEnabled(bool enabled) {
+    if (attention_enabled_ == enabled) { return; }
+    attention_enabled_ = enabled;
+    Q_EMIT notificationsChanged();
+}
+void AlertModel::clearNotificationHistory() {
+    notification_history_.clear();
+    Q_EMIT notificationsChanged();
+}
 void AlertModel::advance() {
     client_.advance(); if (client_.state() == service::HealthQueryState::Pending) { return; }
+    const bool pageRequest = request_.operation == service::AlertQuery::Operation::List;
     exchange_.stop(); busy_ = false;
     const auto result = client_.alerts(); client_.cancel();
     if (!result || result->result != "OK") {
@@ -84,6 +108,16 @@ void AlertModel::advance() {
         expiry_.start();
     }
     Q_EMIT changed();
+    if (pageRequest) {
+        // Do not retain result, count, identity, timestamp, source or severity.
+        // A completed request is not proof of authorization or a new alert.
+        if (notifications_enabled_) {
+            if (notification_history_.size() >= 8) { notification_history_.removeLast(); }
+            notification_history_.prepend(tr("Stored alert page request ended. Consult Alerts for current status."));
+            Q_EMIT notificationsChanged();
+        }
+        Q_EMIT pageRequestFinished();
+    }
 }
 void AlertModel::select(int row) {
     if (busy_) { return; }

@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M8.7 — Keyboard navigation and accessibility
 
-Issue #75, implementation candidate pending Ubuntu 26.04 target qualification.
+Issue #75, implemented keyboard accessibility foundation accepted on Ubuntu 26.04.
 The desktop is a bounded read-only inspection and explicitly authorized alert
 interface, not an operational SIEM. Accessibility must not change authority.
 
@@ -111,3 +111,14 @@ remain mandatory. The full local runner now expects 177 successful gates with
 `--full --gui-review` (176 without the visual fixture). Configured CTest counts
 are unchanged; the existing M2.7 source-policy regression now includes preflight
 negative controls. Final target and visual qualification remain pending.
+
+## Final qualification
+
+The maintainer reloaded systemd after reviewing the installed files and the
+read-only prerequisite then passed. Revision `6efe70f` passed 177 consolidated
+gates, all 584 configured CTests, strict QML, installed systemd confinement
+and the disposable visual fixture. Nine hosted checks, manual keyboard
+operation and merge were reported. Unselected investigation rows were unreadable
+in light appearance during visual review; this remains a known limitation of
+M8.7 and is corrected in the [M8.8 candidate](NOTIFICATIONS_M88.md), pending
+light/dark review. Broader assistive-technology qualification remains open.

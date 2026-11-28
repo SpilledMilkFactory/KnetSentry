@@ -51,6 +51,10 @@ def main():
         try:
             ready(inactive)
             require(exchange(LIST) == b'', 'default access')
+            if desktop:
+                denied = invoke(desktop, '--ipc-dir', ipc, '--self-test-notifications', 'denied')
+                require(denied.returncode == 0 and b'M8.8 notification privacy, bounded history and current-page indicator: PASS' in denied.stdout,
+                        'M8.8 default-denied notifications')
         finally:
             stop(inactive)
         proc = launch('read', private(base/'audit-read'))
@@ -89,6 +93,8 @@ def main():
                 require(result.returncode == 0 and b'M7.7 rendered alert interface: PASS' in result.stdout, 'rendered alert test')
                 require(b'M8.7 alert keyboard inspection: PASS' in result.stdout, 'M8.7 keyboard inspection')
                 print('M8.7 alert keyboard inspection: PASS')
+                require(b'M8.8 alert record palette pairing: PASS' in result.stdout, 'M8.8 record palette')
+                print('M8.8 alert record palette pairing: PASS')
                 require(b'M8.6 rendered alert presets, saved views and cross-view clearing: PASS' in result.stdout, 'M8.6 rendered controls')
                 require(query_count() - before == 5, 'M8.6 unexpected authorized query count')
                 print('M8.6 rendered alert presets, saved views and cross-view clearing: PASS')
@@ -98,10 +104,25 @@ def main():
         entries = [json.loads(line) for line in (audit/'service-audit.jsonl').read_text().splitlines()]
         require(any(row['event'] == 'alert_acknowledge_authorized' for row in entries) and any(row['event'] == 'alert_acknowledged' for row in entries), 'audit')
         require('ssh.service' not in (audit/'service-audit.jsonl').read_text(), 'audit telemetry leak')
-        proc = launch('read', private(base/'audit-restart'))
+        restart_audit = private(base/'audit-restart')
+        proc = launch('read', restart_audit)
         try:
             ready(proc)
             require(exchange(LIST).splitlines()[1].split()[2:5] == [b'2', b'3', b'1'], 'restart persistence')
+            if desktop:
+                saved_ledger = ledger.read_bytes()
+                def counts():
+                    records = [json.loads(line)['event'] for line in (restart_audit/'service-audit.jsonl').read_text().splitlines()]
+                    return records.count('alerts_authorized'), records.count('alert_acknowledge_authorized')
+                before = counts()
+                result = invoke(desktop, '--ipc-dir', ipc, '--self-test-notifications', 'read')
+                require(result.returncode == 0 and b'M8.8 notification privacy, bounded history and current-page indicator: PASS' in result.stdout,
+                        'M8.8 notification integration')
+                after = counts()
+                require(after == (before[0] + 11, before[1]), 'M8.8 explicit read count or unexpected acknowledgement')
+                require(ledger.read_bytes() == saved_ledger and (store/'events-m64.sqlite3').read_bytes() == original,
+                        'M8.8 evidence/ledger invariance')
+                print('M8.8 notification privacy, bounded history and current-page indicator: PASS')
         finally:
             stop(proc)
         print('M7.7 manager IPC, default denial, read-only policy, audit, revision and restart: PASS')

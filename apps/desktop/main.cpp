@@ -10,6 +10,7 @@
 #include "daemon_control.hpp"
 #include "knetsentry/core/diagnostics.hpp"
 
+#include <QColor>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
@@ -29,6 +30,8 @@
 #include <QStringList>
 #include <QVariant>
 
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <string_view>
 
@@ -119,10 +122,39 @@ bool focus_control(QObject* control) {
     return item->hasActiveFocus();
 }
 
+// Verify the actual visible delegate, including its explicit background, in
+// both cursor states. Platform theme sampling is also required on the host.
+double relative_luminance(const QColor& color) {
+    const auto linear = [](double channel) {
+        return channel <= 0.04045 ? channel / 12.92 : std::pow((channel + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * linear(color.redF()) + 0.7152 * linear(color.greenF()) + 0.0722 * linear(color.blueF());
+}
+bool record_palette_matches(QObject* list, bool highlighted) {
+    auto* row = list->property("currentItem").value<QObject*>();
+    if (!row || row->property("highlighted").toBool() != highlighted) { return false; }
+    const auto* label = row->property("contentItem").value<QObject*>();
+    const auto* surface = row->property("background").value<QObject*>();
+    if (!label || !surface) { return false; }
+    const auto foreground = label->property("color").value<QColor>();
+    const auto background = surface->property("color").value<QColor>();
+    const double foregroundLight = relative_luminance(foreground);
+    const double backgroundLight = relative_luminance(background);
+    const double contrast = (std::max(foregroundLight, backgroundLight) + 0.05) /
+                            (std::min(foregroundLight, backgroundLight) + 0.05);
+    return foreground.isValid() && background.isValid() && foreground.alpha() == 255 && background.alpha() == 255 &&
+        contrast >= 4.5 &&
+        foreground == row->property("recordForeground").value<QColor>() &&
+        background == row->property("recordBackground").value<QColor>();
+}
 bool keyboard_inspect(QQuickWindow& window, const QObject& root, const char* name, int index) {
     auto* list = search_control(root, name);
     if (!list || index < 0 || index >= list->property("count").toInt() ||
         !focus_control(list) || !list->setProperty("currentIndex", 0)) { return false; }
+    QCoreApplication::processEvents();
+    if (!record_palette_matches(list, true) ||
+        !focus_control(root.property("navigationFocusControl").value<QObject*>()) ||
+        !record_palette_matches(list, false) || !focus_control(list)) { return false; }
     send_key(window, Qt::Key_Up);
     if (list->property("currentIndex").toInt() != 0) { return false; }
     if (list->property("count").toInt() > 1) {
@@ -211,6 +243,9 @@ int main(int argc, char *argv[]) {
     const QCommandLineOption alerts_smoke_test(QStringLiteral("self-test-alerts"),
         QStringLiteral("Verify rendered alert interface against a disposable M7.7 synthetic ledger."));
     parser.addOption(alerts_smoke_test);
+    const QCommandLineOption notifications_test(QStringLiteral("self-test-notifications"),
+        QStringLiteral("Verify privacy-minimized notices against a disposable fixture."), QStringLiteral("mode"));
+    parser.addOption(notifications_test);
     const QCommandLineOption dashboard_smoke_test(QStringLiteral("self-test-dashboard"),
         QStringLiteral("Verify rendered read-only dashboard against a disposable synthetic store."));
     parser.addOption(dashboard_smoke_test);
@@ -293,6 +328,11 @@ int main(int argc, char *argv[]) {
         std::cerr << "KnetSentry: unexpected QML root; Kirigami startup not qualified.\n";
         return 1;
     }
+    // No desktop notification payload, service, or history integration. The
+    // operator may opt into a bounded platform window-attention hint only.
+    QObject::connect(&alerts, &knetsentry::desktop::AlertModel::pageRequestFinished, window, [&alerts, window] {
+        if (alerts.attentionEnabled() && !window->isActive()) { window->alert(3000); }
+    });
     publish(knetsentry::core::DiagnosticLevel::Info,
             knetsentry::core::DiagnosticEvent::GuiReady,
             knetsentry::core::DiagnosticOutcome::Success);
@@ -505,7 +545,7 @@ int main(int argc, char *argv[]) {
         deadline.start(12000); check.start(25);
         const int result = loop.exec();
         if (result == 0) {
-            if (mode == QStringLiteral("read")) { std::cout << "M8.7 timeline keyboard inspection: PASS\n"; }
+            if (mode == QStringLiteral("read")) { std::cout << "M8.7 timeline keyboard inspection: PASS\nM8.8 timeline record palette pairing: PASS\n"; }
             std::cout << "M8.4 rendered timeline and evidence lifecycle: PASS\n";
         }
         return result;
@@ -661,7 +701,7 @@ int main(int argc, char *argv[]) {
             } else {
                 if (count != 0 || events.more() || !root->property("currentEventStatus").toString().startsWith(QStringLiteral("No matching stored events")) ||
                     !root->setProperty("navigationRequest", QStringLiteral("dashboard")) || events.rowCount() != 0 || !events.detail().isEmpty()) { loop.exit(1); return; }
-                std::cout << "M8.7 event keyboard inspection: PASS\n";
+                std::cout << "M8.7 event keyboard inspection: PASS\nM8.8 event record palette pairing: PASS\n";
                 std::cout << "M8.6 rendered event presets, saved views and cross-view clearing: PASS\n";
                 std::cout << "M6.8 rendered event explorer: PASS\n";
                 loop.exit(0);
@@ -669,6 +709,77 @@ int main(int argc, char *argv[]) {
         });
         check.start(50); deadline.start(10000);
         return loop.exec();
+    }
+    if (parser.isSet(notifications_test)) {
+        const auto mode = parser.value(notifications_test);
+        if (!parser.isSet(QStringLiteral("ipc-dir")) ||
+            (mode != QStringLiteral("read") && mode != QStringLiteral("denied"))) { return 1; }
+        const bool authorized = mode == QStringLiteral("read");
+        QObject* root = engine.rootObjects().constFirst();
+        auto navigate = [&](const QString& section) {
+            return root->setProperty("navigationRequest", section) && root->property("activeSection").toString() == section;
+        };
+        auto toggle = [&](const char* name, bool checked) {
+            auto* item = search_control(*root, name);
+            return item && item->setProperty("checked", checked) && QMetaObject::invokeMethod(item, "toggled");
+        };
+        auto refresh = [&] { return click_search_control(*root, "alertRefreshButton"); };
+        if (alerts.notificationsEnabled() || alerts.attentionEnabled() || alerts.notificationCount() != 0 ||
+            !navigate(QStringLiteral("settings")) || !toggle("attentionToggle", true) || !alerts.attentionEnabled() ||
+            !toggle("attentionToggle", false) || alerts.attentionEnabled() ||
+            !navigate(QStringLiteral("alerts")) || alerts.activePageCount() != -1 || !refresh()) { return 1; }
+        QEventLoop loop;
+        QTimer check, deadline;
+        int completed = 0;
+        const int retainedRequests = authorized ? 9 : 1;
+        deadline.setSingleShot(true);
+        QObject::connect(&deadline, &QTimer::timeout, &loop, [&loop] { loop.exit(1); });
+        QObject::connect(&check, &QTimer::timeout, &loop, [&] {
+            if (alerts.busy()) { return; }
+            const auto* indicator = search_control(*root, "alertPageIndicator");
+            const int expected = authorized ? 8 : -1;
+            const auto prefix = authorized ? QStringLiteral("Active stored alerts on current page: 8")
+                                           : QStringLiteral("Active stored alerts on current page: unavailable");
+            if (!indicator || alerts.activePageCount() != expected ||
+                !indicator->property("text").toString().startsWith(prefix)) { loop.exit(1); return; }
+            if (completed == 0) {
+                if (alerts.notificationCount() != 0 || !navigate(QStringLiteral("settings")) ||
+                    !toggle("notificationToggle", true) || !alerts.notificationsEnabled() ||
+                    !navigate(QStringLiteral("alerts")) || alerts.activePageCount() != -1 || !refresh()) { loop.exit(1); return; }
+                ++completed; return;
+            }
+            const auto count = completed < 8 ? completed : 8;
+            const auto notices = alerts.notificationHistoryText().split(QLatin1Char('\n'));
+            if (alerts.notificationCount() != count || notices.size() != count) { loop.exit(1); return; }
+            for (const auto& notice : notices) {
+                if (notice != QStringLiteral("Stored alert page request ended. Consult Alerts for current status.")) { loop.exit(1); return; }
+            }
+            if (completed < retainedRequests) {
+                if (!refresh()) { loop.exit(1); return; }
+                ++completed; return;
+            }
+            if (completed == retainedRequests) {
+                if (!navigate(QStringLiteral("settings")) || alerts.activePageCount() != -1 ||
+                    !root->property("currentSectionPage").value<QObject*>() ||
+                    root->property("currentSectionPage").value<QObject*>()->property("notificationHistoryText").toString() != alerts.notificationHistoryText() ||
+                    !click_search_control(*root, "clearHistoryControl") || alerts.notificationCount() != 0 ||
+                    !navigate(QStringLiteral("alerts")) || !refresh()) { loop.exit(1); return; }
+                // After clearing, the next request should produce exactly one notice.
+                completed = -1; return;
+            }
+            loop.exit(1);
+        });
+        // Finish separately after the clear-and-refresh phase, before the
+        // repeating check can interpret it as a normal accumulated entry.
+        QObject::connect(&alerts, &knetsentry::desktop::AlertModel::pageRequestFinished, &loop, [&] {
+            if (completed != -1) { return; }
+            if (alerts.notificationCount() != 1 || !navigate(QStringLiteral("settings")) ||
+                !toggle("notificationToggle", false) || alerts.notificationsEnabled() ||
+                alerts.notificationCount() != 0 || alerts.activePageCount() != -1) { loop.exit(1); return; }
+            std::cout << "M8.8 notification privacy, bounded history and current-page indicator: PASS\n";
+            loop.exit(0);
+        });
+        check.start(25); deadline.start(12000); return loop.exec();
     }
     if (parser.isSet(alerts_smoke_test)) {
         if (!parser.isSet(QStringLiteral("ipc-dir"))) { return 1; }
@@ -687,6 +798,7 @@ int main(int argc, char *argv[]) {
             !apply_search_preset(*root, "alertPresetControl", 0)) { return 1; }
         alerts.search(6);
         if (alerts.busy() || alerts.rowCount() != 0 || !alerts.status().startsWith(QStringLiteral("Invalid"))) { return 1; }
+        alerts.setNotificationsEnabled(true);
         QObject* refresh = root->property("currentAlertRefreshButton").value<QObject*>();
         QObject* ack = root->property("currentAlertAckButton").value<QObject*>();
         if (!refresh || !ack || !QMetaObject::invokeMethod(refresh,"clicked")) { return 1; }
@@ -695,15 +807,15 @@ int main(int argc, char *argv[]) {
         QObject::connect(&check,&QTimer::timeout,&loop,[&] {
             if (alerts.busy()) { return; }
             if (stage == 0) {
-                if (root->property("currentAlertCount").toInt() != 8 || !alerts.more()) { loop.exit(1); return; }
+                if (root->property("currentAlertCount").toInt() != 8 || !alerts.more() || alerts.notificationCount() != 1 || alerts.activePageCount() != 8) { loop.exit(1); return; }
                 if (!keyboard_inspect(*window, *root, "alertKeyboardList", 1)) { loop.exit(1); return; } // first alert already acknowledged
                 if (!root->property("currentAlertDetail").toString().contains(QStringLiteral("Alert 1/3")) || !alerts.canAcknowledge()) { loop.exit(1); return; }
                 alerts.inspectEvidence(0); ++stage;
             } else if (stage == 1) {
-                if (!root->property("currentAlertEvidence").toString().contains(QStringLiteral("Verified stored evidence #2")) || !QMetaObject::invokeMethod(ack,"clicked")) { loop.exit(1); return; }
+                if (alerts.notificationCount() != 1 || !root->property("currentAlertEvidence").toString().contains(QStringLiteral("Verified stored evidence #2")) || !QMetaObject::invokeMethod(ack,"clicked")) { loop.exit(1); return; }
                 ++stage;
             } else if (stage == 2) {
-                if (!alerts.status().startsWith(QStringLiteral("Acknowledgement committed"))) { loop.exit(1); return; }
+                if (alerts.notificationCount() != 1 || alerts.activePageCount() != -1 || !alerts.status().startsWith(QStringLiteral("Acknowledgement committed"))) { loop.exit(1); return; }
                 if (!click_search_control(*root, "alertRestoreControl") ||
                     !search_index_matches(*root, "alertSeverityControl", 4) ||
                     !click_search_control(*root, "alertForgetControl") || alerts.busy() || alerts.rowCount() != 0 ||
@@ -711,10 +823,10 @@ int main(int argc, char *argv[]) {
                 ++stage;
             } else if (stage == 3) {
                 alerts.select(1);
-                if (alerts.rowCount() != 8 || alerts.canAcknowledge() || !alerts.detail().contains(QStringLiteral("Acknowledged"))) { loop.exit(1); return; }
+                if (alerts.notificationCount() != 2 || alerts.rowCount() != 8 || alerts.canAcknowledge() || !alerts.detail().contains(QStringLiteral("Acknowledged"))) { loop.exit(1); return; }
                 alerts.next(); ++stage;
             } else if (stage == 4) {
-                if (alerts.rowCount() != 3 || alerts.more() || !alerts.status().contains(QStringLiteral("End of matching results."))) { loop.exit(1); return; }
+                if (alerts.notificationCount() != 3 || alerts.rowCount() != 3 || alerts.more() || !alerts.status().contains(QStringLiteral("End of matching results."))) { loop.exit(1); return; }
                 alerts.select(0);
                 if (alerts.detail().isEmpty() || !click_search_control(*root, "searchEventsRoute") ||
                     root->property("activeSection").toString() != QStringLiteral("events") ||
@@ -725,8 +837,8 @@ int main(int argc, char *argv[]) {
                     !currentRefresh || !QMetaObject::invokeMethod(currentRefresh, "clicked")) { loop.exit(1); return; }
                 ++stage;
             } else {
-                if (alerts.rowCount() != 0 || !alerts.status().startsWith(QStringLiteral("No matching")) || !root->setProperty("navigationRequest",QStringLiteral("dashboard")) || alerts.rowCount() != 0 || !alerts.detail().isEmpty()) { loop.exit(1); return; }
-                std::cout << "M8.7 alert keyboard inspection: PASS\n";
+                if (alerts.notificationCount() != 4 || alerts.activePageCount() != 0 || alerts.rowCount() != 0 || !alerts.status().startsWith(QStringLiteral("No matching")) || !root->setProperty("navigationRequest",QStringLiteral("dashboard")) || alerts.rowCount() != 0 || !alerts.detail().isEmpty()) { loop.exit(1); return; }
+                std::cout << "M8.7 alert keyboard inspection: PASS\nM8.8 alert record palette pairing: PASS\n";
                 std::cout << "M8.6 rendered alert presets, saved views and cross-view clearing: PASS\n";
                 std::cout << "M7.7 rendered alert interface: PASS\n"; loop.exit(0);
             }

@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns accepted; M7.4 Audit detection foundation accepted (#63 remains open); M7.5 scheduling foundation accepted (#64 remains open); M7.6 alert ledger accepted (#65 remains open); M7.7 alert interface foundation accepted (#66 remains open); M7.8 regression accepted; M7.9 mapping accepted (#68); M8.1 dashboard foundation accepted (#69 remaining scope); M8.2 visualizations accepted (#70 remaining scope); M8.3 workspace accepted (#71 remaining scope); M8.4 timeline accepted (#72 remaining scope); M8.5 motion and feedback accepted (#73 remaining scope); M8.6 search and filtering accepted (#74 remaining scope); M8.7 keyboard accessibility qualification pending (#75); issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns accepted; M7.4 Audit detection foundation accepted (#63 remains open); M7.5 scheduling foundation accepted (#64 remains open); M7.6 alert ledger accepted (#65 remains open); M7.7 alert interface foundation accepted (#66 remains open); M7.8 regression accepted; M7.9 mapping accepted (#68); M8.1 dashboard foundation accepted (#69 remaining scope); M8.2 visualizations accepted (#70 remaining scope); M8.3 workspace accepted (#71 remaining scope); M8.4 timeline accepted (#72 remaining scope); M8.5 motion and feedback accepted (#73 remaining scope); M8.6 search and filtering accepted (#74 remaining scope); M8.7 keyboard accessibility accepted (#75 remaining scope); M8.8 notifications candidate (#76); issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
 CTest inventories are 90 Release/Debug/Clazy/analysis, 79 full ASan/UBSan,
 72 core-only and 73 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
@@ -494,3 +494,15 @@ manual keyboard-only use and platform assistive-technology review remain
 separate. The local-only consolidated runner additionally checks exact suite
 counts, repeated regressions, compiler diagnostics, native GUI independence
 and installed manager equality without requiring repeated terminal commands.
+
+M8.7 final qualification: 177 consolidated gates and all 584 configured CTests
+passed; manual keyboard review and hosted checks reported. The reported
+light-theme record contrast defect is tracked in M8.8.
+
+### M8.8 notifications and alert presentation
+
+See [M8.8](NOTIFICATIONS_M88.md). Existing rendered evidence regressions exercise
+paired row colors, generic bounded history, default denial and authorization
+audit counts. The full local runner expects 178 gates with graphical review,
+79 structural verifiers and the unchanged 584 configured CTests. Actual light
+and dark appearance and optional desktop attention remain manual checks.

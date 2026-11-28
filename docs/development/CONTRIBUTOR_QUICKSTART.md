@@ -555,3 +555,15 @@ qualification early; see [M2.7](SYSTEMD_SERVICE_M27.md) for the approved host
 preconditions. The runner does not modify existing service state to satisfy this
 check. The mandatory live verifier repeats the preflight and retains all
 confinement checks. The expected full gate count increases by one.
+
+### M8.8 notifications and alert presentation
+
+See [M8.8](NOTIFICATIONS_M88.md). Use the maintained local-only runner with
+`--full --gui-review` for all automated checks and the disposable graphical
+review. Notification history and window attention must start disabled; opt
+in, inspect only generic request notices and clear/disable them. Confirm the
+current-page alert indicator is not a global total. Inspect unselected and
+focused rows under the system's light and dark appearances. The fixture keeps
+a private writable XDG configuration and adds the ordinary user configuration
+to fallback lookup for theme discovery without copying private files. Never
+force a theme or modify the host configuration automatically.

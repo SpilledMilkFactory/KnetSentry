@@ -507,7 +507,14 @@ Kirigami.ApplicationWindow {
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
                 }
-                Controls.Label { text: qsTr("M8.7 development") }
+                Controls.Label { text: qsTr("M8.8 development") }
+            }
+            Controls.Label {
+                Layout.fillWidth: true
+                visible: window.alertModel.notificationsEnabled && window.alertModel.notificationCount > 0
+                text: qsTr("Alert-page request notice available — Settings contains session history.")
+                wrapMode: Text.WordWrap
+                Accessible.name: text
             }
             RowLayout {
                 Layout.fillWidth: true

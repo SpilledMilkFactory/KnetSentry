@@ -17,6 +17,11 @@ class AlertModel : public QAbstractListModel {
     Q_PROPERTY(QStringList evidence READ evidence NOTIFY changed FINAL)
     Q_PROPERTY(bool busy READ busy NOTIFY changed FINAL)
     Q_PROPERTY(bool more READ more NOTIFY changed FINAL)
+    Q_PROPERTY(int activePageCount READ activePageCount NOTIFY changed FINAL)
+    Q_PROPERTY(bool notificationsEnabled READ notificationsEnabled WRITE setNotificationsEnabled NOTIFY notificationsChanged FINAL)
+    Q_PROPERTY(bool attentionEnabled READ attentionEnabled WRITE setAttentionEnabled NOTIFY notificationsChanged FINAL)
+    Q_PROPERTY(int notificationCount READ notificationCount NOTIFY notificationsChanged FINAL)
+    Q_PROPERTY(QString notificationHistoryText READ notificationHistoryText NOTIFY notificationsChanged FINAL)
     Q_PROPERTY(bool canAcknowledge READ canAcknowledge NOTIFY changed FINAL)
 public:
     explicit AlertModel(const QString& directory, QObject* parent = nullptr);
@@ -30,6 +35,14 @@ public:
     [[nodiscard]] bool busy() const noexcept { return busy_; }
     [[nodiscard]] bool more() const noexcept { return more_; }
     [[nodiscard]] bool canAcknowledge() const noexcept;
+    [[nodiscard]] int activePageCount() const noexcept;
+    [[nodiscard]] bool notificationsEnabled() const noexcept { return notifications_enabled_; }
+    [[nodiscard]] bool attentionEnabled() const noexcept { return attention_enabled_; }
+    [[nodiscard]] int notificationCount() const noexcept { return static_cast<int>(notification_history_.size()); }
+    [[nodiscard]] QString notificationHistoryText() const { return notification_history_.join(QLatin1Char('\n')); }
+    void setNotificationsEnabled(bool enabled);
+    void setAttentionEnabled(bool enabled);
+    Q_INVOKABLE void clearNotificationHistory();
     Q_INVOKABLE void search(int severity);
     Q_INVOKABLE void next();
     Q_INVOKABLE void select(int row);
@@ -38,6 +51,8 @@ public:
     Q_INVOKABLE void clear();
 Q_SIGNALS:
     void changed();
+    void notificationsChanged();
+    void pageRequestFinished();
 private:
     void request(const service::AlertQuery& q);
     void advance();
@@ -50,6 +65,8 @@ private:
     std::vector<service::AlertRow> rows_;
     QString status_, detail_, evidence_detail_;
     QStringList evidence_;
+    QStringList notification_history_;
+    bool notifications_enabled_{}, attention_enabled_{};
     QTimer exchange_, expiry_;
     int selection_{-1};
     bool busy_{}, more_{}, writable_{};

@@ -41,6 +41,8 @@ def main():
                     'rendered timeline test')
             require(b'M8.7 timeline keyboard inspection: PASS' in result.stdout, 'M8.7 keyboard inspection')
             print('M8.7 timeline keyboard inspection: PASS')
+            require(b'M8.8 timeline record palette pairing: PASS' in result.stdout, 'M8.8 record palette')
+            print('M8.8 timeline record palette pairing: PASS')
             require(database.read_bytes() == original and ledger.read_bytes() == initial, 'read-only evidence and ledger')
         finally:
             proc.terminate()
