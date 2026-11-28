@@ -537,6 +537,9 @@ Kirigami.Page {
                 }
                 Controls.Label {
                     text: page.workspaceModel.status
+                    font.weight: Font.DemiBold
+                    textFormat: Text.PlainText
+                    Accessible.name: text
                     Layout.fillWidth: true
                     wrapMode: Text.WordWrap
                 }

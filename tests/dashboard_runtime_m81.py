@@ -41,6 +41,7 @@ def main():
                     'rendered dashboard test')
             require(b'M8.2 rendered chart values, local filters and clearing: PASS' in result.stdout,
                     'rendered chart and filter test')
+            require(b'M8.5 actual request feedback and completion: PASS' in result.stdout, 'authorized request feedback')
             require(database.read_bytes() == original and ledger.read_bytes() == initial, 'read-only evidence and ledger')
         finally:
             proc.terminate()
@@ -55,12 +56,14 @@ def main():
             result = invoke(desktop, '--ipc-dir', ipc, '--self-test-dashboard-denied')
             require(result.returncode == 0 and b'M8.1 rendered denied summaries: PASS' in result.stdout,
                     'default-denied dashboard test')
+            require(b'M8.5 actual request feedback and completion: PASS' in result.stdout, 'denied request feedback')
         finally:
             proc.terminate()
             proc.communicate(timeout=8)
         require(proc.returncode == 0, 'manager stop')
         print('M8.1 rendered dashboard, default denial and evidence invariance: PASS')
         print('M8.2 rendered chart values, filters and clearing: PASS')
+        print('M8.5 authorized and denied request feedback: PASS')
 
 
 if __name__ == '__main__':

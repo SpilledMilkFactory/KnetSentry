@@ -34,6 +34,27 @@ Kirigami.ApplicationWindow {
     readonly property alias toolbarStopButton: stopButton
     readonly property int toolbarTone: window.daemonControl.tone
     readonly property bool toolbarPulse: window.daemonControl.pulse
+    // Session-only, fail-safe opt-in. Respect the platform's duration hint as
+    // well as the operator's choice; never animate security-relevant data.
+    property bool reduceMotion: true
+    readonly property int platformMotionDuration: Kirigami.Units.shortDuration
+    readonly property int motionDuration: reduceMotion || platformMotionDuration <= 1
+        ? 0 : (platformMotionDuration < designTokens.durationFast ? platformMotionDuration : designTokens.durationFast)
+    readonly property bool motionAllowed: motionDuration > 0 && visible && visibility !== Window.Minimized
+    readonly property bool navigationAnimationRunning: navigationMotion.running
+    readonly property bool loadingAnimationRunning: loadingMotion.running
+    readonly property bool displayedHealthPulse: heartbeat.activePulse
+    readonly property bool operationFeedbackVisible: requestFeedback.visible
+    readonly property string operationFeedbackText: requestLabel.text
+    readonly property alias reduceMotionControl: motionToggle
+    readonly property bool operationPending: (activeSection === "dashboard" && dashboardModel.busy)
+        || (activeSection === "events" && eventModel.busy)
+        || (activeSection === "alerts" && alertModel.busy)
+        || (activeSection === "investigations" && timelineModel.busy)
+    onMotionAllowedChanged: {
+        if (!motionAllowed && navigationMotion)
+            navigationMotion.stop()
+    }
     objectName: "knetSentryMainWindow"
     title: qsTr("KnetSentry — %1").arg(activeSectionTitle)
     // Default client size in logical pixels; do not maximize or enter fullscreen.
@@ -156,6 +177,10 @@ Kirigami.ApplicationWindow {
             return false
         }
         activeSection = sectionId
+        // Only the decorative title accent moves. Page replacement and
+        // snapshot clearing above are synchronous and never animated here.
+        if (window.motionAllowed)
+            navigationMotion.restart()
         return true
     }
 
@@ -233,6 +258,25 @@ Kirigami.ApplicationWindow {
         alertModel: window.alertModel
     }
 
+    NumberAnimation {
+        id: navigationMotion
+        target: navigationAccent
+        property: "opacity"
+        from: 1
+        to: 0
+        duration: window.motionDuration
+    }
+    NumberAnimation {
+        id: loadingMotion
+        target: loadingMarker
+        property: "rotation"
+        from: 0
+        to: 360
+        duration: 900
+        loops: Animation.Infinite
+        running: window.motionAllowed && window.operationPending
+    }
+
     header: Controls.ToolBar {
         implicitHeight: Math.max(44, toolbarRow.implicitHeight + 8)
         RowLayout {
@@ -242,6 +286,7 @@ Kirigami.ApplicationWindow {
             anchors.rightMargin: Kirigami.Units.smallSpacing
             spacing: Kirigami.Units.smallSpacing
             Controls.ToolButton {
+                id: navigationButton
                 text: qsTr("Navigation")
                 Layout.preferredWidth: designTokens.touchTarget
                 Layout.preferredHeight: designTokens.touchTarget
@@ -252,12 +297,47 @@ Kirigami.ApplicationWindow {
                 onClicked: window.globalDrawer.drawerOpen = !window.globalDrawer.drawerOpen
                 Controls.ToolTip.visible: hovered
                 Controls.ToolTip.text: text
+                Rectangle {
+                    anchors.bottom: parent.bottom
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width / 2
+                    height: 2
+                    color: Kirigami.Theme.highlightColor
+                    visible: navigationButton.hovered || navigationButton.activeFocus
+                    Accessible.ignored: true
+                }
             }
-            Controls.Label {
-                text: window.activeSectionTitle
-                font.pixelSize: designTokens.sectionSize
+            ColumnLayout {
                 Layout.fillWidth: true
-                elide: Text.ElideRight
+                spacing: 2
+                Controls.Label {
+                    text: window.activeSectionTitle
+                    font.pixelSize: designTokens.sectionSize
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+                // Reserve the same space in both motion modes.
+                Item {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 2
+                    Rectangle {
+                        id: navigationAccent
+                        width: Math.min(parent.width, 64)
+                        height: parent.height
+                        color: Kirigami.Theme.highlightColor
+                        opacity: 0
+                        visible: window.motionAllowed && navigationMotion.running
+                        Accessible.ignored: true
+                    }
+                }
+            }
+            Controls.CheckBox {
+                id: motionToggle
+                text: qsTr("Reduce motion")
+                checked: window.reduceMotion
+                onToggled: window.reduceMotion = checked
+                Controls.ToolTip.visible: hovered
+                Controls.ToolTip.text: qsTr("Session only. Platform-disabled motion stays disabled.")
             }
             Item {
                 id: indicator
@@ -269,7 +349,7 @@ Kirigami.ApplicationWindow {
                 Accessible.name: window.daemonControl.status
                 HoverHandler { id: indicatorHover }
                 Controls.ToolTip.visible: indicatorHover.hovered
-                Controls.ToolTip.text: window.daemonControl.status + qsTr(" — pulse: successful health exchange, not monitoring activity")
+                Controls.ToolTip.text: window.daemonControl.status + qsTr(" — optional pulse: successful health exchange, not monitoring activity")
                 Rectangle {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
@@ -283,7 +363,7 @@ Kirigami.ApplicationWindow {
                     height: 24
                     anchors.verticalCenter: parent.verticalCenter
                     readonly property color lineColor: indicator.stateColor
-                    readonly property bool activePulse: window.toolbarPulse
+                    readonly property bool activePulse: window.toolbarPulse && window.motionAllowed
                     // Fixed scene geometry: no raster-backed Canvas or paint context.
                     Rectangle {
                         x: 1; y: 11; width: 96; height: 2
@@ -364,17 +444,63 @@ Kirigami.ApplicationWindow {
     }
 
     footer: Controls.ToolBar {
-        RowLayout {
+        implicitHeight: feedbackColumn.implicitHeight + 8
+        ColumnLayout {
+            id: feedbackColumn
             anchors.fill: parent
             anchors.leftMargin: Kirigami.Units.largeSpacing
             anchors.rightMargin: Kirigami.Units.largeSpacing
-            Controls.Label {
-                text: qsTr("Monitoring is not active — daemon health is not security coverage")
+            anchors.topMargin: 4
+            anchors.bottomMargin: 4
+            spacing: 2
+            RowLayout {
                 Layout.fillWidth: true
-                elide: Text.ElideRight
+                Controls.Label {
+                    text: qsTr("Monitoring is not active — daemon health is not security coverage")
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+                Controls.Label { text: qsTr("M8.5 development") }
             }
-            Controls.Label {
-                text: qsTr("M8.4 development")
+            RowLayout {
+                Layout.fillWidth: true
+                // Non-modal status notification: actual model text, not a
+                // synthesized success notification or a transient toast queue.
+                Controls.Label {
+                    text: window.daemonControl.status
+                    textFormat: Text.PlainText
+                    Accessible.name: text
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+                RowLayout {
+                    id: requestFeedback
+                    visible: window.operationPending
+                    spacing: designTokens.spaceS
+                    Rectangle {
+                        id: loadingMarker
+                        Layout.preferredWidth: 12
+                        Layout.preferredHeight: 12
+                        color: "transparent"
+                        border.width: 1
+                        border.color: Kirigami.Theme.textColor
+                        radius: 6
+                        Accessible.ignored: true
+                        Rectangle {
+                            width: 4
+                            height: 4
+                            anchors.top: parent.top
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            color: Kirigami.Theme.textColor
+                        }
+                    }
+                    Controls.Label {
+                        id: requestLabel
+                        text: qsTr("Stored request in progress…")
+                        textFormat: Text.PlainText
+                        Accessible.name: text
+                    }
+                }
             }
         }
     }

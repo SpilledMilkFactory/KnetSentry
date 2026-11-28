@@ -309,6 +309,31 @@ int main(int argc, char *argv[]) {
             std::cerr << "KnetSentry: visual system not active on settings page.\n";
             return 1;
         }
+        auto* motionToggle = root->property("reduceMotionControl").value<QObject*>();
+        if (!motionToggle || !motionToggle->property("checked").toBool() ||
+            root->property("motionDuration").toInt() != 0 ||
+            root->property("navigationAnimationRunning").toBool() ||
+            root->property("loadingAnimationRunning").toBool() ||
+            root->property("operationFeedbackVisible").toBool() ||
+            root->property("displayedHealthPulse").toBool()) { return 1; }
+        if (!motionToggle->setProperty("checked", false) ||
+            !QMetaObject::invokeMethod(motionToggle, "toggled") || root->property("reduceMotion").toBool()) { return 1; }
+        const int platform = root->property("platformMotionDuration").toInt();
+        const int duration = root->property("motionDuration").toInt();
+        if ((platform <= 1 && duration != 0) || (platform > 1 && (duration <= 0 || duration > 120 || duration > platform))) { return 1; }
+        // Rapid navigation must be immediate, bounded and independent of motion.
+        for (int pass = 0; pass < 16; ++pass) {
+            const auto section = pass % 2 == 0 ? QStringLiteral("dashboard") : QStringLiteral("settings");
+            if (!root->setProperty("navigationRequest", section) ||
+                root->property("activeSection").toString() != section ||
+                root->property("navigationDepth").toInt() != 1) { return 1; }
+        }
+        if (root->property("motionAllowed").toBool() != root->property("navigationAnimationRunning").toBool()) { return 1; }
+        if (!motionToggle->setProperty("checked", true) || !QMetaObject::invokeMethod(motionToggle, "toggled") ||
+            !root->property("reduceMotion").toBool() || root->property("motionDuration").toInt() != 0 ||
+            root->property("navigationAnimationRunning").toBool() || root->property("loadingAnimationRunning").toBool() ||
+            root->property("displayedHealthPulse").toBool()) { return 1; }
+        std::cout << "M8.5 motion opt-in, bounded navigation and immediate cancellation: PASS\n";
         std::cout << "KnetSentry M1.5 visual system: PASS (platform palette; no telemetry)\n";
         return 0;
     }
@@ -412,12 +437,24 @@ int main(int argc, char *argv[]) {
         QObject* refresh = root->property("dashboardRefreshButton").value<QObject*>();
         if (refresh == nullptr || !root->property("currentDashboardEvents").toString().startsWith(QStringLiteral("Unavailable")) ||
             !QMetaObject::invokeMethod(refresh, "clicked")) { return 1; }
+        // The real pending request must remain visible even with reduced motion.
+        if (!dashboard.busy() || !root->property("operationFeedbackVisible").toBool() ||
+            root->property("loadingAnimationRunning").toBool() ||
+            root->property("operationFeedbackText").toString() != QStringLiteral("Stored request in progress…")) { return 1; }
+        if (!root->setProperty("reduceMotion", false) ||
+            root->property("loadingAnimationRunning").toBool() != root->property("motionAllowed").toBool() ||
+            !root->property("operationFeedbackVisible").toBool() ||
+            !root->setProperty("reduceMotion", true) || root->property("loadingAnimationRunning").toBool() ||
+            !root->property("operationFeedbackVisible").toBool()) { return 1; }
         QEventLoop loop;
         QTimer check, deadline;
         deadline.setSingleShot(true);
         QObject::connect(&deadline, &QTimer::timeout, &loop, [&loop] { loop.exit(1); });
         QObject::connect(&check, &QTimer::timeout, &loop, [&] {
             if (dashboard.busy()) { return; }
+            if (root->property("operationFeedbackVisible").toBool() ||
+                root->property("loadingAnimationRunning").toBool()) { loop.exit(1); return; }
+            std::cout << "M8.5 actual request feedback and completion: PASS\n";
             const auto eventsText = root->property("currentDashboardEvents").toString();
             const auto alertsText = root->property("currentDashboardAlerts").toString();
             const auto detectionText = root->property("currentDashboardDetections").toString();

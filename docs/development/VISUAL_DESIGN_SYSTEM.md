@@ -102,13 +102,13 @@ A narrow window's geometry is **not** proof of mobile support.
 
 ## Motion and reduced motion
 
-Any future transitions should default to subtle, nonessential motion: 120 ms
-for quick feedback and 180 ms for common transitions. **Reduced motion** must
-use the defined zero-duration token and avoid flashing, animated critical
-severity, or constant attention-grabbing movement. This milestone adds **no
-status animation** (`animateStatusChanges: false`), so there is currently no
-in-app reduced-motion toggle to test or persist. Future animation must include
-explicit opt-out/system-preference handling and a testable static fallback.
+M1.5 defines 120 ms for quick feedback and 180 ms for common transitions.
+**Reduced motion** uses zero duration and avoids flashing, animated critical
+severity, and attention-grabbing movement. M8.5 adds an explicit session-only
+Reduce motion control, enabled by default, and consults the Kirigami platform
+duration hint before permitting decorative motion. Security state and evidence
+remain immediate (`animateStatusChanges: false`). See the
+[M8.5 contract](VISUAL_FEEDBACK_M85.md) for limits and qualification.
 
 ## M1.5 QML color-type import correction
 
