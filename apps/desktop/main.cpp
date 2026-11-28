@@ -530,6 +530,8 @@ int main(int argc, char *argv[]) {
                 if (health.agentRegistryStatus().startsWith(QStringLiteral("Checking"))) { return; }
                 if (!root->property("currentPageAgentRosterVisible").toBool() ||
                     !root->property("currentPageAgentRegistry").toString().startsWith(QStringLiteral("Verified registry snapshot")) ||
+                    health.dashboardRegistry() != QStringLiteral("1 approved, 1 revoked registry identities (not live sessions).\n"
+                                                                  "Monitored assets unavailable.") ||
                     root->property("currentPageApprovedAgents").toString() != QStringLiteral("01010101010101010101010101010101") ||
                     root->property("currentPageRevokedAgents").toString() != QStringLiteral("02020202020202020202020202020202")) {
                     loop.exit(1); return;
@@ -541,6 +543,7 @@ int main(int argc, char *argv[]) {
                        health.status() == QStringLiteral("Disconnected or unavailable")) {
                 if (health.resources() != QStringLiteral("Uptime, CPU time and memory unavailable.") ||
                     health.errors() != QStringLiteral("Operational error counters unavailable.") ||
+                    !health.dashboardRegistry().startsWith(QStringLiteral("Unavailable")) ||
                     !root->property("currentPageApprovedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
                     !root->property("currentPageRevokedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
                     !root->setProperty("navigationRequest", QStringLiteral("settings"))) {
@@ -562,6 +565,7 @@ int main(int argc, char *argv[]) {
             } else if (stage == 6 && health.available()) {
                 if (health.agentRegistryStatus().startsWith(QStringLiteral("Checking"))) { return; }
                 if (!root->property("currentPageAgentRegistry").toString().startsWith(QStringLiteral("Unavailable")) ||
+                    !health.dashboardRegistry().startsWith(QStringLiteral("Unavailable")) ||
                     !root->property("currentPageApprovedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
                     !root->property("currentPageRevokedAgents").toString().startsWith(QStringLiteral("Unavailable")) ||
                     !root->setProperty("navigationRequest", QStringLiteral("dashboard"))) { loop.exit(1); return; }

@@ -29,7 +29,7 @@ private Q_SLOTS:
     void scopeIsReadOnly() {
         ServiceHealthModel model(QString{});
         for (const auto* name : {"scopeState", "scopeNetworks", "scopeInterfaces", "scopeDenials",
-                                 "agentRegistryStatus", "approvedAgents", "revokedAgents",
+                                 "agentRegistryStatus", "approvedAgents", "revokedAgents", "dashboardRegistry",
                                  "telemetryStatus", "telemetryCollector", "telemetryHealth", "telemetryRate",
                                  "telemetryQueue", "telemetryFailure"}) {
             const int index = model.metaObject()->indexOfProperty(name);
@@ -41,6 +41,7 @@ private Q_SLOTS:
             QVERIFY(!property.write(&model, QVariant{QStringLiteral("synthetic approval")}));
         }
         QVERIFY(model.agentRegistryStatus().startsWith(QStringLiteral("Unavailable")));
+        QCOMPARE(model.dashboardRegistry(), QStringLiteral("Unavailable — no current verified registry snapshot. Monitored assets unavailable."));
         QVERIFY(model.approvedAgents().startsWith(QStringLiteral("Unavailable")));
         QVERIFY(model.revokedAgents().startsWith(QStringLiteral("Unavailable")));
         QCOMPARE(model.scopeState(), QStringLiteral("Unavailable — no current verified daemon health"));
@@ -53,6 +54,7 @@ private Q_SLOTS:
         QVERIFY(!model.available());
         QCOMPARE(model.scopeState(), QStringLiteral("Unavailable — no current verified daemon health"));
         QVERIFY(model.scopeDenials().endsWith(QStringLiteral("unavailable.")));
+        QCOMPARE(model.dashboardRegistry(), QStringLiteral("Unavailable — no current verified registry snapshot. Monitored assets unavailable."));
     }
     void localTelemetry() {
         ServiceHealthModel model(QString{});

@@ -156,8 +156,8 @@ QString ServiceHealthModel::dashboardRegistry() const {
     for (std::size_t i = 0; i < roster.size; ++i) {
         if (roster.entries.at(i).approved) { ++approved; }
     }
-    return tr("%1 approved, %2 revoked registry identities (not live sessions).
-Monitored assets unavailable.")
+    return tr("%1 approved, %2 revoked registry identities (not live sessions).\n"
+              "Monitored assets unavailable.")
         .arg(decimal(approved), decimal(roster.size - approved));
 }
 namespace {
