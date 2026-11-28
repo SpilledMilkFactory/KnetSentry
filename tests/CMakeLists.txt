@@ -653,3 +653,10 @@ if(KNETSENTRY_BUILD_DESKTOP AND NOT KNETSENTRY_ENABLE_SANITIZERS)
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
         LABELS "qt;desktop;qml;integration;ipc;security;regression;privacy" TIMEOUT 75)
 endif()
+
+# M7.8: independent golden fixtures and composed durable detection/alert replay.
+add_executable(knetsentry_detection_recovery_test detection_recovery_m78.cpp)
+target_link_libraries(knetsentry_detection_recovery_test PRIVATE KnetSentry::Detection KnetSentry::SqliteStorage)
+knetsentry_apply_project_options(knetsentry_detection_recovery_test)
+add_test(NAME knetsentry_detection_recovery_contract COMMAND $<TARGET_FILE:knetsentry_detection_recovery_test>)
+set_tests_properties(knetsentry_detection_recovery_contract PROPERTIES LABELS "integration;security;regression;privacy" TIMEOUT 75)
