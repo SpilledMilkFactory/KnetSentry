@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # Project status
 
-**Accepted baseline: M8.2 — bounded interactive security visualizations foundation.**
+**Accepted baseline: M8.3 — configurable multi-panel workspace foundation.**
 Milestones 0–3 are complete. M4.7's implemented read-only scope is qualified and
 merged; issue #40's remaining operational GUI capabilities remain outstanding.
 M4.8 and M5.1–M5.8 are merged (M5.5 offline foundation only). M5.9 local aggregate agent status in Dashboard and Assets is qualified and merged. Multi-endpoint authenticated status integration remains outstanding (#50).
@@ -13,14 +13,16 @@ Issue #46 operational network/manager integration remains outstanding.
 M6.1 bounded offline authenticated event ingestion is qualified and merged; operational and generic envelope integration (#51) remain outstanding.
 M6.2 typed OCSF-aligned normalization of the KSTD subset is qualified and merged.
 M6.3–M6.8 storage, integrity, search, quotas, explicit cleanup and opt-in manager-mediated stored event exploration foundations are qualified and merged. M6.9 composed failure-recovery regressions are qualified and merged. M6.10 independently approved split-storage foundation is qualified and merged, including actual mount replacement and distinct local filesystem tests. Persistent cross-boot approval and operational integration remain outstanding (#148).
-M7.1 bounded offline deterministic rule evaluation is qualified and merged. M7.2 versioned rule schema and validation are qualified and merged. M7.3 bounded offline authentication-pattern detection is qualified and merged. M7.4 offline Audit record-type detection foundation is qualified and merged; remaining #63 scope open. M7.5 caller-driven persistent scheduling foundation is qualified and merged; remaining #64 scope open. M7.6 persistent alert lifecycle foundation is qualified and merged; remaining #65 scope open. M7.7 opt-in same-user stored alert interface, exact linked evidence inspection and explicitly authorized acknowledgement are qualified and merged; remaining #66 scope open. M7.8 composed offline detection and alert regressions are qualified and merged. M7.9 versioned context-only technique mappings qualified and merged (#68). M8.1 read-only SOC dashboard foundation qualified and merged (#69 remains open for operational coverage). M8.2 bounded interactive stored visualizations qualified and merged (#70 remains open for operational scale). M8.3 configurable workspace candidate; target qualification pending (#71). No operational detection or response authority is enabled.
+M7.1 bounded offline deterministic rule evaluation is qualified and merged. M7.2 versioned rule schema and validation are qualified and merged. M7.3 bounded offline authentication-pattern detection is qualified and merged. M7.4 offline Audit record-type detection foundation is qualified and merged; remaining #63 scope open. M7.5 caller-driven persistent scheduling foundation is qualified and merged; remaining #64 scope open. M7.6 persistent alert lifecycle foundation is qualified and merged; remaining #65 scope open. M7.7 opt-in same-user stored alert interface, exact linked evidence inspection and explicitly authorized acknowledgement are qualified and merged; remaining #66 scope open. M7.8 composed offline detection and alert regressions are qualified and merged. M7.9 versioned context-only technique mappings qualified and merged (#68). M8.1 read-only SOC dashboard foundation qualified and merged (#69 remains open for operational coverage). M8.2 bounded interactive stored visualizations qualified and merged (#70 remains open for operational scale). M8.3 configurable workspace qualified and merged (#71 remaining scope); M8.4 read-only investigation timeline candidate, qualification pending (#72). No operational detection or response authority is enabled.
 This is an unreleased development baseline, not a v1.0.0 security qualification.
+
+M8.3 maintainer acceptance (2026-11-28 UTC, applied working tree based on `4eef955`): 159 consolidated gates, 573 configured CTests, 74 structural verifiers, 190 repeated Release and 95 repeated sanitized executions, 20 repeated rendered workspace/dashboard executions, 12 focused desktop and eight GUI/IPC regressions. Strict QML and compiler diagnostic review passed. Manual GUI qualification and merge reported; nine hosted checks on `81b6a57`. Remaining #71 customization scope stays open.
 
 ## Available today
 
 | Area | Implemented behavior |
 | --- | --- |
-| Desktop | Seven Qt 6/Kirigami sections; global health indicator and heartbeat; owned-manager Play/Stop and cleanup; Dashboard health, read-only Settings scope and Assets enrollment roster; explicit local agent status in Dashboard/Assets; bounded stored event exploration through an explicitly selected foreground manager; opt-in stored alert inspection and acknowledgement; M8.1 bounded operator-requested stored summaries and registry counts; M8.2 accepted page-local charts and filters; M8.3 candidate adds persistent presentation-only workspace layouts |
+| Desktop | Seven Qt 6/Kirigami sections; global health indicator and heartbeat; owned-manager Play/Stop and cleanup; Dashboard health, read-only Settings scope and Assets enrollment roster; explicit local agent status in Dashboard/Assets; bounded stored event exploration through an explicitly selected foreground manager; opt-in stored alert inspection and acknowledgement; M8.1 bounded operator-requested stored summaries and registry counts; M8.2 accepted page-local charts and filters; M8.3 accepted persistent presentation-only workspace layouts; M8.4 candidate adds bounded investigation timeline |
 | Manager | Non-root lifecycle, strict lifecycle-only v1 configuration, opt-in same-UID/GID authenticated Unix IPC (`STATUS`, `HEALTH`, `AGENTS`, opt-in audited `EVENTS` and development `ALERTS`), bounded health and protected audit logging |
 | Deployment | Explicit development systemd deployment under a dedicated non-login identity with confinement; ordinary desktop IPC remains separate |
 | Network security | Default-deny preflight, strict IPv4/IPv6 prefixes and interface binding, Linux effective/FIB route checks, sticky authorization invalidation, optional dedicated-UID deny-all nftables profile |
@@ -313,7 +315,7 @@ and [evidence guide](development/VERIFICATION_EVIDENCE.md).
 | M3 — LAN scope policy, firewall, isolated tests and GUI inspection | Complete through M3.8 |
 | M4 — identity, PKI and secure agent enrollment | M4.8 accepted; issue #40 remaining capabilities open |
 | M5–M7 — functional SIEM foundations | M7.9 mapping accepted; #63/#64/#65/#66 remaining scope open; persistent volume approval and operational integration outstanding |
-| M8–M12 — advanced security operations | M8.1 and M8.2 foundations accepted; M8.3 workspace candidate, target qualification pending; later scope planned |
+| M8–M12 — advanced security operations | M8.1–M8.3 foundations accepted; M8.4 timeline candidate, target qualification pending; later scope planned |
 | M13–M15 — qualification, packaging and v1.0.0 | Planned |
 | M16 — possible KDE community adoption | Post-v1.0 aspiration |
 

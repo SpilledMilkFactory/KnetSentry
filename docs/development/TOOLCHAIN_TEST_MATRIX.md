@@ -5,10 +5,10 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # KnetSentry — Toolchain, Build Presets and Test Strategy
 
-**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns accepted; M7.4 Audit detection foundation accepted (#63 remains open); M7.5 scheduling foundation accepted (#64 remains open); M7.6 alert ledger accepted (#65 remains open); M7.7 alert interface foundation accepted (#66 remains open); M7.8 regression accepted; M7.9 mapping accepted (#68); M8.1 dashboard foundation accepted (#69 remaining scope); M8.2 visualizations accepted (#70 remaining scope); M8.3 workspace qualification pending (#71); issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
+**State:** M6.10 split-storage foundation accepted (including actual mount and distinct-filesystem tests); M7.1 detection accepted; M7.2 rule schema accepted; M7.3 authentication patterns accepted; M7.4 Audit detection foundation accepted (#63 remains open); M7.5 scheduling foundation accepted (#64 remains open); M7.6 alert ledger accepted (#65 remains open); M7.7 alert interface foundation accepted (#66 remains open); M7.8 regression accepted; M7.9 mapping accepted (#68); M8.1 dashboard foundation accepted (#69 remaining scope); M8.2 visualizations accepted (#70 remaining scope); M8.3 workspace accepted (#71 remaining scope); M8.4 timeline qualification pending (#72); issues #40/#46/#50/#51/#148 remaining capabilities open; Ubuntu 26.04 AMD64.
 Seven mandatory build/test presets and nine hosted CI checks are active. Current
-CTest inventories are 88 Release/Debug/Clazy/analysis, 78 full ASan/UBSan,
-71 core-only and 72 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
+CTest inventories are 90 Release/Debug/Clazy/analysis, 79 full ASan/UBSan,
+72 core-only and 73 sanitized core-only. See [project status](../PROJECT_STATUS.md) for recorded
 acceptance and the [build guide](BUILD_FOUNDATION.md). Historical milestone
 sections below describe earlier inventories, not today's totals.
 
@@ -464,4 +464,8 @@ The [M8.2 contract](SECURITY_VISUALIZATIONS_M82.md) extends the existing dashboa
 
 ### M8.3 configurable workspace
 
-The [M8.3 contract](WORKSPACE_M83.md) adds a native contract across all seven presets and a separate-process desktop regression in the four non-sanitized desktop presets. Target: 573 configured CTests, 74 structural verifiers and 159 consolidated gates. Target-host qualification pending.
+The [M8.3 contract](WORKSPACE_M83.md) adds a native contract across all seven presets and a separate-process desktop regression in the four non-sanitized desktop presets. Accepted: 573 configured CTests, 74 structural verifiers and 159 consolidated gates.
+
+### M8.4 investigation timeline
+
+The [M8.4 contract](INVESTIGATION_TIMELINE_M84.md) adds a native test across seven presets and a rendered regression in four non-sanitized desktop presets. Target: 584 configured CTests, 75 structural verifiers and 160 consolidated gates. Target-host qualification pending.

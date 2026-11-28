@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **88 CTest tests**, including
+The Release desktop suite currently contains **90 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **78 CTests**, including the
+The full sanitizer suite currently contains **79 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **71 CTests**) and `linux-sanitize-core-only` for **72**.
+C++ test (currently **72 CTests**) and `linux-sanitize-core-only` for **73**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -511,3 +511,7 @@ See [M8.2](SECURITY_VISUALIZATIONS_M82.md). Run `ctest --preset linux-release -R
 ### M8.3 configurable workspace
 
 See [M8.3](WORKSPACE_M83.md). Run `ctest --preset linux-release -R '^knetsentry_(workspace_preferences_contract|gui_workspace_runtime)$' --verbose --no-tests=error`. Target inventories: desktop 88/78, core-only 71/72. Verify the default 1920 × 1080 logical-pixel windowed startup size (subject to window-manager constraints). Test workspace saves with an isolated configuration root; never publish user preferences or operational evidence.
+
+### M8.4 investigation timeline
+
+See [M8.4](INVESTIGATION_TIMELINE_M84.md). Run `ctest --preset linux-release -R '^knetsentry_(investigation_timeline_contract|gui_investigation_runtime)$' --verbose --no-tests=error`. Target inventories: desktop 90/79, core-only 72/73. Verify explicit related-record navigation and revision-bound evidence inspection with the disposable M7.7 fixture only.

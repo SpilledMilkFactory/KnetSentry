@@ -5,7 +5,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # M8.3 — Configurable multi-panel workspace
 
-Issue #71. Candidate pending Ubuntu 26.04 qualification. This is presentation-only
+Issue #71. Implemented foundation qualified on Ubuntu 26.04 and merged; broader workspace customization remains open. This is presentation-only
 workspace customization, not a monitoring or evidence authorization mechanism.
 
 ## Interaction
