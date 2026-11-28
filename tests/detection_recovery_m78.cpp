@@ -79,18 +79,19 @@ void authentication_matrix(EventStore& store) {
     require(denied.status == PatternStatus::Unverified && denied.findings.empty(), "untrusted evidence");
 }
 void audit_matrix(EventStore& store) {
-    struct Expected { unsigned type; std::string_view id; RuleSeverity severity; };
+    // Keep the pointer-aligned member first to avoid unnecessary fixture padding.
+    struct Expected { std::string_view id; unsigned type; RuleSeverity severity; };
     using S = RuleSeverity;
     constexpr Expected expected[] = {
-        {1130, "audit-service-start", S::Informational}, {1131, "audit-service-stop", S::Informational},
-        {1203, "audit-daemon-config", S::Medium}, {1305, "audit-config-change", S::Medium},
-        {1321, "audit-file-capabilities", S::Medium}, {1322, "audit-capset", S::Medium},
-        {1325, "audit-netfilter-config", S::Medium}, {1330, "audit-kernel-module", S::Medium},
-        {1403, "audit-mac-policy-load", S::Medium}, {1404, "audit-mac-status", S::Medium},
-        {1702, "audit-anomalous-link", S::High}, {1703, "audit-anomalous-create", S::High},
-        {1800, "audit-integrity-data", S::Medium}, {1801, "audit-integrity-metadata", S::Medium},
-        {1802, "audit-integrity-status", S::Medium}, {1804, "audit-integrity-pcr", S::Medium},
-        {1805, "audit-integrity-policy", S::Medium}, {1807, "audit-ima-policy", S::Medium}};
+        {"audit-service-start", 1130, S::Informational}, {"audit-service-stop", 1131, S::Informational},
+        {"audit-daemon-config", 1203, S::Medium}, {"audit-config-change", 1305, S::Medium},
+        {"audit-file-capabilities", 1321, S::Medium}, {"audit-capset", 1322, S::Medium},
+        {"audit-netfilter-config", 1325, S::Medium}, {"audit-kernel-module", 1330, S::Medium},
+        {"audit-mac-policy-load", 1403, S::Medium}, {"audit-mac-status", 1404, S::Medium},
+        {"audit-anomalous-link", 1702, S::High}, {"audit-anomalous-create", 1703, S::High},
+        {"audit-integrity-data", 1800, S::Medium}, {"audit-integrity-metadata", 1801, S::Medium},
+        {"audit-integrity-status", 1802, S::Medium}, {"audit-integrity-pcr", 1804, S::Medium},
+        {"audit-integrity-policy", 1805, S::Medium}, {"audit-ima-policy", 1807, S::Medium}};
     require(system_rules().size() == std::size(expected), "catalog changed");
     unsigned n = 20; std::vector<SystemFinding> golden;
     for (const auto& entry : expected) {
