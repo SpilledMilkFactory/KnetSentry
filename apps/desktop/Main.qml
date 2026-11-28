@@ -10,7 +10,17 @@ import io.github.spilledmilkfactory.KnetSentry
 // M2.6: read-only daemon health; no live SIEM telemetry sources.
 Kirigami.ApplicationWindow {
     id: window
+    required property WorkspaceModel workspaceModel
     required property DashboardModel dashboardModel
+    readonly property Controls.Button workspaceEvidenceButton: currentSectionPage ? currentSectionPage.workspaceEvidenceButton : null
+    readonly property Controls.Button workspaceSaveButton: currentSectionPage ? currentSectionPage.workspaceSaveButton : null
+    readonly property Controls.SpinBox workspaceResizeControl: currentSectionPage ? currentSectionPage.workspaceResizeControl : null
+    readonly property bool workspaceHealthVisible: currentSectionPage ? currentSectionPage.workspaceHealthVisible : false
+    readonly property bool workspaceTelemetryVisible: currentSectionPage ? currentSectionPage.telemetryVisible : false
+    readonly property int workspaceColumns: currentSectionPage ? currentSectionPage.workspaceColumns : 0
+    readonly property real workspaceOverviewWidth: currentSectionPage ? currentSectionPage.workspaceOverviewWidth : 0
+    readonly property real workspaceChartWidth: currentSectionPage ? currentSectionPage.workspaceChartWidth : 0
+    readonly property bool workspaceChartsVisible: currentSectionPage ? currentSectionPage.workspaceChartsVisible : false
     required property ServiceHealthModel healthModel
     required property AlertModel alertModel
     required property EventExplorerModel eventModel
@@ -21,8 +31,9 @@ Kirigami.ApplicationWindow {
     readonly property bool toolbarPulse: window.daemonControl.pulse
     objectName: "knetSentryMainWindow"
     title: qsTr("KnetSentry — %1").arg(activeSectionTitle)
-    width: 1100
-    height: 720
+    // Default client size in logical pixels; do not maximize or enter fullscreen.
+    width: 1920
+    height: 1080
     minimumWidth: 700
     minimumHeight: 480
     visible: true
@@ -202,11 +213,12 @@ Kirigami.ApplicationWindow {
 
     Component {
         id: sectionPageComponent
-        SectionPage { dashboardModel: window.dashboardModel; healthModel: window.healthModel; eventModel: window.eventModel; alertModel: window.alertModel }
+        SectionPage { workspaceModel: window.workspaceModel; dashboardModel: window.dashboardModel; healthModel: window.healthModel; eventModel: window.eventModel; alertModel: window.alertModel }
     }
 
     pageStack.initialPage: SectionPage {
         sectionId: "dashboard"
+        workspaceModel: window.workspaceModel
         dashboardModel: window.dashboardModel
         healthModel: window.healthModel
         eventModel: window.eventModel
@@ -354,7 +366,7 @@ Kirigami.ApplicationWindow {
                 elide: Text.ElideRight
             }
             Controls.Label {
-                text: qsTr("M8.2 development")
+                text: qsTr("M8.3 development")
             }
         }
     }

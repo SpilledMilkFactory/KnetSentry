@@ -5,6 +5,7 @@
 #include "event_explorer_model.hpp"
 #include "alert_model.hpp"
 #include "dashboard_model.hpp"
+#include "workspace_model.hpp"
 #include "daemon_control.hpp"
 #include "knetsentry/core/diagnostics.hpp"
 
@@ -161,7 +162,23 @@ int main(int argc, char *argv[]) {
     const QCommandLineOption dashboard_denied_test(QStringLiteral("self-test-dashboard-denied"),
         QStringLiteral("Verify dashboard refusal against a default-deny manager."));
     parser.addOption(dashboard_denied_test);
+    const QCommandLineOption workspace_test(QStringLiteral("self-test-workspace"),
+        QStringLiteral("Exercise workspace persistence against an isolated configuration root."), QStringLiteral("mode"));
+    parser.addOption(workspace_test);
     parser.process(app);
+    bool persistent = true;
+    const auto options = parser.optionNames();
+    for (const auto& option : options) {
+        if (option.startsWith(QStringLiteral("self-test-"))) { persistent = false; }
+    }
+    // Other integration tests never read or write operator preferences.
+    if (parser.isSet(workspace_test)) {
+        const auto testRoot = qEnvironmentVariable("XDG_CONFIG_HOME");
+        if (!testRoot.startsWith(QStringLiteral("/var/tmp/ks83-")) ||
+            QDir::cleanPath(testRoot) != testRoot || testRoot.mid(9).contains(QLatin1Char('/'))) { return 2; }
+        persistent = true;
+    }
+    knetsentry::desktop::WorkspaceModel workspace(persistent);
 
     // The model outlives QML and is not a management authority.
     knetsentry::desktop::ServiceHealthModel health(parser.value(QStringLiteral("ipc-dir")));
@@ -181,12 +198,14 @@ int main(int argc, char *argv[]) {
         }
     });
     QQmlApplicationEngine engine;
+    QQmlEngine::setObjectOwnership(&workspace, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&dashboard, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&alerts, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&events, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&health, QQmlEngine::CppOwnership);
     QQmlEngine::setObjectOwnership(&control, QQmlEngine::CppOwnership);
-    engine.setInitialProperties({{QStringLiteral("dashboardModel"), QVariant::fromValue(&dashboard)},
+    engine.setInitialProperties({{QStringLiteral("workspaceModel"), QVariant::fromValue(&workspace)},
+                                 {QStringLiteral("dashboardModel"), QVariant::fromValue(&dashboard)},
                                  {QStringLiteral("alertModel"), QVariant::fromValue(&alerts)},
                                  {QStringLiteral("eventModel"), QVariant::fromValue(&events)},
                                  {QStringLiteral("healthModel"), QVariant::fromValue(&health)},
@@ -210,6 +229,53 @@ int main(int argc, char *argv[]) {
     publish(knetsentry::core::DiagnosticLevel::Info,
             knetsentry::core::DiagnosticEvent::GuiReady,
             knetsentry::core::DiagnosticOutcome::Success);
+    if (parser.isSet(workspace_test)) {
+        const auto mode = parser.value(workspace_test);
+        QCoreApplication::processEvents();
+        if (window->width() != 1920 || window->height() != 1080 ||
+            window->visibility() != QWindow::Windowed) {
+            std::cerr << "M8.3 default windowed geometry: FAIL\n";
+            return 1;
+        }
+        std::cout << "M8.3 default windowed geometry: PASS\n";
+        if (mode == QStringLiteral("write")) {
+            auto* button = window->property("workspaceEvidenceButton").value<QObject*>();
+            if (!button || !QMetaObject::invokeMethod(button, "clicked")) { return 1; }
+            auto* resize = window->property("workspaceResizeControl").value<QObject*>();
+            if (!resize || !resize->setProperty("value", 65) ||
+                !QMetaObject::invokeMethod(resize, "valueModified")) { return 1; }
+            auto* save = window->property("workspaceSaveButton").value<QObject*>();
+            if (!save || !QMetaObject::invokeMethod(save, "clicked")) { return 1; }
+        } else if (mode != QStringLiteral("restore") && mode != QStringLiteral("default")) { return 2; }
+        QCoreApplication::processEvents();
+        const bool defaults = mode == QStringLiteral("default");
+        if (workspace.ratio() != (defaults ? 50 : 65) || !workspace.charts() ||
+            workspace.health() != defaults || workspace.telemetry() != defaults ||
+            window->property("workspaceHealthVisible").toBool() != defaults ||
+            window->property("workspaceTelemetryVisible").toBool() != defaults ||
+            !window->property("workspaceChartsVisible").toBool() ||
+            !window->property("currentDashboardHistogramCounts").toString().isEmpty()) { return 1; }
+        auto settle = [] {
+            QEventLoop loop;
+            QTimer::singleShot(200, &loop, &QEventLoop::quit);
+            loop.exec();
+        };
+        window->resize(1600, 900);
+        settle();
+        if (window->property("workspaceColumns").toInt() != 2 ||
+            window->property("workspaceOverviewWidth").toReal() <= 0 ||
+            window->property("workspaceChartWidth").toReal() <= 0 ||
+            (!defaults && window->property("workspaceOverviewWidth").toReal() <=
+                          window->property("workspaceChartWidth").toReal())) { return 1; }
+        window->resize(700, 600);
+        settle();
+        if (window->property("workspaceColumns").toInt() != 1) { return 1; }
+        if (!window->setProperty("navigationRequest", QStringLiteral("assets"))) { return 1; }
+        QCoreApplication::processEvents();
+        if (!window->property("currentPageTelemetryVisible").toBool()) { return 1; }
+        std::cout << "M8.3 workspace rendered preferences: PASS\n";
+        return 0;
+    }
     if (parser.isSet(qml_smoke_test)) {
         std::cout << "KnetSentry M1.3 Kirigami QML smoke: PASS (not an operational SIEM)\n";
         return 0;

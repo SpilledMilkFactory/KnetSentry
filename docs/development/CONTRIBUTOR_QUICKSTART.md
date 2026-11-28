@@ -51,7 +51,7 @@ cmake --build --preset linux-release --parallel 2
 ctest --preset linux-release --output-on-failure
 ```
 
-The Release desktop suite currently contains **86 CTest tests**, including
+The Release desktop suite currently contains **88 CTest tests**, including
 real Qt Test, QML startup, navigation, diagnostics and binary-hardening checks.
 Do not claim qualification on a failing command or because CTest merely lists
 names. Run a version-independent command for the actual Qt Test subset:
@@ -90,7 +90,7 @@ reuse lint
 git diff --check
 ```
 
-The full sanitizer suite currently contains **77 CTests**, including the
+The full sanitizer suite currently contains **78 CTests**, including the
 first-party deliberate-leak negative control. Source-only verifiers are not
 proof of executable results; official REUSE lint is the licensing gate. The
 CI workflow additionally runs Debug, Clazy, clang-tidy, and separate QML lint.
@@ -98,7 +98,7 @@ See [test-suite foundation](TEST_SUITE_FOUNDATION.md) and
 [CI implementation](CI_IMPLEMENTATION_M18.md).
 
 When working without Qt/KDE dependencies, use `linux-core-only` for a limited
-C++ test (currently **70 CTests**) and `linux-sanitize-core-only` for **71**.
+C++ test (currently **71 CTests**) and `linux-sanitize-core-only` for **72**.
 A core-only PASS **never** qualifies the desktop, network-monitoring, or
 release security requirements.
 
@@ -507,3 +507,7 @@ See [M8.1](SOC_DASHBOARD_M81.md). Run `ctest --preset linux-release -R '^knetsen
 ### M8.2 interactive stored visualizations
 
 See [M8.2](SECURITY_VISUALIZATIONS_M82.md). Run `ctest --preset linux-release -R '^knetsentry_(dashboard_summary_contract|gui_dashboard_runtime)$' --verbose --no-tests=error`, and `python3 -B scripts/verify_m82_visualizations.py`. Existing inventories remain unchanged; inspect histogram, receiver-age bars and alert severity filters using the private synthetic fixture. No additional evidence query or deployment privilege is introduced.
+
+### M8.3 configurable workspace
+
+See [M8.3](WORKSPACE_M83.md). Run `ctest --preset linux-release -R '^knetsentry_(workspace_preferences_contract|gui_workspace_runtime)$' --verbose --no-tests=error`. Target inventories: desktop 88/78, core-only 71/72. Verify the default 1920 × 1080 logical-pixel windowed startup size (subject to window-manager constraints). Test workspace saves with an isolated configuration root; never publish user preferences or operational evidence.

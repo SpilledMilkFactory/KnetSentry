@@ -682,3 +682,17 @@ if(KNETSENTRY_BUILD_DESKTOP AND NOT KNETSENTRY_ENABLE_SANITIZERS)
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
         LABELS "qt;desktop;qml;integration;ipc;security;regression;privacy" TIMEOUT 75)
 endif()
+
+# M8.3: native bounded workspace persistence and real desktop restart.
+add_executable(knetsentry_workspace_preferences_test workspace_preferences_m83.cpp)
+target_link_libraries(knetsentry_workspace_preferences_test PRIVATE KnetSentry::Core)
+knetsentry_apply_project_options(knetsentry_workspace_preferences_test)
+add_test(NAME knetsentry_workspace_preferences_contract COMMAND $<TARGET_FILE:knetsentry_workspace_preferences_test>)
+set_tests_properties(knetsentry_workspace_preferences_contract PROPERTIES LABELS "unit;security;regression;privacy" TIMEOUT 20)
+if(KNETSENTRY_BUILD_DESKTOP AND NOT KNETSENTRY_ENABLE_SANITIZERS)
+    add_test(NAME knetsentry_gui_workspace_runtime COMMAND "${Python3_EXECUTABLE}" -B
+        "${PROJECT_SOURCE_DIR}/tests/workspace_runtime_m83.py" $<TARGET_FILE:knetsentry>)
+    set_tests_properties(knetsentry_gui_workspace_runtime PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Basic"
+        LABELS "qt;desktop;qml;integration;security;regression;privacy" TIMEOUT 100)
+endif()
